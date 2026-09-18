@@ -1,0 +1,124 @@
+# SPDX-FileCopyrightText: 2026 k0s authors
+# SPDX-License-Identifier: Apache-2.0
+
+# AI conformance testing workflow. See ../../hack/ai-conformance/README.md for details.
+
+name: AI Conformance
+
+on:
+  workflow_dispatch:
+    inputs:
+      k0s-version:
+        type: string
+        description: The k0s version to test. Defaults to the current stable release.
+        default: ""
+      suite-sha:
+        type: string
+        description: The kubernetes-sigs/ai-conformance commit to run.
+        default: da952539a75be3ceee8bbf82698c5f19c401cb2d
+      keep-cluster:
+        type: boolean
+        description: Keep the Azure resource group after the run (for debugging).
+        default: false
+      k0sctl-version:
+        type: string
+        description: The k0sctl version to use when bootstrapping the test cluster.
+        # k0sctl 0.32+ fails on hosts with fs.protected_regular: k0sproject/k0sctl#1186
+        default: 0.31.1 # renovate: datasource=github-releases depName=k0sproject/k0sctl
+  schedule:
+    - cron: 30 3 * * 1 # every Monday
+
+permissions:
+  contents: read
+  id-token: write # for azure/login via OIDC
+
+env:
+  K0S_VERSION: ${{ inputs.k0s-version }}
+  SUITE_SHA: ${{ inputs.suite-sha || 'da952539a75be3ceee8bbf82698c5f19c401cb2d' }}
+  K0SCTL_VERSION: ${{ inputs.k0sctl-version || '0.31.1' }}
+  KEEP_CLUSTER: ${{ inputs.keep-cluster && 'y' || 'n' }}
+  RUN_ID: gha-${{ github.run_id }}
+  ARTIFACTS: ${{ github.workspace }}/artifacts
+
+jobs:
+  run:
+    name: "AI Conformance :: Azure T4"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Azure login
+        uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Set up Go
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        with:
+          go-version: "1.25"
+          cache: false
+
+      - name: Resolve k0s version
+        if: env.K0S_VERSION == ''
+        run: echo "K0S_VERSION=$(curl -sSfL https://docs.k0sproject.io/stable.txt)" >>"$GITHUB_ENV"
+
+      - name: Install k0sctl
+        run: |
+          curl --proto '=https' --tlsv1.2 --retry 5 --retry-all-errors -sSLfo /usr/local/bin/k0sctl \
+            "https://github.com/k0sproject/k0sctl/releases/download/v${K0SCTL_VERSION}/k0sctl-linux-amd64"
+          chmod +x /usr/local/bin/k0sctl
+          k0sctl version
+          az version --query '"azure-cli"' -o tsv
+          helm version --short
+          kubectl version --client
+
+      - name: Run AI conformance suite
+        id: run
+        run: |
+          keep=''
+          [ "$KEEP_CLUSTER" != y ] || keep=--keep-cluster
+          # shellcheck disable=SC2086
+          hack/ai-conformance/run.sh \
+            --k0s-version "$K0S_VERSION" \
+            --suite-sha "$SUITE_SHA" \
+            --run-id "$RUN_ID" \
+            --out "$ARTIFACTS" \
+            $keep 2>&1 | tee run.log
+          rc="${PIPESTATUS[0]}"
+          {
+            echo '```'
+            tail -n 6 run.log
+            echo '```'
+          } >>"$GITHUB_STEP_SUMMARY"
+          exit "$rc"
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        with:
+          name: ai-conformance-${{ env.K0S_VERSION }}-${{ github.run_id }}
+          path: |
+            ${{ env.ARTIFACTS }}
+            !${{ env.ARTIFACTS }}/**/kubeconfig
+            !${{ env.ARTIFACTS }}/**/ssh/**
+          if-no-files-found: warn
+          retention-days: 90
+
+      - name: Delete Azure resource group
+        # Safety net in case the runner killed the script before its own cleanup.
+        if: always() && env.KEEP_CLUSTER != 'y'
+        run: |
+          rg="k0s-aiconf-$RUN_ID"
+          if [ "$(az group exists -n "$rg")" = true ]; then
+            echo "Resource group $rg still exists, deleting"
+            az group delete -n "$rg" --yes --no-wait
+          else
+            echo "Resource group $rg already gone"
+          fi

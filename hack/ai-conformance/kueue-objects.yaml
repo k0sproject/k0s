@@ -1,0 +1,37 @@
+# SPDX-FileCopyrightText: 2026 k0s authors
+# SPDX-License-Identifier: Apache-2.0
+
+# Kueue objects for TestGangScheduling, as in the upstream run-e2e-gcp.sh.
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: ResourceFlavor
+metadata:
+  name: e2e-flavor
+---
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: ClusterQueue
+metadata:
+  name: e2e-cq
+spec:
+  namespaceSelector: {}
+  resourceGroups:
+    - coveredResources: ["cpu", "memory"]
+      flavors:
+        - name: e2e-flavor
+          resources:
+            - name: cpu
+              nominalQuota: 10
+            - name: memory
+              nominalQuota: 10Gi
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ai-conformance-gang-scheduling
+---
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: LocalQueue
+metadata:
+  name: e2e-lq
+  namespace: ai-conformance-gang-scheduling
+spec:
+  clusterQueue: e2e-cq

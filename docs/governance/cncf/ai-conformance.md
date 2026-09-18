@@ -361,3 +361,19 @@ Cluster resources: {'CPU': 2.0, ...}
 Further reading:
 
 - [KubeRay](https://docs.ray.io/en/latest/cluster/kubernetes/)
+
+## Automated verification
+
+Starting with Kubernetes v1.37, the CNCF AI Conformance program accepts test artifacts from the upstream [AI Conformance test suite](https://github.com/kubernetes-sigs/ai-conformance) as evidence for the requirements that have automated tests: secure accelerator access, gang scheduling, and cluster autoscaling.
+
+k0s runs that suite against a freshly provisioned two-node cluster with one NVIDIA T4 worker on Azure, using `hack/ai-conformance/run.sh` in the k0s repository.
+The script installs k0s with k0sctl, adds the NVIDIA GPU Operator and Kueue, runs the suite, and collects `junit.xml`, `e2e.log`, and `results.json` for the submission.
+Gang scheduling is tested with Kueue because the suite submits a plain `batch/v1` Job, which Volcano does not intercept; Volcano remains documented above as a supported gang scheduler on k0s.
+The cluster autoscaling test is skipped because k0s does not ship a cluster autoscaler.
+
+The `AI Conformance` GitHub Actions workflow runs the script weekly and on demand.
+
+Further reading:
+
+- [hack/ai-conformance/README.md](https://github.com/k0sproject/k0s/tree/main/hack/ai-conformance)
+- [CNCF AI Conformance submission instructions](https://github.com/cncf/k8s-ai-conformance/blob/main/instructions.md)

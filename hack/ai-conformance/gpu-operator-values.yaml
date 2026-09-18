@@ -1,0 +1,16 @@
+# SPDX-FileCopyrightText: 2026 k0s authors
+# SPDX-License-Identifier: Apache-2.0
+
+# Point the toolkit at k0s's containerd socket and drop-in directory.
+operator:
+  defaultRuntime: containerd
+toolkit:
+  env:
+    - name: CONTAINERD_CONFIG
+      value: /etc/k0s/containerd.d/nvidia.toml
+    - name: CONTAINERD_SOCKET
+      value: /run/k0s/containerd.sock
+    - name: CONTAINERD_RUNTIME_CLASS
+      value: nvidia
+migManager:
+  enabled: false
