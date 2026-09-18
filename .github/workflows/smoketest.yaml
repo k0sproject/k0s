@@ -36,7 +36,7 @@ jobs:
       }}
     steps:
       - name: Check out code into the Go module directory
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           show-progress: false
@@ -52,13 +52,13 @@ jobs:
         run: .github/workflows/prepare-docker-ipv6.sh
 
       - name: Set up Go
-        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version: ${{ env.GO_VERSION }}
           cache: false
 
       - name: Download compiled executable
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: k0s-linux-${{ inputs.arch }}
 
@@ -69,13 +69,13 @@ jobs:
 
       - name: Download airgap image bundle
         if: contains(inputs.name, 'airgap') || contains(inputs.name, 'ipv6')
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: airgap-image-bundle-linux-${{ inputs.arch }}
 
       - name: Download ipv6 image bundle
         if: inputs.name == 'calico-ipv6' || inputs.name == 'kuberouter-ipv6' || (startsWith(inputs.name, 'network-conformance-') && contains(inputs.name, '-ipv6'))
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: ipv6-test-image-bundle-linux-${{ inputs.arch }}
 
@@ -97,7 +97,7 @@ jobs:
 
       - name: Collect k0s logs, support bundle and conformance test results
         if: failure()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ inputs.name }}${{ inputs.k0s-reference-version && format('-{0}', inputs.k0s-reference-version) || '' }}-${{ inputs.arch }}-files
           path: |
