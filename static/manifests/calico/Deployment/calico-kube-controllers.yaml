@@ -41,8 +41,11 @@ spec:
           imagePullPolicy: {{ .PullPolicy }}
           env:
             # Choose which controllers to run.
+            # "loadbalancer" is not supported by the v3.29.x kube-controllers
+            # image. Only enable controllers that are supported by the
+            # deployed image version.
             - name: ENABLED_CONTROLLERS
-              value: node,loadbalancer
+              value: node,policy,profile,workloadendpoint
             - name: DATASTORE_TYPE
               value: kubernetes
           livenessProbe:
