@@ -4,6 +4,7 @@
 package kuberouter
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"strings"
@@ -11,9 +12,14 @@ import (
 	"time"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
+	"github.com/k0sproject/k0s/pkg/applier"
 
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/kubernetes/scheme"
 
 	"sigs.k8s.io/yaml"
 
@@ -59,8 +65,7 @@ func (s *KubeRouterHairpinSuite) TestK0sGetsUp() {
 		common.ConfigureIPv6ResolvConf(&s.BootlooseSuite)
 	}
 	s.MakeDir(s.ControllerNode(0), "/var/lib/k0s/manifests/test")
-	s.PutFile(s.ControllerNode(0), "/var/lib/k0s/manifests/test/pod.yaml", podManifest)
-	s.PutFile(s.ControllerNode(0), "/var/lib/k0s/manifests/test/service.yaml", serviceManifest)
+	s.putManifests("/var/lib/k0s/manifests/test/hairpin.yaml", s.hairpinApp()...)
 	s.Require().NoError(s.RunWorkers())
 
 	kc, err := s.KubeClient("controller0", "")
@@ -137,37 +142,51 @@ func TestKubeRouterHairpinSuite(t *testing.T) {
 	suite.Run(t, &s)
 }
 
-const podManifest = `
-apiVersion: v1
-kind: Pod
-metadata:
-  name: hairpin-pod
-  namespace: default
-  labels:
-    app.kubernetes.io/name: hairpin
-spec:
-  containers:
-  - name: nginx
-    image: docker.io/library/nginx:1.31.6-alpine
-    ports:
-    - containerPort: 80
-  - name: curl
-    image: docker.io/curlimages/curl:8.22.0
-    command: ["/bin/sh", "-c"]
-    args: ["tail -f /dev/null"]
-`
+// Writes the given objects as YAML manifests to path on the first controller.
+func (s *KubeRouterHairpinSuite) putManifests(path string, obj ...runtime.Object) {
+	codec := applier.CodecFor(scheme.Scheme)
+	var buf bytes.Buffer
+	for _, obj := range obj {
+		buf.WriteString("---\n")
+		s.Require().NoError(codec.Encode(obj, &buf))
+		buf.WriteByte('\n')
+	}
+	s.WriteFileContent(s.ControllerNode(0), path, buf.Bytes())
+}
 
-const serviceManifest = `
-apiVersion: v1
-kind: Service
-metadata:
-  name: hairpin
-  namespace: default
-spec:
-  selector:
-    app.kubernetes.io/name: hairpin
-  ports:
-  - protocol: TCP
-    port: 80
-    targetPort: 80
-`
+// A pod serving HTTP that tries to reach itself, exposed via a service
+func (s *KubeRouterHairpinSuite) hairpinApp() []runtime.Object {
+	appLabels := map[string]string{"app.kubernetes.io/name": "hairpin"}
+
+	return []runtime.Object{
+		&corev1.Pod{
+			Name:      "hairpin-pod",
+			Namespace: metav1.NamespaceDefault,
+			Labels:    appLabels,
+			Spec: corev1.PodSpec{
+				Containers: []corev1.Container{{
+					Name:  "nginx",
+					Image: "docker.io/library/nginx:1.31.6-alpine",
+					Ports: []corev1.ContainerPort{{ContainerPort: 80}},
+				}, {
+					Name:    "curl",
+					Image:   "docker.io/curlimages/curl:8.22.0",
+					Command: []string{"/bin/sh", "-c"},
+					Args:    []string{"tail -f /dev/null"},
+				}},
+			},
+		},
+		&corev1.Service{
+			Name:      "hairpin",
+			Namespace: metav1.NamespaceDefault,
+			Spec: corev1.ServiceSpec{
+				Selector: appLabels,
+				Ports: []corev1.ServicePort{{
+					Protocol:   corev1.ProtocolTCP,
+					Port:       80,
+					TargetPort: intstr.FromInt32(80),
+				}},
+			},
+		},
+	}
+}
