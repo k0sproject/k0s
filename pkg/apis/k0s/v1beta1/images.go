@@ -22,7 +22,7 @@ type ImageSpec struct {
 	// +kubebuilder:validation:MinLength=1
 	Image string `json:"image"`
 
-	// +kubebuilder:validation:Pattern="^[\\w][\\w.-]{0,127}(?:@[A-Za-z][A-Za-z0-9]*(?:[-_+.][A-Za-z][A-Za-z0-9]*)*[:][[:xdigit:]]{32,})?$"
+	// +kubebuilder:validation:Pattern="^[\\w][\\w.-]{0,127}(?:@[A-Za-z][A-Za-z0-9]*(?:[-_+.][A-Za-z][A-Za-z0-9]*)*[:][0-9A-Fa-f]{32,})?$"
 	Version string `json:"version"`
 }
 
