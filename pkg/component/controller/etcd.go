@@ -512,9 +512,9 @@ func (e *Etcd) setupCerts(ctx context.Context) error {
 }
 
 // Health-check interface
-func (e *Etcd) Ready() error {
+func (e *Etcd) Ready(ctx context.Context) error {
 	logrus.WithField("component", "etcd").Debug("checking etcd endpoint for health")
-	ctx, cancel := context.WithTimeout(context.TODO(), 1*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
 	defer cancel()
 	err := etcd.CheckEtcdReady(ctx, e.K0sVars.CertRootDir, e.K0sVars.EtcdCertDir, e.Config)
 	return err
