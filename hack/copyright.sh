@@ -59,14 +59,19 @@ for i in $(find_files_to_check); do
     *)
         DATE=$(get_year "$i")
 
+        # REUSE allows the license info to live in a .license file next to
+        # files that can't carry a header themselves.
+        NOTICE_FILE=$i
+        [ ! -f "$i.license" ] || NOTICE_FILE=$i.license
+
         # codegen gets the header from a static file, so instead we'll replace it every time.
         # Also fix every file if FIX=y
         if [ "$FIX" = 'y' ]; then
-          sed -i.tmp -e "s/SPDX-FileCopyrightText: [0-9][0-9][0-9][0-9] k0s authors/SPDX-FileCopyrightText: $DATE k0s authors/" -- "$i" && rm -f "$i".tmp
+          sed -i.tmp -e "s/SPDX-FileCopyrightText: [0-9][0-9][0-9][0-9] k0s authors/SPDX-FileCopyrightText: $DATE k0s authors/" -- "$NOTICE_FILE" && rm -f "$NOTICE_FILE".tmp
         fi
 
-        if ! has_date_copyright "$DATE" "$i"; then
-          echo "ERROR: $i doesn't have a proper copyright notice. Expected $DATE" 1>&2
+        if ! has_date_copyright "$DATE" "$NOTICE_FILE"; then
+          echo "ERROR: $NOTICE_FILE doesn't have a proper copyright notice. Expected $DATE" 1>&2
           RESULT=1
         fi
         ;;

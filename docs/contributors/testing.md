@@ -5,10 +5,10 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # Testing Your Code
 
-k0s uses GitHub Actions to run automated tests on any pull request before
-merging it. However, your PR will not be reviewed until all tests are green. To
-save time and prevent your PR from going stale, it is best to run the tests
-before submitting the PR.
+k0s uses GitHub Actions to run automated tests on pull requests. The workflows
+only run after a k0s maintainer has approved them, and a pull request won't be
+merged until all tests are green. To save time and prevent your PR from going
+stale, run the tests locally before submitting it.
 
 ## Run Local Verifications
 
@@ -136,23 +136,6 @@ pull request against the k0s repository because running the GitHub workflows for
 pull requests requires approval from a k0s maintainer. Additionally, it allows
 you to tinker with the tests and workflows however you like to debug things.
 This could be useful if you cannot run the smoketests locally.
-
-## Opening A Pull Request
-
-### Draft Mode
-
-You may open a pull request in [draft mode](https://github.blog/2019-02-14-introducing-draft-pull-requests).
-All automated tests will still run against the PR, but the PR will not be assigned for review.
-Once a PR is ready for review, transition it from Draft mode, and code owners will be notified.
-
-### Pre-Requisites for PR Merge
-
-In order for a PR to be merged, the following conditions should exist:
-
-1. The PR has passed all the automated tests (style, build & tests).
-2. PR commits have been signed with the `--signoff` option.
-3. PR was reviewed and approved by a code owner.
-4. PR is rebased against upstream's main branch.
 
 ## Cleanup the local workspace
 

@@ -65,30 +65,38 @@ If you'd like to try k0s, please jump in to our:
 <!-- Start Join the Community -->
 ## Join the Community
 
-- [k8s Slack] - Reach out for support and help from the k0s community.
-- [GitHub Issues] - Submit your issues and feature requests via GitHub.
+The main community communication channel is [#k0s-users] on Kubernetes Slack.
+There you'll find like-minded people and reach out for assistance and
+discussions.
 
 We welcome your help in building k0s! If you are interested, we invite you to
-check out the [Contributing Guide] and the [Code of Conduct].
+join the [#k0s-dev] channel on Kubernetes Slack and check out the [contributing
+guidelines].
 
-[k8s Slack]: https://kubernetes.slack.com/archives/C07VAPJUECS
-[GitHub Issues]: https://github.com/k0sproject/k0s/issues
-[Contributing Guide]: https://docs.k0sproject.io/stable/contributors/
-[Code of Conduct]:https://docs.k0sproject.io/stable/contributors/CODE_OF_CONDUCT/
+We also run a [community blog] that's open to posts from anyone. Subscribe to
+its [RSS feed][blog-rss] to stay up to date.
 
-### Community hours
+[community blog]: https://blog.k0sproject.io/
+[blog-rss]: https://blog.k0sproject.io/index.xml
+[#k0s-users]: https://kubernetes.slack.com/archives/C0809EA06QZ
+[contributing guidelines]: https://docs.k0sproject.io/stable/contributors/
+[#k0s-dev]: https://kubernetes.slack.com/archives/C07VAPJUECS
 
-We will be holding regular community hours. Everyone in the community is welcome to drop by and ask questions, talk about projects, and chat.
+### Community calls
 
-There's three calls scheduled:
+We hold regular community calls. Everyone is welcome to drop by to ask
+questions, discuss ideas or planned contributions, or just chat:
 
-- Community office hours - Eastern Hemisphere (EU TZ's)
-- Community office hours - Western Hemisphere (US/Americas TZ's)
-- Maintainers call - Open to everyone but intended for maintainers to sync up on plans and work
+- Community office hours, Eastern Hemisphere (EMEA-friendly time)
+- Community office hours, Western Hemisphere (Americas-friendly time)
+- Maintainers call, open to everyone but meant for maintainers to sync up on
+  plans and work
 
-All events are published in our public [project calendar].
+All events are listed in the [k0sproject meeting calendar], and the
+[meeting minutes] are public.
 
-[project calendar]: https://zoom-lfx.platform.linuxfoundation.org/meetings/k0s?view=month
+[k0sproject meeting calendar]: https://zoom-lfx.platform.linuxfoundation.org/meetings/k0s?view=month
+[meeting minutes]: https://notes.cncf.io/s/_5FVgysYK
 
 <!-- End Join the Community -->
 ### Adopters

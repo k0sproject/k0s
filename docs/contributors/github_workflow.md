@@ -184,15 +184,25 @@ how it was verified, and what the change deliberately leaves out. It must not
 contradict the commit messages. When you rewrite commits after a review round,
 re-read the description and update it, too.
 
+You may open a pull request in [draft mode]. Automated tests run against a draft
+just like against any other pull request, but it will not be assigned for
+review. Once a PR is ready for review, mark it as "Ready for review", and code
+owners will be notified.
+
 [pr-from-fork]: https://docs.github.com/pull-requests/how-tos/create-pull-requests/creating-a-pull-request-from-a-fork
+[draft mode]: https://github.blog/2019-02-14-introducing-draft-pull-requests
 
 ### Get a code review
 
 Once your pull request has been opened it will be assigned to one or more
-reviewers, and will go through a series of [smoke tests].
+reviewers, and will go through a series of [smoke tests]. It can be merged once
+all automated checks pass and a code owner has approved it.
 
 Commit changes made in response to review comments should be added to the same
-branch on your fork.
+branch on your fork. Reviews usually take a few rounds. Address feedback by
+reworking the commits themselves, rather than by appending fixup commits, so
+that each commit is still individually understandable. It's good practice to
+rebase them on the current `main` branch while you're at it.
 
 Very small PRs are easy to review. Very large PRs are very difficult to review.
 
