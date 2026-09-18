@@ -240,6 +240,10 @@ ifneq ($(EMBEDDED_BINS_BUILDMODE),none)
 bindata: pkg/assets/zz_generated_offsets_$(TARGET_OS).go
 endif
 
+.PHONY: list-images
+list-images:
+	@$(GO) run ./hack/list-images
+
 .PHONY: lint-copyright
 lint-copyright:
 	hack/copyright.sh
