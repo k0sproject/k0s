@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/yaml"
@@ -99,7 +100,19 @@ func (s *CalicoSuite) TestK0sGetsUp() {
 		TypeMeta:   metav1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{Name: "nginx"},
 		Spec: corev1.PodSpec{
-			Containers: []corev1.Container{{Name: "nginx", Image: "docker.io/library/nginx:1.31.6-alpine"}},
+			Containers: []corev1.Container{{
+				Name:  "nginx",
+				Image: "docker.io/library/nginx:1.31.6-alpine",
+				ReadinessProbe: &corev1.Probe{
+					ProbeHandler: corev1.ProbeHandler{
+						HTTPGet: &corev1.HTTPGetAction{
+							Path:   "/",
+							Port:   intstr.FromInt(80),
+							Scheme: corev1.URISchemeHTTP,
+						},
+					},
+				},
+			}},
 			NodeSelector: map[string]string{
 				"kubernetes.io/hostname": "worker0",
 			},
@@ -132,7 +145,8 @@ func (s *CalicoSuite) TestK0sGetsUp() {
 		out, err := common.PodExecCmdOutput(kc, restConfig, sourcePod.Name, sourcePod.Namespace,
 			"/usr/bin/wget -qO- "+net.JoinHostPort(targetPod.Status.PodIP, "80"))
 		if err != nil {
-			return false, err
+			s.T().Log("Error calling nginx pod:", err)
+			return false, nil
 		}
 		s.T().Log("server response", out)
 		return strings.Contains(out, "Welcome to nginx"), nil
