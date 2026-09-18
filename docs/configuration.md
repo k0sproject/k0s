@@ -51,17 +51,21 @@ and other editors using [yaml-language-server](https://github.com/redhat-develop
 The schema path is relative to the YAML file. Other JSON Schema-aware editors can
 associate the same local file through their settings.
 
-The schema checks field names, types, required fields, allowed values, and bounds
-declared in the CRD. It allows partial configurations where k0s supplies defaults,
-including partial image overrides. Optional fields may be null; required fields
-and list entries must supply a value. Worker profile `values` and Kubernetes
-`metadata` are open objects. Unknown fields outside open objects are rejected,
-including where a nested k0s decoder would ignore them.
+The schema checks types, required fields, allowed values, bounds, and patterns
+declared in the CRD. It provides guidance for authoring configurations
+and can be stricter than the config-file parser. For example, omit an API port to
+use its default instead of setting it to zero. Omit optional fields instead of
+setting them to null. Image overrides must include both `image` and `version`.
+Worker profile `values` and Kubernetes `metadata` are open objects. The schema
+does not reject unknown fields where the CRD leaves `additionalProperties`
+unspecified. Field completion helps discover available options, but misspelled
+field names may go undetected.
 
-The schema does not check cross-field rules, regex patterns, or the contents of
-worker profiles and embedded Helm values or resource patches. Schema defaults
-are omitted because CRD defaults can differ from config-file defaults. Continue
-to use `k0s config validate --config k0s.yaml` for additional semantic validation.
+Defaults in the schema are CRD annotations for editor suggestions; they do not
+apply config-file defaults and may differ from them. The schema does not check
+cross-field rules, Kubernetes-specific list constraints, or the contents of worker
+profiles and embedded Helm values or resource patches. Continue to use
+`k0s config validate --config k0s.yaml` for additional semantic validation.
 This schema is for the k0s configuration, not the surrounding k0sctl configuration
 file.
 
@@ -70,6 +74,11 @@ Contributors can regenerate the schema with `make config-schema` (or
 `make codegen`. The generator reuses field descriptions and structure from the
 ClusterConfig CRD, which is generated from the Go configuration types. Edit those
 types rather than the generated JSON file.
+
+Unsupported keywords or formats cause generation to fail.
+Run `go test ./hack/config-schema` for generation
+and validation tests, and `node --test hack/config-schema/regex.test.cjs` for the
+image-version pattern check using the JavaScript regular expressions used by editors.
 
 ## Configuring k0s via k0sctl
 
