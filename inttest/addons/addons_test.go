@@ -35,6 +35,7 @@ import (
 	"github.com/cloudflare/cfssl/signer"
 	"github.com/cloudflare/cfssl/signer/local"
 	"github.com/k0sproject/k0s/inttest/common"
+	"github.com/k0sproject/k0s/inttest/common/ociimages"
 	helmv1beta1 "github.com/k0sproject/k0s/pkg/apis/helm/v1beta1"
 	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	k0sclientset "github.com/k0sproject/k0s/pkg/client/clientset"
@@ -646,6 +647,7 @@ func (as *AddonsSuite) testControllerRestartRecovery(kc *k8s.Clientset) {
 			ChartName:   as.uploadChart("slow-hook-chart"),
 			ReleaseName: restartAddonName,
 			Version:     "0.1.0",
+			Values:      as.hookImageValues(),
 			Namespace:   metav1.NamespaceDefault,
 		},
 	}
@@ -746,6 +748,7 @@ func (as *AddonsSuite) testChartOrdering() {
 			ChartName:   as.uploadChart("order-test-chart-a"),
 			ReleaseName: chartAReleaseName,
 			Version:     "0.1.0",
+			Values:      as.hookImageValues(),
 			Namespace:   metav1.NamespaceDefault,
 			Timeout:     "6m0s",
 		},
@@ -840,6 +843,16 @@ func (as *AddonsSuite) uploadChart(chartName string) string {
 	}
 
 	return remotePath
+}
+
+func (as *AddonsSuite) hookImageValues() string {
+	alpineImage, err := ociimages.Alpine(as.Context())
+	as.Require().NoError(err)
+	values, err := yaml.Marshal(map[string]any{
+		"hook": map[string]any{"image": alpineImage},
+	})
+	as.Require().NoError(err)
+	return string(values)
 }
 
 func tarFS(src fs.FS, path string, out io.Writer) (err error) {

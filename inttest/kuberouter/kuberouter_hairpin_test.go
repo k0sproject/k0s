@@ -24,6 +24,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/k0sproject/k0s/inttest/common"
+	"github.com/k0sproject/k0s/inttest/common/ociimages"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -91,7 +92,7 @@ func (s *KubeRouterHairpinSuite) TestK0sGetsUp() {
 		s.Require().NoError(err)
 		defer ssh.Disconnect()
 
-		const curl = "k0s kc exec -n default hairpin-pod -c curl -- curl"
+		const wget = "k0s kc exec -n default hairpin-pod -c wget -- wget"
 		for _, test := range []struct {
 			dnsName string
 			desc    string
@@ -107,7 +108,7 @@ func (s *KubeRouterHairpinSuite) TestK0sGetsUp() {
 		} {
 			s.Run(test.desc, func() {
 				err = wait.PollImmediate(5*time.Second, 2*time.Minute, func() (bool, error) {
-					output, err := ssh.ExecWithOutput(s.Context(), fmt.Sprintf("%s --connect-timeout 5 -sS http://%s", curl, test.dnsName))
+					output, err := ssh.ExecWithOutput(s.Context(), fmt.Sprintf("%s -T 5 -qO- http://%s", wget, test.dnsName))
 					if err != nil {
 						s.T().Log(output)
 						return false, nil
@@ -157,6 +158,8 @@ func (s *KubeRouterHairpinSuite) putManifests(path string, obj ...runtime.Object
 // A pod serving HTTP that tries to reach itself, exposed via a service
 func (s *KubeRouterHairpinSuite) hairpinApp() []runtime.Object {
 	appLabels := map[string]string{"app.kubernetes.io/name": "hairpin"}
+	alpineImage, err := ociimages.Alpine(s.Context())
+	s.Require().NoError(err)
 
 	return []runtime.Object{
 		&corev1.Pod{
@@ -166,13 +169,12 @@ func (s *KubeRouterHairpinSuite) hairpinApp() []runtime.Object {
 			Spec: corev1.PodSpec{
 				Containers: []corev1.Container{{
 					Name:  "nginx",
-					Image: "docker.io/library/nginx:1.31.6-alpine",
+					Image: ociimages.Nginx,
 					Ports: []corev1.ContainerPort{{ContainerPort: 80}},
 				}, {
-					Name:    "curl",
-					Image:   "docker.io/curlimages/curl:8.22.0",
-					Command: []string{"/bin/sh", "-c"},
-					Args:    []string{"tail -f /dev/null"},
+					Name:    "wget",
+					Image:   alpineImage,
+					Command: []string{"sleep", "infinity"},
 				}},
 			},
 		},
