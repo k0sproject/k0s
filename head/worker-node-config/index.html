@@ -1246,6 +1246,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#kubelet-serving-certificates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Kubelet serving certificates
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -3098,6 +3109,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#kubelet-serving-certificates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Kubelet serving certificates
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -3176,6 +3198,49 @@ See also the <a href="../configuration/#configuration-examples">examples of k0s.
 profiles</a> and the <a href="https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/">list of possible
 Kubelet configuration
 fields</a>.</p>
+<h3 id="kubelet-serving-certificates">Kubelet serving certificates<a class="headerlink" href="#kubelet-serving-certificates" title="Permanent link">#</a></h3>
+<p>By default, k0s configures kubelets to request their serving certificates from
+the Kubernetes API via <a href="https://kubernetes.io/docs/reference/access-authn-authz/certificate-signing-requests/">Certificate Signing Requests</a> (CSRs), by enabling
+<code>serverTLSBootstrap</code> in the generated kubelet configuration. The kubelet then
+requests a certificate from the <code>kubernetes.io/kubelet-serving</code> signer and uses
+it to serve its own API. Clients of that API verify the certificate against the
+cluster CA. The Kubernetes API server verifies it, for example, when serving
+<code>kubectl logs</code> and <code>kubectl exec</code> requests. Similarly, k0s's <code>metrics-server</code>
+component, which bundles the <a href="https://github.com/kubernetes-sigs/metrics-server">Kubernetes Metrics Server</a>, verifies it when
+scraping the kubelet's resource metrics. Other properly configured monitoring
+systems do the same.</p>
+<p>Kubernetes doesn't approve these CSRs automatically. k0s ships a controller
+component called <code>csr-approver</code> that does so, provided the request meets all of
+the following conditions:</p>
+<ul>
+<li>The PEM-encoded certificate request size doesn't exceed 512 KiB.</li>
+<li>It is a well-formed kubelet serving certificate request, according to
+  Kubernetes' validation rules.</li>
+<li>The certificate request has no more than 4096 SANs, counting DNS names and IP
+  addresses together.</li>
+<li>It was created by the very node it requests the certificate for. The
+  requesting user must have the <code>system:node:&lt;nodeName&gt;</code> name and be a member of
+  the <code>system:nodes</code> group, and the certificate's common name must be identical
+  to the requesting user name.</li>
+<li>The requested DNS names and IP addresses don't identify the cluster's control
+  plane or other in-cluster services: no IP address may be inside the service
+  CIDR(s), and no DNS name may be <code>kubernetes</code>, <code>kubernetes.default</code>, or a name
+  within the <code>svc</code> or cluster domains.</li>
+<li>The node exists in the cluster.</li>
+<li>The node's <code>status.addresses</code> contains no more than 4096 entries.</li>
+<li>The requested DNS names and IP addresses are all listed in the node's
+  <code>status.addresses</code>.</li>
+</ul>
+<p>Requests that don't meet these conditions are left pending, and the reason is
+logged by the k0s controller. Note that a node's addresses are reported by its
+kubelet, so flags like <code>--node-ip</code> directly influence which addresses a
+certificate may be issued for.</p>
+<p>The CSR approver checks for pending requests periodically. It only considers the
+newest pending request of each node per pass, so that a node can't hold up
+others by creating large numbers of requests. It can be turned off via <code>k0s
+controller --disable-components csr-approver</code>. In that case, kubelet serving
+certificates need to be approved by some other means, otherwise the affected
+kubelet APIs remain unavailable.</p>
 <h2 id="iptables-mode">IPTables Mode<a class="headerlink" href="#iptables-mode" title="Permanent link">#</a></h2>
 <p>k0s detects the iptables backend automatically based on the existing records. On a brand-new setup, <code>iptables-nft</code> will be used.
 There is an <code>--iptables-mode</code> flag to specify the mode explicitly. Valid values: <code>nft</code>, <code>legacy</code> and <code>auto</code> (default).</p>
