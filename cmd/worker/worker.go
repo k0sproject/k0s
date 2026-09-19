@@ -236,7 +236,22 @@ func (c *Command) Start(ctx context.Context, nodeName apitypes.NodeName, kubelet
 		c.WorkerProfile,
 	)
 	if err != nil {
-		return err
+		if !c.AllowCachedConfig || ctx.Err() != nil || !shouldFallBackToCachedProfile(err) {
+			return err
+		}
+
+		cached, cacheErr := workerconfig.LoadProfileFromCache(c.K0sVars.DataDir, c.WorkerProfile)
+		if cacheErr != nil {
+			return errors.Join(
+				fmt.Errorf("failed to load the worker profile from the Kubernetes API: %w", err),
+				fmt.Errorf("failed to load cached worker profile: %w", cacheErr),
+			)
+		}
+
+		logrus.WithError(err).WithField("profile", c.WorkerProfile).Warn(
+			"Failed to load the worker profile from the Kubernetes API, starting with the cached worker profile, which may be out of date",
+		)
+		workerConfig = cached
 	}
 
 	componentManager := manager.New(prober.DefaultProber)
@@ -354,4 +369,12 @@ func (c *Command) Start(ctx context.Context, nodeName apitypes.NodeName, kubelet
 		logrus.Info("All worker components stopped")
 	}
 	return nil
+}
+
+// shouldFallBackToCachedProfile tells if a failure to load the worker profile
+// from the Kubernetes API may be answered with the cached profile. Only a
+// Kubernetes API that couldn't be reached at all qualifies: whenever it did
+// respond, it rejected this node's request, and a stale profile won't fix that.
+func shouldFallBackToCachedProfile(err error) bool {
+	return workerconfig.IsAPIUnreachable(err)
 }
