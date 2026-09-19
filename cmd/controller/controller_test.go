@@ -50,6 +50,7 @@ Examples:
 	Note: Token can be passed either as a CLI argument, a flag, or an environment variable
 
 Flags:
+      --allow-cached-config                            Allow starting with the last cached worker profile if the Kubernetes API is unreachable
       --api-server-stop-timeout duration               time to wait for the API server to stop
   -c, --config string                                  config file, use '-' to read the config from stdin (default `+defaultConfigPath+`)
       --cri-socket string                              container runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]

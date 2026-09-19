@@ -4,10 +4,15 @@
 package worker
 
 import (
+	"errors"
+	"fmt"
 	"path/filepath"
 	"testing"
 
 	"github.com/k0sproject/k0s/cmd/internal"
+	workerconfig "github.com/k0sproject/k0s/pkg/component/worker/config"
+
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -48,4 +53,27 @@ func TestKubeconfigGetterFromJoinToken_InvalidArgDeferred(t *testing.T) {
 
 	_, err := getter()
 	require.ErrorContains(t, err, "failed to decode join token")
+}
+
+func TestShouldFallBackToCachedProfile(t *testing.T) {
+	t.Parallel()
+
+	unreachable := &workerconfig.APIUnreachableError{Err: errors.New("connection refused")}
+
+	for _, test := range []struct {
+		name string
+		err  error
+		want bool
+	}{
+		{"unreachable_api_server", unreachable, true},
+		{"wrapped_unreachable_api_server", fmt.Errorf("failed to load the worker profile: %w", unreachable), true},
+		{"unrelated_failure", assert.AnError, false},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, test.want, shouldFallBackToCachedProfile(test.err),
+				"Wrong decision for %v", test.err)
+		})
+	}
 }
