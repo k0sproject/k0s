@@ -3622,7 +3622,7 @@ k0sctl</a> and the <a href="https://github.com/k0sproject/k0sctl/blob/main/READM
 </tr>
 <tr>
 <td><code>kine.extraArgs</code></td>
-<td>Map of key-values (strings) for any extra arguments to pass down to kine process. <code>extraArgs</code> are recommended over <code>rawArgs</code> if the use case allows it.  Any behavior triggered by these parameters is outside k0s support.</td>
+<td>Map of key-values (strings) for any extra arguments to pass down to kine process. <code>extraArgs</code> are recommended over <code>rawArgs</code> if the use case allows it. Any behavior triggered by these parameters is outside k0s support.</td>
 </tr>
 <tr>
 <td><code>kine.rawArgs</code></td>
@@ -3673,15 +3673,15 @@ k0sctl</a> and the <a href="https://github.com/k0sproject/k0sctl/blob/main/READM
 <tbody>
 <tr>
 <td><code>provider</code></td>
-<td>Network provider (valid values: <code>calico</code>, <code>kuberouter</code>, or <code>custom</code>). For <code>custom</code>, you can push any network provider (default: <code>kuberouter</code>). Be aware that it is your responsibility to configure all the CNI-related setups, including the CNI provider itself and all necessary host levels setups (for example, CNI binaries). <strong>Note:</strong> Once you initialize the cluster with a network provider the only way to change providers is through a full cluster redeployment.</td>
+<td>Network provider (valid values: <code>calico</code>, <code>kuberouter</code>, or <code>custom</code>). For <code>custom</code>, you can push any network provider (default: <code>kuberouter</code>). Be aware that it is your responsibility to configure all the CNI-related setups, including the CNI provider itself and all necessary host levels setups (for example, CNI binaries). <strong>Note:</strong> Once you initialize the cluster with a network provider the only way to change providers is through a full cluster redeployment. The CNI files are applied as static manifests.</td>
 </tr>
 <tr>
 <td><code>podCIDR</code></td>
-<td>Pod network CIDR to use in the cluster. Defaults to <code>10.244.0.0/16</code>.</td>
+<td>Pod network CIDR to use in the cluster by the network provider. Defaults to <code>10.244.0.0/16</code>.</td>
 </tr>
 <tr>
 <td><code>serviceCIDR</code></td>
-<td>Network CIDR to use for cluster VIP services. Defaults to <code>10.96.0.0/12</code>.</td>
+<td>CNI-independent Network CIDR to use for cluster VIP services. Defaults to <code>10.96.0.0/12</code>.</td>
 </tr>
 <tr>
 <td><code>primaryAddressFamily</code></td>
@@ -3704,11 +3704,11 @@ k0sctl</a> and the <a href="https://github.com/k0sproject/k0sctl/blob/main/READM
 <tbody>
 <tr>
 <td><code>mode</code></td>
-<td>Indicates the Calico backend to use. Either <code>bird</code> or <code>vxlan</code> (default). The deprecated legacy value <code>ipip</code> is also accepted.</td>
+<td>Indicates the Calico backend to use. Either <code>bird</code> or <code>vxlan</code> (default). The deprecated legacy value <code>ipip</code> is also accepted. Defaults to <code>vxlan</code> with encapsulated <code>overlay</code>.</td>
 </tr>
 <tr>
 <td><code>overlay</code></td>
-<td>Overlay mode: <code>Always</code> (default), <code>CrossSubnet</code> or <code>Never</code> (requires <code>mode=vxlan</code> to disable Calico overlay-network).</td>
+<td>Overlay mode: <code>Always</code> (default), <code>CrossSubnet</code> or <code>Never</code> (requires <code>mode=vxlan</code> to disable Calico overlay-network, leaving pod CIDRs to be routed by the underlying network).</td>
 </tr>
 <tr>
 <td><code>vxlanPort</code></td>
@@ -4091,7 +4091,7 @@ for node-local load balancing.</p>
 </tr>
 <tr>
 <td><code>addressLabel</code></td>
-<td>The label for the VRRP instance for IPv6 VIPs.  This value is ignored for IPv4 VIPs. This is used to set the routing preference as per RFC 6724. If set to <code>0</code>, uses default value. Default: <code>10000</code></td>
+<td>The label for the VRRP instance for IPv6 VIPs. This value is ignored for IPv4 VIPs. This is used to set the routing preference as per RFC 6724. If set to <code>0</code>, uses default value. Default: <code>10000</code></td>
 </tr>
 </tbody>
 </table>
@@ -4207,7 +4207,7 @@ by k0s.</p>
 <span class="w">  </span><span class="nt">workerProfiles</span><span class="p">:</span>
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">custom-pluginDir</span>
 <span class="w">      </span><span class="nt">values</span><span class="p">:</span>
-<span class="w">         </span><span class="nt">volumePluginDir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/var/libexec/k0s/kubelet-plugins/volume/exec</span>
+<span class="w">        </span><span class="nt">volumePluginDir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/var/libexec/k0s/kubelet-plugins/volume/exec</span>
 </code></pre></div>
 <h5 id="eviction-policy">Eviction Policy<a class="headerlink" href="#eviction-policy" title="Permanent link">#</a></h5>
 <div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
@@ -4245,27 +4245,33 @@ by k0s.</p>
 <h4 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">#</a></h4>
 <h5 id="generic-feature-gates-example">Generic feature gates example<a class="headerlink" href="#generic-feature-gates-example" title="Permanent link">#</a></h5>
 <div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">featureGates</span><span class="p">:</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">feature-gate-0</span>
-<span class="w">        </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<span class="w">        </span><span class="nt">components</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"kube-apiserver"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"kube-controller-manager"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"kubelet"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"kube-scheduler"</span><span class="p p-Indicator">]</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">feature-gate-1</span>
-<span class="w">        </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">feature-gate-2</span>
-<span class="w">        </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">  </span><span class="nt">featureGates</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">feature-gate-0</span>
+<span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">      </span><span class="nt">components</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">[</span>
+<span class="w">          </span><span class="s">"kube-apiserver"</span><span class="p p-Indicator">,</span>
+<span class="w">          </span><span class="s">"kube-controller-manager"</span><span class="p p-Indicator">,</span>
+<span class="w">          </span><span class="s">"kubelet"</span><span class="p p-Indicator">,</span>
+<span class="w">          </span><span class="s">"kube-scheduler"</span><span class="p p-Indicator">,</span>
+<span class="w">        </span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">feature-gate-1</span>
+<span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">feature-gate-2</span>
+<span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
 </code></pre></div>
 <h5 id="kubelet-feature-gates-example">Kubelet feature gates example<a class="headerlink" href="#kubelet-feature-gates-example" title="Permanent link">#</a></h5>
 <p>The below is an example of a k0s config with feature gates enabled:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">featureGates</span><span class="p">:</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DevicePlugins</span>
-<span class="w">        </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<span class="w">        </span><span class="nt">components</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"kubelet"</span><span class="p p-Indicator">]</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Accelerators</span>
-<span class="w">        </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<span class="w">        </span><span class="nt">components</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"kubelet"</span><span class="p p-Indicator">]</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">AllowExtTrafficLocalEndpoints</span>
-<span class="w">        </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">  </span><span class="nt">featureGates</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DevicePlugins</span>
+<span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">      </span><span class="nt">components</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"kubelet"</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Accelerators</span>
+<span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">      </span><span class="nt">components</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"kubelet"</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">AllowExtTrafficLocalEndpoints</span>
+<span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
 </code></pre></div>
 <h3 id="specimages"><code>spec.images</code><a class="headerlink" href="#specimages" title="Permanent link">#</a></h3>
 <p>Nodes under the <code>images</code> key all have the same basic structure:</p>
@@ -4432,9 +4438,9 @@ components happens through a command line flag for the controller process:</p>
 controller at <code>spec.hosts.installFlags</code> in the config file like e.g.:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">hosts</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">controller</span>
-<span class="w">    </span><span class="nt">installFlags</span><span class="p">:</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">--disable-components=metrics-server</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">controller</span>
+<span class="w">      </span><span class="nt">installFlags</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">--disable-components=metrics-server</span>
 </code></pre></div>
 <p>As seen from the component list, the only always-on component is the Kubernetes
 API server, without that k0s serves no purpose.</p>
