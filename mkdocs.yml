@@ -92,8 +92,8 @@ nav:
           - TAG-Security self-assessment: governance/cncf/security-self-assessment.md
   - Commercial support: commercial-support.md
   - Adopters: adopters.md
-  - Contributing:
-      - Getting Started: contributors/index.md
+  - Contributing guidelines:
+      - Overview: contributors/index.md
       - GitHub Workflow: contributors/github_workflow.md
       - Code guidelines: contributors/code_guidelines.md
       - Testing: contributors/testing.md
@@ -151,9 +151,6 @@ markdown_extensions:
   - pymdownx.tilde: {}
   - pymdownx.superfences: {}
   - pymdownx.inlinehilite: {}
-  - pymdownx.emoji:
-      emoji_index: !!python/name:material.extensions.emoji.twemoji
-      emoji_generator: !!python/name:material.extensions.emoji.to_svg
   - mdx_truly_sane_lists: # https://github.com/mkdocs/mkdocs/issues/545#issuecomment-522196661
       nested_indent: 2
       truly_sane: true
@@ -174,9 +171,6 @@ extra:
     - icon: fontawesome/brands/github
       link: https://github.com/k0sproject/k0s
       name: k0s on GitHub
-    - icon: fontawesome/brands/x-twitter
-      link: https://x.com/k0sproject
-      name: k0s on X
     - icon: fontawesome/solid/blog
       link: https://blog.k0sproject.io/
       name: The k0sproject community blog
@@ -184,8 +178,8 @@ extra:
       link: https://blog.k0sproject.io/index.xml
       name: RSS feed of the k0sproject community blog
     - icon: fontawesome/brands/slack
-      link: https://kubernetes.slack.com/archives/C07VAPJUECS
-      name: k0s on the k8s slack
+      link: https://kubernetes.slack.com/archives/C0809EA06QZ
+      name: "#k0s-users on Kubernetes Slack"
     - icon: fontawesome/solid/link
       link: https://k0sproject.io/
       name: k0s Website

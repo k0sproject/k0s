@@ -1,41 +1,27 @@
-<!--
-SPDX-FileCopyrightText: 2022 k0s authors
-SPDX-License-Identifier: CC-BY-SA-4.0
--->
-
 ## Description
 
-<!-- Please include a summary of the change and which issue is fixed. Please also include relevant motivation and context. List any dependencies that are required for this change. -->
+<!--
+Summarize your changes. Give context, mention alternatives considered, and what is
+deliberately left out. It must not contradict the commit messages. When you rewrite
+commits after a review round, re-read this description and update it, too.
 
-<!-- Use "Fixes #N" only if this PR resolves the issue. Otherwise, use "See #N". -->
-
-Fixes # (issue)
+Use "Fixes #N" only if this pull request resolves an issue. Otherwise, use "See #N".
+-->
 
 ## Type of change
 
-<!-- check the related options -->
+- [ ] Non-breaking change
+- [ ] Breaking change (must respect the [version skew policy](https://docs.k0sproject.io/head/version-skew-policy/))
 
-- [ ] Bug fix (non-breaking change which fixes an issue)
-- [ ] New feature (non-breaking change which adds functionality)
-- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
-- [ ] Documentation update
-
-## How Has This Been Tested?
+## How has this been tested?
 
 - [ ] Manual test
-- [ ] Auto test added
+- [ ] Automated test added
 
-<!-- Please describe the tests that you ran to verify your changes. Provide instructions so we can reproduce. Please also list any relevant details for your test configuration -->
+<!-- Describe what was verified, and how. Provide instructions so we can reproduce. -->
 
 ## Checklist
 
-- [ ] My code follows the [code guidelines](https://docs.k0sproject.io/head/contributors/code_guidelines/) of this project
-- [ ] My commit messages are [signed-off](https://docs.k0sproject.io/head/contributors/github_workflow/)
-- [ ] I have performed a self-review of my code
-- [ ] I have commented my code, particularly explaining any non-obvious constraints
+- [ ] This pull request follows the [contributing guidelines](https://docs.k0sproject.io/head/contributors/)
+- [ ] I have performed a self-review of my changes
 - [ ] I have made corresponding changes to the documentation
-- [ ] My changes generate no new warnings
-- [ ] I have added tests that prove my fix is effective or that my feature works
-- [ ] New and existing unit tests pass locally with my changes
-- [ ] Any dependent changes have been merged and published in downstream modules
-- [ ] I have checked my code and corrected any misspellings
