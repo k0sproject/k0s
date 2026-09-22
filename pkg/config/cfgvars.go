@@ -31,6 +31,7 @@ type CfgVars struct {
 	KubeletRootDir             string              // Root directory for kubelet
 	EtcdCertDir                string              // EtcdCertDir contains etcd certificates
 	EtcdDataDir                string              // EtcdDataDir contains etcd state
+	EtcdSocketPath             string              // The unix socket path for the etcd client listener
 	KineSocketPath             string              // The unix socket path for kine
 	KonnectivitySocketDir      string              // location of konnectivity's socket path
 	KubeletAuthConfigPath      string              // KubeletAuthConfigPath defines the default kubelet auth config path
@@ -172,6 +173,7 @@ func NewCfgVars(cobraCmd command, dirs ...string) (*CfgVars, error) {
 		KubeletRootDir:             kubeletRootDir,
 		EtcdCertDir:                filepath.Join(certDir, "etcd"),
 		EtcdDataDir:                filepath.Join(dataDir, "etcd"),
+		EtcdSocketPath:             filepath.Join(runDir, constant.EtcdSocket),
 		KineSocketPath:             filepath.Join(runDir, constant.KineSocket),
 		KonnectivitySocketDir:      filepath.Join(runDir, "konnectivity-server"),
 		KubeletAuthConfigPath:      filepath.Join(dataDir, "kubelet.conf"),

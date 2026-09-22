@@ -406,3 +406,34 @@ func TestEtcdConfig_GetMemberName(t *testing.T) {
 		})
 	}
 }
+
+func TestEtcdSocketURL(t *testing.T) {
+	assert.Equal(t, "unixs:///run/k0s/etcd/etcd.sock", EtcdSocketURL("/run/k0s/etcd/etcd.sock"))
+}
+
+func TestEtcdConfig_GetEndpoints(t *testing.T) {
+	const socketPath = "/run/k0s/etcd/etcd.sock"
+	const socketURL = "unixs:///run/k0s/etcd/etcd.sock"
+
+	t.Run("internal etcd", func(t *testing.T) {
+		e := DefaultEtcdConfig()
+		assert.Equal(t, []string{socketURL}, e.GetEndpoints(socketPath))
+		assert.Equal(t, socketURL, e.GetEndpointsAsString(socketPath))
+	})
+
+	t.Run("nil config", func(t *testing.T) {
+		var e *EtcdConfig
+		assert.Equal(t, []string{socketURL}, e.GetEndpoints(socketPath))
+		assert.Equal(t, socketURL, e.GetEndpointsAsString(socketPath))
+	})
+
+	t.Run("external cluster", func(t *testing.T) {
+		e := &EtcdConfig{
+			ExternalCluster: &ExternalCluster{
+				Endpoints: []string{"https://192.168.10.10:2379", "https://192.168.10.11:2379"},
+			},
+		}
+		assert.Equal(t, []string{"https://192.168.10.10:2379", "https://192.168.10.11:2379"}, e.GetEndpoints(socketPath))
+		assert.Equal(t, "https://192.168.10.10:2379,https://192.168.10.11:2379", e.GetEndpointsAsString(socketPath))
+	})
+}

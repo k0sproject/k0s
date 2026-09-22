@@ -9,6 +9,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -189,9 +190,18 @@ func (m *Metrics) newEtcdJob() (*job, error) {
 		return nil, err
 	}
 
+	// The internal etcd only listens on a unix socket.
+	socketPath := m.K0sVars.EtcdSocketPath
+	if transport, ok := httpClient.Transport.(*http.Transport); ok {
+		transport.DialContext = func(ctx context.Context, _, _ string) (net.Conn, error) {
+			var d net.Dialer
+			return d.DialContext(ctx, "unix", socketPath)
+		}
+	}
+
 	return &job{
 		log:          m.log.WithField("metrics_job", "etcd"),
-		scrapeURL:    "https://localhost:2379/metrics",
+		scrapeURL:    "https://localhost/metrics",
 		name:         "etcd",
 		hostname:     m.hostname,
 		scrapeClient: httpClient,

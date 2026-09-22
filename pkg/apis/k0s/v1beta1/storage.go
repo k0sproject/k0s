@@ -248,22 +248,28 @@ func (k *KineConfig) IsJoinable() bool {
 	}
 }
 
-// GetEndpointsAsString returns comma-separated list of external cluster endpoints if exist
-// or internal etcd address which is https://127.0.0.1:2379
-func (e *EtcdConfig) GetEndpointsAsString() string {
+// EtcdSocketURL returns the TLS-enabled (unixs) URL for the internal etcd's
+// client unix socket at the given file system path.
+func EtcdSocketURL(socketPath string) string {
+	return (&url.URL{Scheme: "unixs", Path: filepath.ToSlash(socketPath)}).String()
+}
+
+// GetEndpointsAsString returns comma-separated list of external cluster endpoints if exist,
+// or the internal etcd unix socket URL for the given socket path.
+func (e *EtcdConfig) GetEndpointsAsString(etcdSocketPath string) string {
 	if e != nil && e.IsExternalClusterUsed() {
 		return strings.Join(e.ExternalCluster.Endpoints, ",")
 	}
-	return "https://127.0.0.1:2379"
+	return EtcdSocketURL(etcdSocketPath)
 }
 
-// GetEndpointsAsString returns external cluster endpoints if exist
-// or internal etcd address which is https://127.0.0.1:2379
-func (e *EtcdConfig) GetEndpoints() []string {
+// GetEndpoints returns external cluster endpoints if exist,
+// or the internal etcd unix socket URL for the given socket path.
+func (e *EtcdConfig) GetEndpoints(etcdSocketPath string) []string {
 	if e != nil && e.IsExternalClusterUsed() {
 		return e.ExternalCluster.Endpoints
 	}
-	return []string{"https://127.0.0.1:2379"}
+	return []string{EtcdSocketURL(etcdSocketPath)}
 }
 
 // IsExternalClusterUsed returns true if `spec.storage.etcd.externalCluster` is defined, otherwise returns false.

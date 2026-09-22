@@ -40,9 +40,9 @@ spec:
         command: "curl"
         args: ["-k", "--cert", "/var/lib/k0s/pki/admin.crt", "--key", "/var/lib/k0s/pki/admin.key", "https://localhost:6443/healthz?verbose"]
     - run:
-        collectorName: curl-etcd-health-2379
+        collectorName: curl-etcd-health
         command: "curl"
-        args: ["-ki", "https://localhost:2379/health", "--cert", "/var/lib/k0s/pki/apiserver-etcd-client.crt", "--key", "/var/lib/k0s/pki/apiserver-etcd-client.key"]
+        args: ["-ki", "--unix-socket", "/run/k0s/etcd/etcd.sock", "https://localhost/health", "--cert", "/var/lib/k0s/pki/apiserver-etcd-client.crt", "--key", "/var/lib/k0s/pki/apiserver-etcd-client.key"]
     - run:
         collectorName: etcd-members
         command: "k0s"
@@ -217,7 +217,7 @@ spec:
               message: "Kubernetes API health check passed"
     - textAnalyze:
         checkName: ETCD API Health
-        fileName: host-collectors/run-host/curl-etcd-health-2379.txt
+        fileName: host-collectors/run-host/curl-etcd-health.txt
         regex: ".*\"health\":\"true\"*"
         outcomes:
           - fail:

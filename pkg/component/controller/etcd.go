@@ -39,6 +39,12 @@ import (
 
 const etcdGID = 0
 
+// The mode of the etcd client unix socket. The socket needs to be connectable
+// by other local processes running as different users, most notably
+// kube-apiserver. Access control relies on TLS client certificate
+// authentication, just as it did when etcd was listening on loopback TCP.
+const etcdSocketMode = 0666
+
 // Etcd implement the component interface to run etcd
 type Etcd struct {
 	CertManager certificate.Manager
@@ -48,9 +54,10 @@ type Etcd struct {
 	LogLevel    string
 	LeaveOnStop func() bool
 
-	supervisor     *supervisor.Supervisor
-	executablePath string
-	uid            int
+	supervisor           *supervisor.Supervisor
+	executablePath       string
+	uid                  int
+	stopSocketMaintainer context.CancelFunc
 }
 
 var _ manager.Component = (*Etcd)(nil)
@@ -81,7 +88,13 @@ func (e *Etcd) Init(_ context.Context) error {
 		return fmt.Errorf("failed to create etcd cert dir: %w", err)
 	}
 
-	for _, f := range []string{e.K0sVars.EtcdDataDir, e.K0sVars.EtcdCertDir} {
+	etcdSocketDir := filepath.Dir(e.K0sVars.EtcdSocketPath)
+	err = dir.Init(etcdSocketDir, 0755)
+	if err != nil {
+		return fmt.Errorf("failed to create etcd socket dir: %w", err)
+	}
+
+	for _, f := range []string{e.K0sVars.EtcdDataDir, e.K0sVars.EtcdCertDir, etcdSocketDir} {
 		err = recursiveChown(f, e.uid, etcdGID)
 		if err != nil && os.Geteuid() == 0 {
 			return err
@@ -167,11 +180,12 @@ func (e *Etcd) Start(ctx context.Context) (err error) {
 	}
 
 	peerURL := e.Config.GetPeerURL()
+	clientURL := v1beta1.EtcdSocketURL(e.K0sVars.EtcdSocketPath)
 
 	args := stringmap.StringMap{
 		"--data-dir":                    e.K0sVars.EtcdDataDir,
-		"--listen-client-urls":          "https://127.0.0.1:2379",
-		"--advertise-client-urls":       "https://127.0.0.1:2379",
+		"--listen-client-urls":          clientURL,
+		"--advertise-client-urls":       clientURL,
 		"--client-cert-auth":            "true",
 		"--listen-peer-urls":            peerURL,
 		"--initial-advertise-peer-urls": peerURL,
@@ -246,8 +260,17 @@ func (e *Etcd) Start(ctx context.Context) (err error) {
 	if err := e.supervisor.Supervise(ctx); err != nil {
 		return err
 	}
+
+	// The etcd process creates the client socket with permissions based on
+	// its umask and re-creates it whenever the supervisor restarts it, so
+	// keep the socket mode maintained for as long as the component runs.
+	maintainerCtx, stopMaintainer := context.WithCancel(context.Background())
+	e.stopSocketMaintainer = stopMaintainer
+	go e.maintainSocketMode(maintainerCtx)
+
 	defer func() {
 		if err != nil {
+			stopMaintainer()
 			err = errors.Join(err, e.supervisor.Stop())
 		}
 	}()
@@ -278,8 +301,34 @@ func (e *Etcd) Start(ctx context.Context) (err error) {
 	}
 }
 
+// maintainSocketMode ensures that the etcd client unix socket remains
+// connectable by other local processes (e.g. kube-apiserver running as a
+// different user) by adjusting its file mode whenever etcd (re-)creates it.
+func (e *Etcd) maintainSocketMode(ctx context.Context) {
+	log := logrus.WithField("component", "etcd")
+	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
+	for {
+		if info, err := os.Stat(e.K0sVars.EtcdSocketPath); err == nil {
+			if info.Mode().Type() == os.ModeSocket && info.Mode().Perm() != etcdSocketMode {
+				if err := os.Chmod(e.K0sVars.EtcdSocketPath, etcdSocketMode); err != nil {
+					log.WithError(err).Warn("Failed to adjust etcd socket permissions")
+				} else {
+					log.Debugf("Adjusted mode of etcd socket %s to %o", e.K0sVars.EtcdSocketPath, etcdSocketMode)
+				}
+			}
+		}
+
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+		}
+	}
+}
+
 func (e *Etcd) fixupPeerURL(ctx context.Context) (err error) {
-	c, err := etcd.NewClient(e.K0sVars.CertRootDir, e.K0sVars.EtcdCertDir, e.Config)
+	c, err := etcd.NewClient(e.K0sVars, e.Config)
 	if err != nil {
 		return err
 	}
@@ -326,6 +375,10 @@ func (e *Etcd) fixupPeerURL(ctx context.Context) (err error) {
 
 // Stop stops etcd
 func (e *Etcd) Stop() error {
+	if e.stopSocketMaintainer != nil {
+		e.stopSocketMaintainer()
+	}
+
 	s := e.supervisor
 	if s == nil {
 		return nil
@@ -371,7 +424,7 @@ func (e *Etcd) leave(ctx context.Context) error {
 	log.Info("Attempting to leave the cluster")
 
 	if err := func() error {
-		c, err := etcd.NewClient(e.K0sVars.CertRootDir, e.K0sVars.EtcdCertDir, e.Config)
+		c, err := etcd.NewClient(e.K0sVars, e.Config)
 		if err != nil {
 			return fmt.Errorf("failed to initialize etcd client: %w", err)
 		}
@@ -482,6 +535,9 @@ func (e *Etcd) setupCerts(ctx context.Context) error {
 			Hostnames: []string{
 				"127.0.0.1",
 				"localhost",
+				// The etcd client uses the base name of a unix socket
+				// endpoint as the TLS server name.
+				filepath.Base(e.K0sVars.EtcdSocketPath),
 			},
 		}
 
@@ -516,7 +572,7 @@ func (e *Etcd) Ready() error {
 	logrus.WithField("component", "etcd").Debug("checking etcd endpoint for health")
 	ctx, cancel := context.WithTimeout(context.TODO(), 1*time.Second)
 	defer cancel()
-	err := etcd.CheckEtcdReady(ctx, e.K0sVars.CertRootDir, e.K0sVars.EtcdCertDir, e.Config)
+	err := etcd.CheckEtcdReady(ctx, e.K0sVars, e.Config)
 	return err
 }
 

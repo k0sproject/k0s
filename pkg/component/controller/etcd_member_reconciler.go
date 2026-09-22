@@ -136,7 +136,7 @@ func (e *EtcdMemberReconciler) resync(ctx context.Context, client etcdclient.Etc
 }
 
 func (e *EtcdMemberReconciler) listEtcdClusterMembers(ctx context.Context) (_ *etcd.Client, _ []etcd.Member, err error) {
-	client, err := etcd.NewClient(e.k0sVars.CertRootDir, e.k0sVars.EtcdCertDir, e.etcdConfig)
+	client, err := etcd.NewClient(e.k0sVars, e.etcdConfig)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create etcd client: %w", err)
 	}
@@ -423,7 +423,7 @@ func (e *EtcdMemberReconciler) createMemberObject(ctx context.Context, client et
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 	// find the member ID for this node
-	etcdClient, err := etcd.NewClient(e.k0sVars.CertRootDir, e.k0sVars.EtcdCertDir, e.etcdConfig)
+	etcdClient, err := etcd.NewClient(e.k0sVars, e.etcdConfig)
 	if err != nil {
 		return err
 	}
@@ -732,7 +732,7 @@ func (e *EtcdMemberReconciler) promoteLearners(
 	crs []etcdv1beta1.EtcdMember,
 	log logrus.FieldLogger,
 ) bool {
-	etcdClient, err := etcd.NewClient(e.k0sVars.CertRootDir, e.k0sVars.EtcdCertDir, e.etcdConfig)
+	etcdClient, err := etcd.NewClient(e.k0sVars, e.etcdConfig)
 	if err != nil {
 		log.WithError(err).Warn("failed to create etcd client for learner promotion")
 		return false

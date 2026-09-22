@@ -17,6 +17,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/k0sproject/k0s/internal/pkg/file"
+	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/etcd"
 
 	utilsnapshot "go.etcd.io/etcd/etcdutl/v3/snapshot"
@@ -25,16 +26,15 @@ import (
 const etcdBackup = "etcd-snapshot.db"
 
 type etcdStep struct {
-	certRootDir string
-	etcdCertDir string
+	k0sVars *config.CfgVars
 
 	peerAddress string
 	etcdDataDir string
 	tmpDir      string
 }
 
-func newEtcdStep(tmpDir string, certRootDir string, etcdCertDir string, peerAddress string, etcdDataDir string) *etcdStep {
-	return &etcdStep{tmpDir: tmpDir, certRootDir: certRootDir, etcdCertDir: etcdCertDir, peerAddress: peerAddress, etcdDataDir: etcdDataDir}
+func newEtcdStep(tmpDir string, k0sVars *config.CfgVars, peerAddress string, etcdDataDir string) *etcdStep {
+	return &etcdStep{tmpDir: tmpDir, k0sVars: k0sVars, peerAddress: peerAddress, etcdDataDir: etcdDataDir}
 }
 
 func (e etcdStep) Name() string {
@@ -43,7 +43,7 @@ func (e etcdStep) Name() string {
 
 func (e etcdStep) Backup() (StepResult, error) {
 	ctx := context.TODO()
-	etcdClient, err := etcd.NewClient(e.certRootDir, e.etcdCertDir, nil)
+	etcdClient, err := etcd.NewClient(e.k0sVars, nil)
 	if err != nil {
 		return StepResult{}, err
 	}

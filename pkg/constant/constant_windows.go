@@ -8,6 +8,7 @@ const (
 	DataDirDefault = "C:\\var\\lib\\k0s"
 
 	KineSocket              = "kine\\kine.sock:2379"
+	EtcdSocket              = "etcd\\etcd.sock"
 	K0sConfigPathDefault    = "C:\\etc\\k0s\\k0s.yaml"
 	StatusSocketPathDefault = `\\.\pipe\k0s-status`
 
