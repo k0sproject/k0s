@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"math"
 	"reflect"
-	"sync"
 	"time"
 
 	"github.com/k0sproject/k0s/internal/sync/value"
@@ -281,9 +280,8 @@ type CoreDNS struct {
 	log                    *logrus.Entry
 	previousConfig         coreDNSConfig
 	previousPatches        v1beta1.Patches
-	stopFunc               context.CancelFunc
+	stop                   func()
 	lastKnownClusterConfig value.Latest[*v1beta1.ClusterConfig]
-	reconcileMutex         sync.Mutex
 }
 
 type coreDNSConfig struct {
@@ -326,23 +324,34 @@ func (c *CoreDNS) Init(_ context.Context) error {
 
 // Run runs the CoreDNS reconciler component
 func (c *CoreDNS) Start(ctx context.Context) error {
-	ctx, c.stopFunc = context.WithCancel(ctx)
+	ctx, cancel := context.WithCancel(ctx)
+	done := make(chan struct{})
 
+	// Reconcile always happening async, triggered either via:
+	// - changes in the last known cluster config
+	// - changes in the leader election status
+	// - 10sec ticker, to cover scaling when node count changes
 	go func() {
+		defer close(done)
 		ticker := time.NewTicker(10 * time.Second)
 		defer ticker.Stop()
+		clusterConfig, cfgExpirationChan := c.lastKnownClusterConfig.Peek()
+		_, leaderExpirationChan := c.leaderStatus()
 		for {
+			if clusterConfig == nil {
+				c.log.Info("no last known cluster config, skipping reconcile")
+			} else if err := c.reconcile(ctx, clusterConfig); err != nil {
+				c.log.Warnf("failed to reconcile coredns based on last known cluster config: %v", err)
+			}
 			select {
 			case <-ticker.C:
-				clusterConfig, _ := c.lastKnownClusterConfig.Peek()
-				if clusterConfig == nil {
-					c.log.Info("no last known cluster config, skipping reconcile")
-					continue
-				}
-				err := c.reconcile(ctx)
-				if err != nil {
-					c.log.Warnf("failed to reconcile coredns based on node count: %v", err)
-				}
+			case <-cfgExpirationChan:
+				clusterConfig, cfgExpirationChan = c.lastKnownClusterConfig.Peek()
+			case <-leaderExpirationChan:
+				_, leaderExpirationChan = c.leaderStatus()
+				// Clear out any previous state once we lose leadership
+				// That guarantees the next leadeship obtain will trigger a full reconcile.
+				c.previousConfig, c.previousPatches = coreDNSConfig{}, nil
 			case <-ctx.Done():
 				c.log.Info("coredns node reconciler done")
 				return
@@ -350,6 +359,7 @@ func (c *CoreDNS) Start(ctx context.Context) error {
 		}
 	}()
 
+	c.stop = func() { cancel(); <-done }
 	return nil
 }
 
@@ -414,9 +424,9 @@ func replicaCount(nodeCount int) int {
 
 // Stop stops the CoreDNS reconciler
 func (c *CoreDNS) Stop() error {
-	if c.stopFunc != nil {
+	if stop := c.stop; stop != nil {
 		logrus.Debug("closing coreDNS component context")
-		c.stopFunc()
+		stop()
 	}
 	return nil
 }
@@ -424,22 +434,14 @@ func (c *CoreDNS) Stop() error {
 // Reconcile detects changes in configuration and applies them to the component
 func (c *CoreDNS) Reconcile(ctx context.Context, clusterConfig *v1beta1.ClusterConfig) error {
 	// Reconcile is the only source-of-truth for cluster config
+	// Actual reconcile is triggered async via the Latest expiration channel
 	c.lastKnownClusterConfig.Set(clusterConfig)
-	return c.reconcile(ctx)
+	return nil
 }
 
 // reconcile peeks the last known config and reconciles CoreDNS with that
-func (c *CoreDNS) reconcile(ctx context.Context) error {
+func (c *CoreDNS) reconcile(ctx context.Context, clusterConfig *v1beta1.ClusterConfig) error {
 	logrus.Debug("reconcile method called for: CoreDNS")
-	// Allow only one concurrent reconcile as it can be triggered either via the ticker or config change
-	c.reconcileMutex.Lock()
-	defer c.reconcileMutex.Unlock()
-
-	clusterConfig, _ := c.lastKnownClusterConfig.Peek()
-	if clusterConfig == nil {
-		c.log.Info("no last known cluster config, skipping reconcile")
-		return nil
-	}
 
 	ctx, cancel := leaderelection.LeaderContext(ctx, c.leaderStatus)
 	defer cancel()
