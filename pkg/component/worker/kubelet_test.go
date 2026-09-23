@@ -70,10 +70,10 @@ func TestParseTaints(t *testing.T) {
 	}
 }
 
-func TestHasSystemdResolvedNameserver(t *testing.T) {
+func TestIsSystemdResolvedStub(t *testing.T) {
 	t.Run("nonexistent_file", func(t *testing.T) {
 		path := filepath.Join(t.TempDir(), "resolv.conf")
-		detected, err := hasSystemdResolvedNameserver(path)
+		detected, err := isSystemdResolvedStub(path)
 		assert.ErrorIs(t, err, os.ErrNotExist)
 		assert.False(t, detected)
 	})
@@ -98,6 +98,16 @@ func TestHasSystemdResolvedNameserver(t *testing.T) {
 			false,
 		},
 		{
+			"zoned_link_local_nameserver_before_systemd_resolved",
+			"nameserver fe80::1%eth0\nnameserver 127.0.0.53",
+			false,
+		},
+		{
+			"zoned_link_local_nameserver_after_systemd_resolved",
+			"nameserver 127.0.0.53\nnameserver fe80::1%eth0",
+			false,
+		},
+		{
 			"commented_nameserver",
 			"search example.com\nnameserver 127.0.0.53\n#nameserver 1.2.3.4",
 			true,
@@ -111,7 +121,7 @@ func TestHasSystemdResolvedNameserver(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			path := filepath.Join(t.TempDir(), "resolv.conf")
 			require.NoError(t, os.WriteFile(path, []byte(test.content), 0644))
-			detected, err := hasSystemdResolvedNameserver(path)
+			detected, err := isSystemdResolvedStub(path)
 			if assert.NoError(t, err) {
 				assert.Equal(t, test.expected, detected)
 			}

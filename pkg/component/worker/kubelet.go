@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"net/netip"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -328,7 +329,7 @@ func determineKubeletResolvConfPath() *string {
 		// nameserver, that nameserver won't be reachable from within
 		// containers. Try to use the alternative resolv.conf path used by
 		// systemd-resolved instead.
-		detected, err := hasSystemdResolvedNameserver(path)
+		detected, err := isSystemdResolvedStub(path)
 		if err != nil {
 			logrus.WithError(err).Info("Failed to detect the presence of systemd-resolved")
 		} else if detected {
@@ -342,10 +343,9 @@ func determineKubeletResolvConfPath() *string {
 	return &path
 }
 
-// hasSystemdResolvedNameserver parses the given resolv.conf file and checks if
-// it contains 127.0.0.53 as the only nameserver. Then it is assumed to be
-// systemd-resolved managed.
-func hasSystemdResolvedNameserver(resolvConfPath string) (bool, error) {
+// Parses the given resolv.conf file and checks if it contains 127.0.0.53 as the
+// only nameserver. Then it is assumed to be the systemd-resolved stub.
+func isSystemdResolvedStub(resolvConfPath string) (bool, error) {
 	f, err := os.Open(resolvConfPath)
 	if err != nil {
 		return false, err
@@ -360,6 +360,7 @@ func hasSystemdResolvedNameserver(resolvConfPath string) (bool, error) {
 	// https://git.musl-libc.org/cgit/musl/tree/src/network/resolvconf.c?h=v1.2.3#n62
 
 	nameserverLine := regexp.MustCompile(`^nameserver\s+(\S+)`)
+	stubIP := netip.AddrFrom4([4]byte{127, 0, 0, 53})
 
 	lines := bufio.NewScanner(f)
 	systemdResolvedIPSeen := false
@@ -368,11 +369,8 @@ func hasSystemdResolvedNameserver(resolvConfPath string) (bool, error) {
 		if len(match) < 1 {
 			continue
 		}
-		ip := net.ParseIP(string(match[1]))
-		if ip == nil {
-			continue
-		}
-		if systemdResolvedIPSeen || !ip.Equal(net.IP{127, 0, 0, 53}) {
+
+		if ip, _ := netip.ParseAddr(string(match[1])); systemdResolvedIPSeen || ip != stubIP {
 			return false, nil
 		}
 		systemdResolvedIPSeen = true
