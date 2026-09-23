@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
-	"github.com/k0sproject/k0s/pkg/config"
 	"go.etcd.io/etcd/api/v3/v3rpc/rpctypes"
 	"go.etcd.io/etcd/client/pkg/v3/transport"
 	clientv3 "go.etcd.io/etcd/client/v3"
@@ -32,16 +31,18 @@ type Member struct {
 	IsLearner bool
 }
 
-// NewClient creates new Client
-func NewClient(k0sVars *config.CfgVars, etcdConf *v1beta1.EtcdConfig) (*Client, error) {
+// NewClient creates new Client. The etcdSocketPath is the path to the
+// internal etcd's client unix socket; it's only used if etcdConf doesn't
+// refer to an external etcd cluster.
+func NewClient(certDir, etcdCertDir, etcdSocketPath string, etcdConf *v1beta1.EtcdConfig) (*Client, error) {
 	client := &Client{}
 
 	var tlsConfig *tls.Config
 	if etcdConf.IsTLSEnabled() {
 		client.tlsInfo = transport.TLSInfo{
-			CertFile:      etcdConf.GetCertFilePath(k0sVars.CertRootDir),
-			KeyFile:       etcdConf.GetKeyFilePath(k0sVars.CertRootDir),
-			TrustedCAFile: etcdConf.GetCaFilePath(k0sVars.EtcdCertDir),
+			CertFile:      etcdConf.GetCertFilePath(certDir),
+			KeyFile:       etcdConf.GetKeyFilePath(certDir),
+			TrustedCAFile: etcdConf.GetCaFilePath(etcdCertDir),
 		}
 
 		var err error
@@ -52,7 +53,7 @@ func NewClient(k0sVars *config.CfgVars, etcdConf *v1beta1.EtcdConfig) (*Client, 
 	}
 
 	cfg := clientv3.Config{
-		Endpoints: etcdConf.GetEndpoints(k0sVars.EtcdSocketPath),
+		Endpoints: etcdConf.GetEndpoints(etcdSocketPath),
 		TLS:       tlsConfig,
 	}
 	return NewClientWithConfig(cfg)

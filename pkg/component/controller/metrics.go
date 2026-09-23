@@ -185,18 +185,16 @@ func (m *Metrics) newEtcdJob() (*job, error) {
 	certFile := filepath.Join(m.K0sVars.CertRootDir, "apiserver-etcd-client.crt")
 	keyFile := filepath.Join(m.K0sVars.CertRootDir, "apiserver-etcd-client.key")
 
-	httpClient, err := getClient(certFile, keyFile)
-	if err != nil {
-		return nil, err
-	}
-
 	// The internal etcd only listens on a unix socket.
 	socketPath := m.K0sVars.EtcdSocketPath
-	if transport, ok := httpClient.Transport.(*http.Transport); ok {
-		transport.DialContext = func(ctx context.Context, _, _ string) (net.Conn, error) {
-			var d net.Dialer
-			return d.DialContext(ctx, "unix", socketPath)
-		}
+	dialSocket := func(ctx context.Context, _, _ string) (net.Conn, error) {
+		var d net.Dialer
+		return d.DialContext(ctx, "unix", socketPath)
+	}
+
+	httpClient, err := getClient(certFile, keyFile, dialSocket)
+	if err != nil {
+		return nil, err
 	}
 
 	return &job{
@@ -210,7 +208,7 @@ func (m *Metrics) newEtcdJob() (*job, error) {
 }
 
 func (m *Metrics) newKineJob() (*job, error) {
-	httpClient, err := getClient("", "")
+	httpClient, err := getClient("", "", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -229,7 +227,7 @@ func (m *Metrics) newJob(name, scrapeURL string) (*job, error) {
 	certFile := filepath.Join(m.K0sVars.CertRootDir, "admin.crt")
 	keyFile := filepath.Join(m.K0sVars.CertRootDir, "admin.key")
 
-	httpClient, err := getClient(certFile, keyFile)
+	httpClient, err := getClient(certFile, keyFile, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -289,9 +287,12 @@ func (j *job) collectAndPush(ctx context.Context) error {
 	return nil
 }
 
-func getClient(certFile, keyFile string) (*http.Client, error) {
+func getClient(certFile, keyFile string, dialContext func(ctx context.Context, network, addr string) (net.Conn, error)) (*http.Client, error) {
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 	transport.ResponseHeaderTimeout = time.Minute
+	if dialContext != nil {
+		transport.DialContext = dialContext
+	}
 	tlsConfig := &tls.Config{InsecureSkipVerify: true}
 	transport.TLSClientConfig = tlsConfig
 

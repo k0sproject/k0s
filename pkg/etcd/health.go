@@ -7,14 +7,13 @@ import (
 	"context"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
-	"github.com/k0sproject/k0s/pkg/config"
 
 	"github.com/sirupsen/logrus"
 )
 
 // CheckEtcdReady returns true if etcd responds to the metrics endpoint with a status code of 200
-func CheckEtcdReady(ctx context.Context, k0sVars *config.CfgVars, etcdConf *v1beta1.EtcdConfig) error {
-	c, err := NewClient(k0sVars, etcdConf)
+func CheckEtcdReady(ctx context.Context, certDir, etcdCertDir, etcdSocketPath string, etcdConf *v1beta1.EtcdConfig) error {
+	c, err := NewClient(certDir, etcdCertDir, etcdSocketPath, etcdConf)
 	if err != nil {
 		logrus.Errorf("failed to initialize etcd client: %v", err)
 		return err

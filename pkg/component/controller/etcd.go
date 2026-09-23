@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -32,6 +33,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/avast/retry-go"
+	"github.com/fsnotify/fsnotify"
 	"github.com/sirupsen/logrus"
 	"go.etcd.io/etcd/client/pkg/v3/tlsutil"
 	"golang.org/x/sync/errgroup"
@@ -86,6 +88,12 @@ func (e *Etcd) Init(_ context.Context) error {
 	err = dir.Init(e.K0sVars.EtcdCertDir, constant.EtcdCertDirMode) // https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-4.1.7/
 	if err != nil {
 		return fmt.Errorf("failed to create etcd cert dir: %w", err)
+	}
+
+	// Unix domain socket paths are limited to 108 bytes on Linux (104 on
+	// some other platforms, see unix(7)). Fail early with a clear error.
+	if len(e.K0sVars.EtcdSocketPath) > 103 {
+		return fmt.Errorf("etcd socket path %q exceeds the unix domain socket path length limit; use a shorter run directory", e.K0sVars.EtcdSocketPath)
 	}
 
 	etcdSocketDir := filepath.Dir(e.K0sVars.EtcdSocketPath)
@@ -237,6 +245,16 @@ func (e *Etcd) Start(ctx context.Context) (err error) {
 		args[argName] = value
 	}
 
+	// All internal etcd clients, including kube-apiserver, connect via the
+	// unix socket. Make sure that etcd keeps listening on it and advertising
+	// it, even if the user overrides the listener configuration.
+	for _, argName := range []string{"--listen-client-urls", "--advertise-client-urls"} {
+		if merged := ensureURLInList(clientURL, args[argName]); merged != args[argName] {
+			logrus.Warnf("appending %s to user-provided %s, as the internal etcd clients rely on it", clientURL, argName)
+			args[argName] = merged
+		}
+	}
+
 	// Specifying a minimum version of TLS 1.3 _and_ a list of cipher suites
 	// will be rejected.
 	// https://github.com/etcd-io/etcd/pull/15156/files#diff-538c79cd00ec18cb43b5dddd5f36b979d9d050cf478a241304493284739d31bfR810-R813
@@ -301,34 +319,78 @@ func (e *Etcd) Start(ctx context.Context) (err error) {
 	}
 }
 
+// ensureURLInList ensures that url is an element of the comma-separated list
+// of URLs, appending it if necessary.
+func ensureURLInList(url, urls string) string {
+	if urls == "" {
+		return url
+	}
+	if !slices.Contains(strings.Split(urls, ","), url) {
+		return urls + "," + url
+	}
+	return urls
+}
+
 // maintainSocketMode ensures that the etcd client unix socket remains
 // connectable by other local processes (e.g. kube-apiserver running as a
 // different user) by adjusting its file mode whenever etcd (re-)creates it.
 func (e *Etcd) maintainSocketMode(ctx context.Context) {
 	log := logrus.WithField("component", "etcd")
-	ticker := time.NewTicker(1 * time.Second)
-	defer ticker.Stop()
-	for {
-		if info, err := os.Stat(e.K0sVars.EtcdSocketPath); err == nil {
-			if info.Mode().Type() == os.ModeSocket && info.Mode().Perm() != etcdSocketMode {
-				if err := os.Chmod(e.K0sVars.EtcdSocketPath, etcdSocketMode); err != nil {
-					log.WithError(err).Warn("Failed to adjust etcd socket permissions")
-				} else {
-					log.Debugf("Adjusted mode of etcd socket %s to %o", e.K0sVars.EtcdSocketPath, etcdSocketMode)
-				}
-			}
-		}
+	socketPath := e.K0sVars.EtcdSocketPath
 
+	fixMode := func() {
+		switch changed, err := ensureUnixSocketMode(socketPath, etcdSocketMode); {
+		case errors.Is(err, os.ErrNotExist): // etcd is (re)starting, the socket isn't there yet
+		case err != nil:
+			log.WithError(err).Warn("Failed to adjust etcd socket permissions")
+		case changed:
+			log.Debugf("Adjusted mode of etcd socket %s to %o", socketPath, etcdSocketMode)
+		}
+	}
+
+	fixMode()
+
+	// Watch the socket directory, so that the mode gets fixed promptly
+	// whenever etcd re-creates the socket (e.g. when the supervisor restarts
+	// it). The periodic resync acts as a fallback for missed events, and as
+	// the only mechanism if the watcher is unavailable.
+	resync := 30 * time.Second
+	var events chan fsnotify.Event
+	var watchErrs chan error
+	if watcher, err := fsnotify.NewWatcher(); err != nil {
+		log.WithError(err).Warn("Failed to watch etcd socket directory, falling back to polling")
+	} else if err := watcher.Add(filepath.Dir(socketPath)); err != nil {
+		log.WithError(err).Warn("Failed to watch etcd socket directory, falling back to polling")
+		_ = watcher.Close()
+	} else {
+		defer watcher.Close()
+		events, watchErrs = watcher.Events, watcher.Errors
+	}
+	if events == nil {
+		resync = 1 * time.Second
+	}
+
+	ticker := time.NewTicker(resync)
+	defer ticker.Stop()
+
+	for {
 		select {
 		case <-ctx.Done():
 			return
+		case event := <-events:
+			if event.Name == socketPath && event.Op&(fsnotify.Create|fsnotify.Chmod) != 0 {
+				fixMode()
+			}
+		case err := <-watchErrs:
+			log.WithError(err).Warn("Error while watching etcd socket directory")
 		case <-ticker.C:
+			fixMode()
 		}
 	}
 }
 
 func (e *Etcd) fixupPeerURL(ctx context.Context) (err error) {
-	c, err := etcd.NewClient(e.K0sVars, e.Config)
+	c, err := etcd.NewClient(e.K0sVars.CertRootDir, e.K0sVars.EtcdCertDir, e.K0sVars.EtcdSocketPath, e.Config)
 	if err != nil {
 		return err
 	}
@@ -424,7 +486,7 @@ func (e *Etcd) leave(ctx context.Context) error {
 	log.Info("Attempting to leave the cluster")
 
 	if err := func() error {
-		c, err := etcd.NewClient(e.K0sVars, e.Config)
+		c, err := etcd.NewClient(e.K0sVars.CertRootDir, e.K0sVars.EtcdCertDir, e.K0sVars.EtcdSocketPath, e.Config)
 		if err != nil {
 			return fmt.Errorf("failed to initialize etcd client: %w", err)
 		}
@@ -535,9 +597,6 @@ func (e *Etcd) setupCerts(ctx context.Context) error {
 			Hostnames: []string{
 				"127.0.0.1",
 				"localhost",
-				// The etcd client uses the base name of a unix socket
-				// endpoint as the TLS server name.
-				filepath.Base(e.K0sVars.EtcdSocketPath),
 			},
 		}
 
@@ -572,7 +631,7 @@ func (e *Etcd) Ready() error {
 	logrus.WithField("component", "etcd").Debug("checking etcd endpoint for health")
 	ctx, cancel := context.WithTimeout(context.TODO(), 1*time.Second)
 	defer cancel()
-	err := etcd.CheckEtcdReady(ctx, e.K0sVars, e.Config)
+	err := etcd.CheckEtcdReady(ctx, e.K0sVars.CertRootDir, e.K0sVars.EtcdCertDir, e.K0sVars.EtcdSocketPath, e.Config)
 	return err
 }
 

@@ -121,7 +121,7 @@ type etcdMember struct {
 func (s *EtcdLearnerSuite) listMembers(ctx context.Context, ssh *common.SSHConnection) []etcdMember {
 	out, err := ssh.ExecWithOutput(ctx,
 		"/opt/etcdctl member list -w json "+
-			"--endpoints=unixs:///run/k0s/etcd/etcd.sock "+
+			"--endpoints=unixs:///run/k0s/etcd/localhost:2379 "+
 			"--cacert=/var/lib/k0s/pki/etcd/ca.crt "+
 			"--cert=/var/lib/k0s/pki/apiserver-etcd-client.crt "+
 			"--key=/var/lib/k0s/pki/apiserver-etcd-client.key")

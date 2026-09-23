@@ -198,7 +198,7 @@ func etcdHandler(log logrus.FieldLogger, k0sVars *config.CfgVars) http.Handler {
 			return
 		}
 
-		etcdClient, err := etcd.NewClient(k0sVars, nil)
+		etcdClient, err := etcd.NewClient(k0sVars.CertRootDir, k0sVars.EtcdCertDir, k0sVars.EtcdSocketPath, nil)
 		if err != nil {
 			sendError(err, resp)
 			return

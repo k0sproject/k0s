@@ -15,11 +15,14 @@ import (
 
 	"github.com/k0sproject/k0s/pkg/config"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestEtcd_MaintainSocketMode(t *testing.T) {
-	socketPath := filepath.Join(t.TempDir(), "etcd.sock")
+	// Use a relative socket path to stay below the unix socket path length limit.
+	t.Chdir(t.TempDir())
+	socketPath := "localhost:2379"
 
 	listen := func() net.Listener {
 		l, err := net.Listen("unix", socketPath)
@@ -52,4 +55,64 @@ func TestEtcd_MaintainSocketMode(t *testing.T) {
 	l = listen()
 	require.Eventually(t, hasMode(etcdSocketMode), 10*time.Second, 10*time.Millisecond,
 		"socket mode should be adjusted to %o after the socket is re-created", etcdSocketMode)
+}
+
+func TestEnsureUnixSocketMode(t *testing.T) {
+	t.Run("refuses symlinks", func(t *testing.T) {
+		// Use relative socket paths to stay below the unix socket path length limit.
+		t.Chdir(t.TempDir())
+		const targetPath, linkPath = "target", "link"
+		l, err := net.Listen("unix", targetPath)
+		require.NoError(t, err)
+		t.Cleanup(func() { l.Close() })
+		require.NoError(t, os.Chmod(targetPath, 0600))
+
+		require.NoError(t, os.Symlink(targetPath, linkPath))
+
+		changed, err := ensureUnixSocketMode(linkPath, 0666)
+		assert.Error(t, err, "symlinks must not be followed")
+		assert.False(t, changed)
+
+		info, err := os.Stat(targetPath)
+		if assert.NoError(t, err) {
+			assert.Equal(t, os.FileMode(0600), info.Mode().Perm(), "symlink target mode must be unchanged")
+		}
+	})
+
+	t.Run("refuses non-sockets", func(t *testing.T) {
+		filePath := filepath.Join(t.TempDir(), "file")
+		require.NoError(t, os.WriteFile(filePath, nil, 0600))
+
+		changed, err := ensureUnixSocketMode(filePath, 0666)
+		assert.Error(t, err, "regular files must not be chmodded")
+		assert.False(t, changed)
+
+		info, err := os.Stat(filePath)
+		if assert.NoError(t, err) {
+			assert.Equal(t, os.FileMode(0600), info.Mode().Perm(), "file mode must be unchanged")
+		}
+	})
+
+	t.Run("missing socket", func(t *testing.T) {
+		changed, err := ensureUnixSocketMode(filepath.Join(t.TempDir(), "nonexistent"), 0666)
+		assert.ErrorIs(t, err, os.ErrNotExist)
+		assert.False(t, changed)
+	})
+}
+
+func TestEnsureURLInList(t *testing.T) {
+	const socketURL = "unixs:///run/k0s/etcd/localhost:2379"
+
+	for _, test := range []struct {
+		name, urls, expected string
+	}{
+		{"empty list", "", socketURL},
+		{"already present", socketURL, socketURL},
+		{"present among others", "https://127.0.0.1:2379," + socketURL, "https://127.0.0.1:2379," + socketURL},
+		{"appended when missing", "https://0.0.0.0:2379", "https://0.0.0.0:2379," + socketURL},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.expected, ensureURLInList(socketURL, test.urls))
+		})
+	}
 }

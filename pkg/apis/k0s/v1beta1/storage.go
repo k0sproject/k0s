@@ -250,8 +250,18 @@ func (k *KineConfig) IsJoinable() bool {
 
 // EtcdSocketURL returns the TLS-enabled (unixs) URL for the internal etcd's
 // client unix socket at the given file system path.
+//
+// Note that the etcd client derives the TLS server name from the socket's
+// base name, stripping any port suffix, so the base name has to match a SAN
+// of the etcd server certificate (see [constant.EtcdSocket]).
 func EtcdSocketURL(socketPath string) string {
-	return (&url.URL{Scheme: "unixs", Path: filepath.ToSlash(socketPath)}).String()
+	socketPath = filepath.ToSlash(socketPath)
+	// Ensure the URL is always in the canonical absolute form (unixs:///path),
+	// so that the path is never mistaken for a host (e.g. Windows drive letters).
+	if !strings.HasPrefix(socketPath, "/") {
+		socketPath = "/" + socketPath
+	}
+	return (&url.URL{Scheme: "unixs", Path: socketPath}).String()
 }
 
 // GetEndpointsAsString returns comma-separated list of external cluster endpoints if exist,

@@ -31,7 +31,7 @@ type CfgVars struct {
 	KubeletRootDir             string              // Root directory for kubelet
 	EtcdCertDir                string              // EtcdCertDir contains etcd certificates
 	EtcdDataDir                string              // EtcdDataDir contains etcd state
-	EtcdSocketPath             string              // The unix socket path for the etcd client listener
+	EtcdSocketPath             string              // The unix socket path for the etcd client listener (see constant.EtcdSocket for the file naming)
 	KineSocketPath             string              // The unix socket path for kine
 	KonnectivitySocketDir      string              // location of konnectivity's socket path
 	KubeletAuthConfigPath      string              // KubeletAuthConfigPath defines the default kubelet auth config path

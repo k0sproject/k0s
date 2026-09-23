@@ -42,7 +42,7 @@ spec:
     - run:
         collectorName: curl-etcd-health
         command: "curl"
-        args: ["-ki", "--unix-socket", "/run/k0s/etcd/etcd.sock", "https://localhost/health", "--cert", "/var/lib/k0s/pki/apiserver-etcd-client.crt", "--key", "/var/lib/k0s/pki/apiserver-etcd-client.key"]
+        args: ["-ki", "--unix-socket", "/run/k0s/etcd/localhost:2379", "https://localhost/health", "--cert", "/var/lib/k0s/pki/apiserver-etcd-client.crt", "--key", "/var/lib/k0s/pki/apiserver-etcd-client.key"]
     - run:
         collectorName: etcd-members
         command: "k0s"
