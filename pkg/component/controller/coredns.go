@@ -267,6 +267,10 @@ const CoreDNSStackName = "coredns"
 
 const HostsPerExtraReplica = 10.0
 
+// The interval between CoreDNS reconciliations that nothing else triggered,
+// so that changes in the node count are picked up.
+const reconcileInterval = 10 * time.Second
+
 var _ manager.Component = (*CoreDNS)(nil)
 var _ manager.Reconciler = (*CoreDNS)(nil)
 
@@ -330,11 +334,11 @@ func (c *CoreDNS) Start(ctx context.Context) error {
 	// Reconcile always happening async, triggered either via:
 	// - changes in the last known cluster config
 	// - changes in the leader election status
-	// - 10sec ticker, to cover scaling when node count changes
+	// - periodic timer, to cover scaling when node count changes
 	go func() {
 		defer close(done)
-		ticker := time.NewTicker(10 * time.Second)
-		defer ticker.Stop()
+		timer := time.NewTimer(reconcileInterval)
+		defer timer.Stop()
 		clusterConfig, cfgExpirationChan := c.lastKnownClusterConfig.Peek()
 		_, leaderExpirationChan := c.leaderStatus()
 		for {
@@ -343,8 +347,13 @@ func (c *CoreDNS) Start(ctx context.Context) error {
 			} else if err := c.reconcile(ctx, clusterConfig); err != nil {
 				c.log.Warnf("failed to reconcile coredns based on last known cluster config: %v", err)
 			}
+
+			// Timer reset ensures we always wait for the interval between
+			// reconciles, no matter how long a reconcile actually takes.
+			timer.Reset(reconcileInterval)
+
 			select {
-			case <-ticker.C:
+			case <-timer.C:
 			case <-cfgExpirationChan:
 				clusterConfig, cfgExpirationChan = c.lastKnownClusterConfig.Peek()
 			case <-leaderExpirationChan:
