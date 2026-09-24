@@ -270,6 +270,7 @@ func (e *Etcd) Start(ctx context.Context) (err error) {
 		UID:           e.uid,
 		GID:           etcdGID,
 		KeepEnvPrefix: true,
+		CleanBeforeFn: e.removeStaleSocket,
 		AfterStartFn:  e.fixSocketMode,
 	}
 
@@ -319,6 +320,15 @@ func ensureURLInList(url, urls string) string {
 		return urls + "," + url
 	}
 	return urls
+}
+
+// removeStaleSocket removes a socket left behind by a killed etcd process, so
+// that the mode adjustment can't mistake it for the one etcd is about to create.
+func (e *Etcd) removeStaleSocket() error {
+	if err := os.Remove(e.K0sVars.EtcdSocketPath); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return err
+	}
+	return nil
 }
 
 // fixSocketMode adjusts the mode of the client socket that etcd creates on

@@ -77,6 +77,25 @@ func TestEtcd_FixSocketMode(t *testing.T) {
 	})
 }
 
+func TestEtcd_RemoveStaleSocket(t *testing.T) {
+	t.Chdir(t.TempDir())
+	e := &Etcd{K0sVars: &config.CfgVars{EtcdSocketPath: "localhost:2379"}}
+
+	t.Run("no socket", func(t *testing.T) {
+		assert.NoError(t, e.removeStaleSocket())
+	})
+
+	t.Run("leftover socket", func(t *testing.T) {
+		l, err := net.Listen("unix", e.K0sVars.EtcdSocketPath)
+		require.NoError(t, err)
+		t.Cleanup(func() { l.Close() })
+
+		require.NoError(t, e.removeStaleSocket())
+		_, err = os.Lstat(e.K0sVars.EtcdSocketPath)
+		assert.ErrorIs(t, err, os.ErrNotExist)
+	})
+}
+
 func TestEnsureUnixSocketMode(t *testing.T) {
 	t.Run("refuses symlinks", func(t *testing.T) {
 		// Use relative socket paths to stay below the unix socket path length limit.
