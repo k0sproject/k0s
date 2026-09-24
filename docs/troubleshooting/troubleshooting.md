@@ -13,7 +13,7 @@ The most common case we've encountered so far has been CoreDNS getting into cras
 
 With kubectl you see something like this:
 
-```shell
+```console
 $ kubectl get pod --all-namespaces
 NAMESPACE     NAME                                       READY   STATUS    RESTARTS   AGE
 kube-system   calico-kube-controllers-5f6546844f-25px6   1/1     Running   0          167m
@@ -40,11 +40,25 @@ kubectl -n kube-system logs coredns-5c98d7d4d8-tfs4q
 plugin/loop: Loop (127.0.0.1:55953 -> :1053) detected for zone ".", see https://coredns.io/plugins/loop#troubleshooting. Query: "HINFO 4547991504243258144.3688648895315093531."
 ```
 
-This is most often caused by systemd-resolved stub (or something similar) running locally and CoreDNS detects a possible loop with DNS queries.
+CoreDNS forwards queries to the nameservers listed in the resolv.conf file that
+the kubelet hands to pods. If that file points to a stub resolver on the host's
+loopback interface, the queries come back to CoreDNS, which detects the loop.
 
-The easiest but most crude way to workaround is to disable the systemd-resolved stub and revert the hosts `/etc/resolv.conf` to original
+K0s handles systemd-resolved's stub automatically: if `/etc/resolv.conf` points
+to it, the kubelet uses `/run/systemd/resolve/resolv.conf` for pods instead.
+Don't disable the stub or empty `/etc/resolv.conf` to work around the loop. K0s
+itself relies on `/etc/resolv.conf` for name resolution, see the section about
+[NSS integration]. If another resolver on the loopback interface causes the
+loop, point the kubelet at a resolv.conf file that lists the upstream
+nameservers via the `resolvConf` field of the [kubelet configuration].
 
-Read more at CoreDNS [troubleshooting docs](https://coredns.io/plugins/loop/#troubleshooting-loops-in-kubernetes-clusters).
+Read more in the [CoreDNS loop troubleshooting] and the [Kubernetes DNS
+debugging] docs.
+
+[NSS integration]: ../external-runtime-deps.md#no-integration-with-name-service-switch-nss-apis
+[kubelet configuration]: ../worker-node-config.md#kubelet-configuration
+[CoreDNS loop troubleshooting]: https://coredns.io/plugins/loop/#troubleshooting-loops-in-kubernetes-clusters
+[Kubernetes DNS debugging]: https://kubernetes.io/docs/tasks/administer-cluster/dns-debugging-resolution/#known-issues
 
 ## `k0s controller` fails on ARM boxes
 
