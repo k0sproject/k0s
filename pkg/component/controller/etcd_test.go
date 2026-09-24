@@ -19,7 +19,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestEtcd_MaintainSocketMode(t *testing.T) {
+func TestEtcd_FixSocketMode(t *testing.T) {
 	// Use a relative socket path to stay below the unix socket path length limit.
 	t.Chdir(t.TempDir())
 	socketPath := "localhost:2379"
@@ -31,30 +31,50 @@ func TestEtcd_MaintainSocketMode(t *testing.T) {
 		return l
 	}
 
-	hasMode := func(mode os.FileMode) func() bool {
-		return func() bool {
-			info, err := os.Stat(socketPath)
-			return err == nil && info.Mode().Perm() == mode
-		}
+	requireMode := func(mode os.FileMode, msgAndArgs ...any) {
+		t.Helper()
+		info, err := os.Stat(socketPath)
+		require.NoError(t, err)
+		require.Equal(t, mode, info.Mode().Perm(), msgAndArgs...)
 	}
 
-	l := listen()
-	t.Cleanup(func() { l.Close() })
-
 	e := &Etcd{K0sVars: &config.CfgVars{EtcdSocketPath: socketPath}}
-	ctx, cancel := context.WithCancel(t.Context())
-	defer cancel()
-	go e.maintainSocketMode(ctx)
 
-	require.Eventually(t, hasMode(etcdSocketMode), 10*time.Second, 10*time.Millisecond,
-		"socket mode should be adjusted to %o", etcdSocketMode)
+	t.Run("adjusts the mode", func(t *testing.T) {
+		l := listen()
+		t.Cleanup(func() { l.Close() })
 
-	// Simulate etcd being restarted by the supervisor: the socket is
-	// re-created with restrictive permissions and should be adjusted again.
-	require.NoError(t, l.Close())
-	l = listen()
-	require.Eventually(t, hasMode(etcdSocketMode), 10*time.Second, 10*time.Millisecond,
-		"socket mode should be adjusted to %o after the socket is re-created", etcdSocketMode)
+		require.NoError(t, e.fixSocketMode(t.Context()))
+		requireMode(etcdSocketMode, "socket mode should be adjusted")
+	})
+
+	t.Run("waits for the socket to appear", func(t *testing.T) {
+		// Simulate etcd being restarted by the supervisor: the socket doesn't
+		// exist when the hook runs, and shows up a little later.
+		var l net.Listener
+		t.Cleanup(func() {
+			if l != nil {
+				l.Close()
+			}
+		})
+		time.AfterFunc(100*time.Millisecond, func() { l = listen() })
+
+		require.NoError(t, e.fixSocketMode(t.Context()))
+		requireMode(etcdSocketMode, "socket mode should be adjusted after the socket appeared")
+	})
+
+	t.Run("returns when canceled", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(t.Context())
+		cancel()
+
+		done := make(chan struct{})
+		go func() { defer close(done); assert.NoError(t, e.fixSocketMode(ctx)) }()
+		select {
+		case <-done:
+		case <-time.After(10 * time.Second):
+			require.Fail(t, "fixSocketMode didn't return on a canceled context")
+		}
+	})
 }
 
 func TestEnsureUnixSocketMode(t *testing.T) {

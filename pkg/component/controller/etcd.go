@@ -33,7 +33,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/avast/retry-go"
-	"github.com/fsnotify/fsnotify"
 	"github.com/sirupsen/logrus"
 	"go.etcd.io/etcd/client/pkg/v3/tlsutil"
 	"golang.org/x/sync/errgroup"
@@ -41,10 +40,9 @@ import (
 
 const etcdGID = 0
 
-// The mode of the etcd client unix socket. The socket needs to be connectable
-// by other local processes running as different users, most notably
-// kube-apiserver. Access control relies on TLS client certificate
-// authentication, just as it did when etcd was listening on loopback TCP.
+// The mode of the etcd client unix socket, so that it's connectable by other
+// local users, most notably kube-apiserver. Not an access control: etcd serves
+// the socket with TLS client certificate authentication.
 const etcdSocketMode = 0666
 
 // Etcd implement the component interface to run etcd
@@ -56,10 +54,9 @@ type Etcd struct {
 	LogLevel    string
 	LeaveOnStop func() bool
 
-	supervisor           *supervisor.Supervisor
-	executablePath       string
-	uid                  int
-	stopSocketMaintainer context.CancelFunc
+	supervisor     *supervisor.Supervisor
+	executablePath string
+	uid            int
 }
 
 var _ manager.Component = (*Etcd)(nil)
@@ -273,22 +270,15 @@ func (e *Etcd) Start(ctx context.Context) (err error) {
 		UID:           e.uid,
 		GID:           etcdGID,
 		KeepEnvPrefix: true,
+		AfterStartFn:  e.fixSocketMode,
 	}
 
 	if err := e.supervisor.Supervise(ctx); err != nil {
 		return err
 	}
 
-	// The etcd process creates the client socket with permissions based on
-	// its umask and re-creates it whenever the supervisor restarts it, so
-	// keep the socket mode maintained for as long as the component runs.
-	maintainerCtx, stopMaintainer := context.WithCancel(context.Background())
-	e.stopSocketMaintainer = stopMaintainer
-	go e.maintainSocketMode(maintainerCtx)
-
 	defer func() {
 		if err != nil {
-			stopMaintainer()
 			err = errors.Join(err, e.supervisor.Stop())
 		}
 	}()
@@ -331,62 +321,29 @@ func ensureURLInList(url, urls string) string {
 	return urls
 }
 
-// maintainSocketMode ensures that the etcd client unix socket remains
-// connectable by other local processes (e.g. kube-apiserver running as a
-// different user) by adjusting its file mode whenever etcd (re-)creates it.
-func (e *Etcd) maintainSocketMode(ctx context.Context) {
+// fixSocketMode adjusts the mode of the client socket that etcd creates on
+// every start, according to k0s's umask.
+func (e *Etcd) fixSocketMode(ctx context.Context) error {
 	log := logrus.WithField("component", "etcd")
 	socketPath := e.K0sVars.EtcdSocketPath
 
-	fixMode := func() {
+	err := wait.PollUntilContextTimeout(ctx, 250*time.Millisecond, 10*time.Second, true, func(context.Context) (bool, error) {
 		switch changed, err := ensureUnixSocketMode(socketPath, etcdSocketMode); {
-		case errors.Is(err, os.ErrNotExist): // etcd is (re)starting, the socket isn't there yet
+		case errors.Is(err, os.ErrNotExist): // etcd hasn't bound the socket yet
+			return false, nil
 		case err != nil:
-			log.WithError(err).Warn("Failed to adjust etcd socket permissions")
-		case changed:
-			log.Debugf("Adjusted mode of etcd socket %s to %o", socketPath, etcdSocketMode)
-		}
-	}
-
-	fixMode()
-
-	// Watch the socket directory, so that the mode gets fixed promptly
-	// whenever etcd re-creates the socket (e.g. when the supervisor restarts
-	// it). The periodic resync acts as a fallback for missed events, and as
-	// the only mechanism if the watcher is unavailable.
-	resync := 30 * time.Second
-	var events chan fsnotify.Event
-	var watchErrs chan error
-	if watcher, err := fsnotify.NewWatcher(); err != nil {
-		log.WithError(err).Warn("Failed to watch etcd socket directory, falling back to polling")
-	} else if err := watcher.Add(filepath.Dir(socketPath)); err != nil {
-		log.WithError(err).Warn("Failed to watch etcd socket directory, falling back to polling")
-		_ = watcher.Close()
-	} else {
-		defer watcher.Close()
-		events, watchErrs = watcher.Events, watcher.Errors
-	}
-	if events == nil {
-		resync = 1 * time.Second
-	}
-
-	ticker := time.NewTicker(resync)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case event := <-events:
-			if event.Name == socketPath && event.Op&(fsnotify.Create|fsnotify.Chmod) != 0 {
-				fixMode()
+			return false, err
+		default:
+			if changed {
+				log.Debugf("Adjusted mode of etcd socket %s to %o", socketPath, etcdSocketMode)
 			}
-		case err := <-watchErrs:
-			log.WithError(err).Warn("Error while watching etcd socket directory")
-		case <-ticker.C:
-			fixMode()
+			return true, nil
 		}
+	})
+	if err != nil && ctx.Err() == nil {
+		return fmt.Errorf("failed to adjust etcd socket permissions: %w", err)
 	}
+	return nil
 }
 
 func (e *Etcd) fixupPeerURL(ctx context.Context) (err error) {
@@ -437,10 +394,6 @@ func (e *Etcd) fixupPeerURL(ctx context.Context) (err error) {
 
 // Stop stops etcd
 func (e *Etcd) Stop() error {
-	if e.stopSocketMaintainer != nil {
-		e.stopSocketMaintainer()
-	}
-
 	s := e.supervisor
 	if s == nil {
 		return nil
