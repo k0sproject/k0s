@@ -198,7 +198,8 @@ func (m *Metrics) newEtcdJob() (*job, error) {
 	}
 
 	return &job{
-		log:          m.log.WithField("metrics_job", "etcd"),
+		log: m.log.WithField("metrics_job", "etcd"),
+		// The host is ignored (the transport dials the socket), the scheme isn't.
 		scrapeURL:    "https://localhost/metrics",
 		name:         "etcd",
 		hostname:     m.hostname,

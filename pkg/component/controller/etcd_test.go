@@ -1,6 +1,6 @@
 //go:build unix
 
-// SPDX-FileCopyrightText: 2025 k0s authors
+// SPDX-FileCopyrightText: 2026 k0s authors
 // SPDX-License-Identifier: Apache-2.0
 
 package controller
@@ -57,7 +57,7 @@ func TestEtcd_FixSocketMode(t *testing.T) {
 				l.Close()
 			}
 		})
-		time.AfterFunc(100*time.Millisecond, func() { l = listen() })
+		time.AfterFunc(500*time.Millisecond, func() { l = listen() })
 
 		require.NoError(t, e.fixSocketMode(t.Context()))
 		requireMode(etcdSocketMode, "socket mode should be adjusted after the socket appeared")

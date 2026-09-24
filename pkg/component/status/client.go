@@ -65,6 +65,7 @@ func doStatusHTTPRequest(socketPath string, path string, tgt any) error {
 		},
 	}
 
+	// The host is ignored, the transport dials the socket.
 	response, err := httpc.Get("http://localhost/" + path)
 	if err != nil {
 		return fmt.Errorf("status: can't get %q via %q: %w", path, socketPath, err)

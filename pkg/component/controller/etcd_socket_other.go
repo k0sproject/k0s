@@ -1,6 +1,6 @@
 //go:build !linux
 
-// SPDX-FileCopyrightText: 2025 k0s authors
+// SPDX-FileCopyrightText: 2026 k0s authors
 // SPDX-License-Identifier: Apache-2.0
 
 package controller
