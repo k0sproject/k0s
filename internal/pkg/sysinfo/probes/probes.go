@@ -13,7 +13,10 @@
 // pass, or with "Assert", in which they just warn about them.
 package probes
 
-import "reflect"
+import (
+	"fmt"
+	"reflect"
+)
 
 // Probe represents some check that yields its outcome to a Reporter.
 type Probe interface {
@@ -60,6 +63,13 @@ type ProbedProp interface {
 	// Name returns the string representation of this property.
 	String() string
 }
+
+// TypedProp is a convenience way of reporting an arbitrary value as a probed property.
+type TypedProp[T any] struct{ Value T }
+
+func (s TypedProp[T]) String() string { return fmt.Sprint(s.Value) }
+
+func IntoProp[T any](value T) TypedProp[T] { return TypedProp[T]{value} }
 
 // StringProp is a convenience way of reporting an arbitrary string as a probed property.
 type StringProp string

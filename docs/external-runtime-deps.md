@@ -188,7 +188,11 @@ nameservers. When using `systemd-resolved`, this typically means making
 as described in the [systemd-resolved documentation]. Pods can't reach that stub
 resolver on the host's loopback interface, which is why k0s configures the
 kubelet to use systemd-resolved's uplink file `/run/systemd/resolve/resolv.conf`
-for pods instead.
+for pods instead. The k0s pre-flight checks detect this situation by resolving a
+name under the reserved `invalid` top-level domain, which any working resolver
+answers with NXDOMAIN. If that lookup fails, k0s issues a warning. If
+`/etc/resolv.conf` doesn't list any nameservers on top of that, worker nodes
+refuse to start. Controllers only warn in that case.
 
 [musl libc]: https://musl.libc.org/
 [glibc's NSS APIs]: https://www.gnu.org/software/libc/manual/html_node/Name-Service-Switch.html
