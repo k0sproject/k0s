@@ -5,21 +5,33 @@ package resolvconf
 
 import (
 	"bufio"
+	"errors"
+	"io"
 	"net/netip"
-	"os"
 	"regexp"
 )
 
-// Parses the given resolv.conf file and checks if it contains 127.0.0.53 as the
-// only nameserver. Then it is assumed to be the systemd-resolved stub.
-func IsSystemdResolvedStub(resolvConfPath string) (bool, error) {
-	f, err := os.Open(resolvConfPath)
-	if err != nil {
-		return false, err
-	}
+// https://www.freedesktop.org/software/systemd/man/latest/systemd-resolved.service.html#/etc/resolv.conf
+const (
+	// The resolv.conf variant that points to systemd-resolved's stub resolver
+	// on localhost. This is the recommended target for the /etc/resolv.conf
+	// symlink.
+	SystemdResolvedStubPath = "/run/systemd/resolve/stub-resolv.conf"
 
-	defer f.Close()
+	// The resolv.conf variant that lists systemd-resolved's uplink DNS servers
+	// directly. Suitable for consumers that can't reach the host's localhost,
+	// such as containers.
+	SystemdResolvedUplinkPath = "/run/systemd/resolve/resolv.conf"
+)
 
+// Indicates that a resolv.conf file doesn't list any nameservers. Resolvers
+// usually fall back to sending DNS queries to a nameserver on localhost then.
+var ErrNoNameservers = errors.New("no nameservers configured")
+
+// Parses r as a resolv.conf file and checks if it contains 127.0.0.53 as the
+// only nameserver. Then it is assumed to be the systemd-resolved stub. Returns
+// [ErrNoNameservers] if r doesn't list any nameservers at all.
+func IsSystemdResolvedStub(r io.Reader) (bool, error) {
 	// This is roughly how glibc and musl do it: check for "nameserver" followed
 	// by whitespace, then try to parse the next bytes as IP address,
 	// disregarding anything after any additional whitespace.
@@ -29,14 +41,15 @@ func IsSystemdResolvedStub(resolvConfPath string) (bool, error) {
 	nameserverLine := regexp.MustCompile(`^nameserver\s+(\S+)`)
 	stubIP := netip.AddrFrom4([4]byte{127, 0, 0, 53})
 
-	lines := bufio.NewScanner(f)
-	systemdResolvedIPSeen := false
+	lines := bufio.NewScanner(r)
+	var systemdResolvedIPSeen, anyNameserverSeen bool
 	for lines.Scan() {
 		match := nameserverLine.FindSubmatch(lines.Bytes())
 		if len(match) < 1 {
 			continue
 		}
 
+		anyNameserverSeen = true
 		if ip, _ := netip.ParseAddr(string(match[1])); systemdResolvedIPSeen || ip != stubIP {
 			return false, nil
 		}
@@ -44,6 +57,10 @@ func IsSystemdResolvedStub(resolvConfPath string) (bool, error) {
 	}
 	if err := lines.Err(); err != nil {
 		return false, err
+	}
+
+	if !anyNameserverSeen {
+		return false, ErrNoNameservers
 	}
 
 	return systemdResolvedIPSeen, nil
