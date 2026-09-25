@@ -4,6 +4,7 @@
 package kuberouter
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"strings"
@@ -11,13 +12,19 @@ import (
 	"time"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
+	"github.com/k0sproject/k0s/pkg/applier"
 
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/kubernetes/scheme"
 
 	"sigs.k8s.io/yaml"
 
 	"github.com/k0sproject/k0s/inttest/common"
+	"github.com/k0sproject/k0s/inttest/common/ociimages"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -59,8 +66,7 @@ func (s *KubeRouterHairpinSuite) TestK0sGetsUp() {
 		common.ConfigureIPv6ResolvConf(&s.BootlooseSuite)
 	}
 	s.MakeDir(s.ControllerNode(0), "/var/lib/k0s/manifests/test")
-	s.PutFile(s.ControllerNode(0), "/var/lib/k0s/manifests/test/pod.yaml", podManifest)
-	s.PutFile(s.ControllerNode(0), "/var/lib/k0s/manifests/test/service.yaml", serviceManifest)
+	s.putManifests("/var/lib/k0s/manifests/test/hairpin.yaml", s.hairpinApp()...)
 	s.Require().NoError(s.RunWorkers())
 
 	kc, err := s.KubeClient("controller0", "")
@@ -86,7 +92,7 @@ func (s *KubeRouterHairpinSuite) TestK0sGetsUp() {
 		s.Require().NoError(err)
 		defer ssh.Disconnect()
 
-		const curl = "k0s kc exec -n default hairpin-pod -c curl -- curl"
+		const wget = "k0s kc exec -n default hairpin-pod -c wget -- wget"
 		for _, test := range []struct {
 			dnsName string
 			desc    string
@@ -102,7 +108,7 @@ func (s *KubeRouterHairpinSuite) TestK0sGetsUp() {
 		} {
 			s.Run(test.desc, func() {
 				err = wait.PollImmediate(5*time.Second, 2*time.Minute, func() (bool, error) {
-					output, err := ssh.ExecWithOutput(s.Context(), fmt.Sprintf("%s --connect-timeout 5 -sS http://%s", curl, test.dnsName))
+					output, err := ssh.ExecWithOutput(s.Context(), fmt.Sprintf("%s -T 5 -qO- http://%s", wget, test.dnsName))
 					if err != nil {
 						s.T().Log(output)
 						return false, nil
@@ -137,37 +143,52 @@ func TestKubeRouterHairpinSuite(t *testing.T) {
 	suite.Run(t, &s)
 }
 
-const podManifest = `
-apiVersion: v1
-kind: Pod
-metadata:
-  name: hairpin-pod
-  namespace: default
-  labels:
-    app.kubernetes.io/name: hairpin
-spec:
-  containers:
-  - name: nginx
-    image: docker.io/library/nginx:1.31.6-alpine
-    ports:
-    - containerPort: 80
-  - name: curl
-    image: docker.io/curlimages/curl:8.22.0
-    command: ["/bin/sh", "-c"]
-    args: ["tail -f /dev/null"]
-`
+// Writes the given objects as YAML manifests to path on the first controller.
+func (s *KubeRouterHairpinSuite) putManifests(path string, obj ...runtime.Object) {
+	codec := applier.CodecFor(scheme.Scheme)
+	var buf bytes.Buffer
+	for _, obj := range obj {
+		buf.WriteString("---\n")
+		s.Require().NoError(codec.Encode(obj, &buf))
+		buf.WriteByte('\n')
+	}
+	s.WriteFileContent(s.ControllerNode(0), path, buf.Bytes())
+}
 
-const serviceManifest = `
-apiVersion: v1
-kind: Service
-metadata:
-  name: hairpin
-  namespace: default
-spec:
-  selector:
-    app.kubernetes.io/name: hairpin
-  ports:
-  - protocol: TCP
-    port: 80
-    targetPort: 80
-`
+// A pod serving HTTP that tries to reach itself, exposed via a service
+func (s *KubeRouterHairpinSuite) hairpinApp() []runtime.Object {
+	appLabels := map[string]string{"app.kubernetes.io/name": "hairpin"}
+	alpineImage, err := ociimages.Alpine(s.Context())
+	s.Require().NoError(err)
+
+	return []runtime.Object{
+		&corev1.Pod{
+			Name:      "hairpin-pod",
+			Namespace: metav1.NamespaceDefault,
+			Labels:    appLabels,
+			Spec: corev1.PodSpec{
+				Containers: []corev1.Container{{
+					Name:  "nginx",
+					Image: ociimages.Nginx,
+					Ports: []corev1.ContainerPort{{ContainerPort: 80}},
+				}, {
+					Name:    "wget",
+					Image:   alpineImage,
+					Command: []string{"sleep", "infinity"},
+				}},
+			},
+		},
+		&corev1.Service{
+			Name:      "hairpin",
+			Namespace: metav1.NamespaceDefault,
+			Spec: corev1.ServiceSpec{
+				Selector: appLabels,
+				Ports: []corev1.ServicePort{{
+					Protocol:   corev1.ProtocolTCP,
+					Port:       80,
+					TargetPort: intstr.FromInt32(80),
+				}},
+			},
+		},
+	}
+}

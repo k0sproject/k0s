@@ -54,6 +54,7 @@ linters:
           list-mode: lax
           files:
             - '!**/inttest/**/*'
+            - '!**/hack/gen-test-images-list/*'
           deny:
             - pkg: github.com/k0sproject/k0s/inttest
               desc: Usage of integration test code outside of integration tests.
