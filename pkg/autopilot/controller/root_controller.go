@@ -15,6 +15,7 @@ import (
 	"github.com/k0sproject/k0s/internal/sync/value"
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
+	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
 	"github.com/k0sproject/k0s/pkg/autopilot/controller/plans"
@@ -197,7 +198,7 @@ func (c *rootController) startSubControllerRoutine(ctx context.Context, logger *
 		return err
 	}
 
-	if err := RegisterIndexers(ctx, mgr, "controller"); err != nil {
+	if err := RegisterIndexers(ctx, mgr); err != nil {
 		logger.WithError(err).Error("unable to register indexers")
 		return err
 	}
@@ -243,7 +244,12 @@ func (c *rootController) startSubControllerRoutine(ctx context.Context, logger *
 	}
 	clusterID := string(ns.UID)
 
-	if err := signal.RegisterControllers(ctx, logger, mgr, delegateMap[apdel.ControllerDelegateController], restartTracker, c.cfg.K0sDataDir, c.enableWorker, clusterID, event); err != nil {
+	hostname, err := apcomm.FindEffectiveHostname()
+	if err != nil {
+		return fmt.Errorf("unable to determine hostname: %w", err)
+	}
+
+	if err := signal.RegisterControllers(ctx, logger, mgr, delegateMap[apdel.ControllerDelegateController], hostname, restartTracker, c.cfg.K0sDataDir, c.enableWorker, clusterID, event); err != nil {
 		logger.WithError(err).Error("unable to register signal controllers")
 		return err
 	}
