@@ -25,16 +25,17 @@ import (
 const etcdBackup = "etcd-snapshot.db"
 
 type etcdStep struct {
-	certRootDir string
-	etcdCertDir string
+	certRootDir    string
+	etcdCertDir    string
+	etcdSocketPath string
 
 	peerAddress string
 	etcdDataDir string
 	tmpDir      string
 }
 
-func newEtcdStep(tmpDir string, certRootDir string, etcdCertDir string, peerAddress string, etcdDataDir string) *etcdStep {
-	return &etcdStep{tmpDir: tmpDir, certRootDir: certRootDir, etcdCertDir: etcdCertDir, peerAddress: peerAddress, etcdDataDir: etcdDataDir}
+func newEtcdStep(tmpDir string, certRootDir, etcdCertDir, etcdSocketPath string, peerAddress string, etcdDataDir string) *etcdStep {
+	return &etcdStep{tmpDir: tmpDir, certRootDir: certRootDir, etcdCertDir: etcdCertDir, etcdSocketPath: etcdSocketPath, peerAddress: peerAddress, etcdDataDir: etcdDataDir}
 }
 
 func (e etcdStep) Name() string {
@@ -43,7 +44,7 @@ func (e etcdStep) Name() string {
 
 func (e etcdStep) Backup() (StepResult, error) {
 	ctx := context.TODO()
-	etcdClient, err := etcd.NewClient(e.certRootDir, e.etcdCertDir, nil)
+	etcdClient, err := etcd.NewClient(e.certRootDir, e.etcdCertDir, e.etcdSocketPath, nil)
 	if err != nil {
 		return StepResult{}, err
 	}

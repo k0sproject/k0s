@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -38,6 +39,11 @@ import (
 )
 
 const etcdGID = 0
+
+// The mode of the etcd client unix socket, so that it's connectable by other
+// local users, most notably kube-apiserver. Not an access control: etcd serves
+// the socket with TLS client certificate authentication.
+const etcdSocketMode = 0666
 
 // Etcd implement the component interface to run etcd
 type Etcd struct {
@@ -81,7 +87,19 @@ func (e *Etcd) Init(_ context.Context) error {
 		return fmt.Errorf("failed to create etcd cert dir: %w", err)
 	}
 
-	for _, f := range []string{e.K0sVars.EtcdDataDir, e.K0sVars.EtcdCertDir} {
+	// Unix domain socket paths are limited to 108 bytes on Linux (104 on
+	// some other platforms, see unix(7)). Fail early with a clear error.
+	if len(e.K0sVars.EtcdSocketPath) > 103 {
+		return fmt.Errorf("etcd socket path %q exceeds the unix domain socket path length limit; use a shorter run directory", e.K0sVars.EtcdSocketPath)
+	}
+
+	etcdSocketDir := filepath.Dir(e.K0sVars.EtcdSocketPath)
+	err = dir.Init(etcdSocketDir, 0755)
+	if err != nil {
+		return fmt.Errorf("failed to create etcd socket dir: %w", err)
+	}
+
+	for _, f := range []string{e.K0sVars.EtcdDataDir, e.K0sVars.EtcdCertDir, etcdSocketDir} {
 		err = recursiveChown(f, e.uid, etcdGID)
 		if err != nil && os.Geteuid() == 0 {
 			return err
@@ -167,11 +185,12 @@ func (e *Etcd) Start(ctx context.Context) (err error) {
 	}
 
 	peerURL := e.Config.GetPeerURL()
+	clientURL := v1beta1.EtcdSocketURL(e.K0sVars.EtcdSocketPath)
 
 	args := stringmap.StringMap{
 		"--data-dir":                    e.K0sVars.EtcdDataDir,
-		"--listen-client-urls":          "https://127.0.0.1:2379",
-		"--advertise-client-urls":       "https://127.0.0.1:2379",
+		"--listen-client-urls":          clientURL,
+		"--advertise-client-urls":       clientURL,
 		"--client-cert-auth":            "true",
 		"--listen-peer-urls":            peerURL,
 		"--initial-advertise-peer-urls": peerURL,
@@ -223,6 +242,16 @@ func (e *Etcd) Start(ctx context.Context) (err error) {
 		args[argName] = value
 	}
 
+	// All internal etcd clients, including kube-apiserver, connect via the
+	// unix socket. Make sure that etcd keeps listening on it and advertising
+	// it, even if the user overrides the listener configuration.
+	for _, argName := range []string{"--listen-client-urls", "--advertise-client-urls"} {
+		if merged := ensureURLInList(clientURL, args[argName]); merged != args[argName] {
+			logrus.Warnf("appending %s to user-provided %s, as the internal etcd clients rely on it", clientURL, argName)
+			args[argName] = merged
+		}
+	}
+
 	// Specifying a minimum version of TLS 1.3 _and_ a list of cipher suites
 	// will be rejected.
 	// https://github.com/etcd-io/etcd/pull/15156/files#diff-538c79cd00ec18cb43b5dddd5f36b979d9d050cf478a241304493284739d31bfR810-R813
@@ -241,11 +270,14 @@ func (e *Etcd) Start(ctx context.Context) (err error) {
 		UID:           e.uid,
 		GID:           etcdGID,
 		KeepEnvPrefix: true,
+		CleanBeforeFn: e.removeStaleSocket,
+		AfterStartFn:  e.fixSocketMode,
 	}
 
 	if err := e.supervisor.Supervise(ctx); err != nil {
 		return err
 	}
+
 	defer func() {
 		if err != nil {
 			err = errors.Join(err, e.supervisor.Stop())
@@ -278,8 +310,54 @@ func (e *Etcd) Start(ctx context.Context) (err error) {
 	}
 }
 
+// ensureURLInList ensures that url is an element of the comma-separated list
+// of URLs, appending it if necessary.
+func ensureURLInList(url, urls string) string {
+	if urls == "" {
+		return url
+	}
+	if !slices.Contains(strings.Split(urls, ","), url) {
+		return urls + "," + url
+	}
+	return urls
+}
+
+// removeStaleSocket removes a socket left behind by a killed etcd process, so
+// that the mode adjustment can't mistake it for the one etcd is about to create.
+func (e *Etcd) removeStaleSocket() error {
+	if err := os.Remove(e.K0sVars.EtcdSocketPath); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return err
+	}
+	return nil
+}
+
+// fixSocketMode adjusts the mode of the client socket that etcd creates on
+// every start, according to k0s's umask.
+func (e *Etcd) fixSocketMode(ctx context.Context) error {
+	log := logrus.WithField("component", "etcd")
+	socketPath := e.K0sVars.EtcdSocketPath
+
+	err := wait.PollUntilContextTimeout(ctx, 250*time.Millisecond, 10*time.Second, true, func(context.Context) (bool, error) {
+		switch changed, err := ensureUnixSocketMode(socketPath, etcdSocketMode); {
+		case errors.Is(err, os.ErrNotExist): // etcd hasn't bound the socket yet
+			return false, nil
+		case err != nil:
+			return false, err
+		default:
+			if changed {
+				log.Debugf("Adjusted mode of etcd socket %s to %o", socketPath, etcdSocketMode)
+			}
+			return true, nil
+		}
+	})
+	if err != nil && ctx.Err() == nil {
+		return fmt.Errorf("failed to adjust etcd socket permissions: %w", err)
+	}
+	return nil
+}
+
 func (e *Etcd) fixupPeerURL(ctx context.Context) (err error) {
-	c, err := etcd.NewClient(e.K0sVars.CertRootDir, e.K0sVars.EtcdCertDir, e.Config)
+	c, err := etcd.NewClient(e.K0sVars.CertRootDir, e.K0sVars.EtcdCertDir, e.K0sVars.EtcdSocketPath, e.Config)
 	if err != nil {
 		return err
 	}
@@ -371,7 +449,7 @@ func (e *Etcd) leave(ctx context.Context) error {
 	log.Info("Attempting to leave the cluster")
 
 	if err := func() error {
-		c, err := etcd.NewClient(e.K0sVars.CertRootDir, e.K0sVars.EtcdCertDir, e.Config)
+		c, err := etcd.NewClient(e.K0sVars.CertRootDir, e.K0sVars.EtcdCertDir, e.K0sVars.EtcdSocketPath, e.Config)
 		if err != nil {
 			return fmt.Errorf("failed to initialize etcd client: %w", err)
 		}
@@ -516,7 +594,7 @@ func (e *Etcd) Ready() error {
 	logrus.WithField("component", "etcd").Debug("checking etcd endpoint for health")
 	ctx, cancel := context.WithTimeout(context.TODO(), 1*time.Second)
 	defer cancel()
-	err := etcd.CheckEtcdReady(ctx, e.K0sVars.CertRootDir, e.K0sVars.EtcdCertDir, e.Config)
+	err := etcd.CheckEtcdReady(ctx, e.K0sVars.CertRootDir, e.K0sVars.EtcdCertDir, e.K0sVars.EtcdSocketPath, e.Config)
 	return err
 }
 

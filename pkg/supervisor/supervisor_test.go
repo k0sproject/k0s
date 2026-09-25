@@ -169,6 +169,37 @@ func TestRespawn(t *testing.T) {
 	assert.NotEqual(t, process.Pid, s.GetProcess().Pid, "Respawn failed")
 }
 
+func TestAfterStartFn(t *testing.T) {
+	pingPong := pingpong.New(t)
+
+	starts := make(chan int, 2)
+	var calls int
+	s := Supervisor{
+		Name:           t.Name(),
+		BinPath:        pingPong.BinPath(),
+		RunDir:         t.TempDir(),
+		Args:           pingPong.BinArgs(),
+		TimeoutStop:    1 * time.Minute,
+		TimeoutRespawn: 1 * time.Millisecond,
+		AfterStartFn: func(ctx context.Context) error {
+			assert.NoError(t, ctx.Err(), "context should be alive while the process is running")
+			calls++
+			starts <- calls
+			return nil
+		},
+	}
+	require.NoError(t, s.Supervise(t.Context()))
+	t.Cleanup(func() { assert.NoError(t, s.Stop()) })
+
+	require.NoError(t, pingPong.AwaitPing())
+	assert.Equal(t, 1, <-starts, "hook should run after the initial start")
+
+	// Let the process exit, so that the supervisor respawns it.
+	require.NoError(t, pingPong.SendPong())
+	require.NoError(t, pingPong.AwaitPing())
+	assert.Equal(t, 2, <-starts, "hook should run again after a restart")
+}
+
 func TestStopWhileRespawn(t *testing.T) {
 	fail := selectCmd(t,
 		cmd{"false", []string{}},

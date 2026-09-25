@@ -31,8 +31,10 @@ type Member struct {
 	IsLearner bool
 }
 
-// NewClient creates new Client
-func NewClient(certDir, etcdCertDir string, etcdConf *v1beta1.EtcdConfig) (*Client, error) {
+// NewClient creates new Client. The etcdSocketPath is the path to the
+// internal etcd's client unix socket; it's only used if etcdConf doesn't
+// refer to an external etcd cluster.
+func NewClient(certDir, etcdCertDir, etcdSocketPath string, etcdConf *v1beta1.EtcdConfig) (*Client, error) {
 	client := &Client{}
 
 	var tlsConfig *tls.Config
@@ -51,7 +53,7 @@ func NewClient(certDir, etcdCertDir string, etcdConf *v1beta1.EtcdConfig) (*Clie
 	}
 
 	cfg := clientv3.Config{
-		Endpoints: etcdConf.GetEndpoints(),
+		Endpoints: etcdConf.GetEndpoints(etcdSocketPath),
 		TLS:       tlsConfig,
 	}
 	return NewClientWithConfig(cfg)

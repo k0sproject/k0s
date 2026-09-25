@@ -9,6 +9,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -184,14 +185,22 @@ func (m *Metrics) newEtcdJob() (*job, error) {
 	certFile := filepath.Join(m.K0sVars.CertRootDir, "apiserver-etcd-client.crt")
 	keyFile := filepath.Join(m.K0sVars.CertRootDir, "apiserver-etcd-client.key")
 
-	httpClient, err := getClient(certFile, keyFile)
+	// The internal etcd only listens on a unix socket.
+	socketPath := m.K0sVars.EtcdSocketPath
+	dialSocket := func(ctx context.Context, _, _ string) (net.Conn, error) {
+		var d net.Dialer
+		return d.DialContext(ctx, "unix", socketPath)
+	}
+
+	httpClient, err := getClient(certFile, keyFile, dialSocket)
 	if err != nil {
 		return nil, err
 	}
 
 	return &job{
-		log:          m.log.WithField("metrics_job", "etcd"),
-		scrapeURL:    "https://localhost:2379/metrics",
+		log: m.log.WithField("metrics_job", "etcd"),
+		// The host is ignored (the transport dials the socket), the scheme isn't.
+		scrapeURL:    "https://localhost/metrics",
 		name:         "etcd",
 		hostname:     m.hostname,
 		scrapeClient: httpClient,
@@ -200,7 +209,7 @@ func (m *Metrics) newEtcdJob() (*job, error) {
 }
 
 func (m *Metrics) newKineJob() (*job, error) {
-	httpClient, err := getClient("", "")
+	httpClient, err := getClient("", "", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -219,7 +228,7 @@ func (m *Metrics) newJob(name, scrapeURL string) (*job, error) {
 	certFile := filepath.Join(m.K0sVars.CertRootDir, "admin.crt")
 	keyFile := filepath.Join(m.K0sVars.CertRootDir, "admin.key")
 
-	httpClient, err := getClient(certFile, keyFile)
+	httpClient, err := getClient(certFile, keyFile, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -279,9 +288,12 @@ func (j *job) collectAndPush(ctx context.Context) error {
 	return nil
 }
 
-func getClient(certFile, keyFile string) (*http.Client, error) {
+func getClient(certFile, keyFile string, dialContext func(ctx context.Context, network, addr string) (net.Conn, error)) (*http.Client, error) {
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 	transport.ResponseHeaderTimeout = time.Minute
+	if dialContext != nil {
+		transport.DialContext = dialContext
+	}
 	tlsConfig := &tls.Config{InsecureSkipVerify: true}
 	transport.TLSClientConfig = tlsConfig
 
