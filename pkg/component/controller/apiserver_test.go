@@ -194,9 +194,10 @@ func (a *apiServerSuite) TestAPIServer_BuildConfig() {
 		return &APIServer{
 			NodeConfig: v1beta1.DefaultClusterConfig(),
 			K0sVars: &config.CfgVars{
-				CertRootDir: "/var/lib/k0s/pki",
-				DataDir:     "/var/lib/k0s",
-				EtcdCertDir: "/var/lib/k0s/pki/etcd",
+				CertRootDir:           "/var/lib/k0s/pki",
+				DataDir:               "/var/lib/k0s",
+				EtcdCertDir:           "/var/lib/k0s/pki/etcd",
+				KonnectivitySocketDir: "/run/k0s/konnectivity-server",
 			},
 			LogLevel: "1",
 		}
@@ -207,6 +208,28 @@ func (a *apiServerSuite) TestAPIServer_BuildConfig() {
 		a.Require().NoError(err)
 		return cfg
 	}
+
+	a.Run("konnectivity disabled", func() {
+		underTest := newAPIServer()
+
+		cfg := build(underTest)
+		a.Nil(cfg.egressSelector)
+		a.NotContains(cfg.flags, "egress-selector-config-file")
+		a.Equal("https://kubernetes.default.svc", cfg.flags["api-audiences"])
+	})
+
+	a.Run("konnectivity enabled", func() {
+		underTest := newAPIServer()
+		underTest.EnableKonnectivity = true
+
+		cfg := build(underTest)
+		a.Equal(&egressSelectorConfig{
+			Path:    filepath.FromSlash("/var/lib/k0s/konnectivity.conf"),
+			UDSName: filepath.FromSlash("/run/k0s/konnectivity-server/konnectivity-server.sock"),
+		}, cfg.egressSelector)
+		a.Equal(cfg.egressSelector.Path, cfg.flags["egress-selector-config-file"])
+		a.Equal("https://kubernetes.default.svc,system:konnectivity-server", cfg.flags["api-audiences"])
+	})
 
 	a.Run("extra args override flags", func() {
 		underTest := newAPIServer()
@@ -338,5 +361,28 @@ func (a *apiServerSuite) TestAPIServer_BuildConfig() {
 		cfg, err := underTest.buildConfig()
 		a.ErrorContains(err, "invalid storage type: bogus")
 		a.Nil(cfg)
+	})
+}
+
+func (a *apiServerSuite) TestAPIServerConfig_WriteFiles() {
+	a.Run("nothing to write", func() {
+		a.NoError((&apiServerConfig{}).writeFiles())
+	})
+
+	a.Run("egress selector config", func() {
+		path := filepath.Join(a.T().TempDir(), "konnectivity.conf")
+		cfg := &apiServerConfig{
+			egressSelector: &egressSelectorConfig{
+				Path:    path,
+				UDSName: "/run/k0s/konnectivity-server/konnectivity-server.sock",
+			},
+		}
+
+		a.Require().NoError(cfg.writeFiles())
+
+		content, err := os.ReadFile(path)
+		a.Require().NoError(err)
+		a.Contains(string(content), "kind: EgressSelectorConfiguration")
+		a.Contains(string(content), "udsName: /run/k0s/konnectivity-server/konnectivity-server.sock")
 	})
 }

@@ -74,8 +74,11 @@ egressSelections:
         udsName: {{ .UDSName }}
 `
 
+// The egress selector configuration file that connects kube-apiserver to
+// konnectivity-server.
 type egressSelectorConfig struct {
-	UDSName string
+	Path    string // Where kube-apiserver expects the file
+	UDSName string // UDS socket of konnectivity-server
 }
 
 // Init extracts needed binaries
@@ -93,12 +96,14 @@ func (a *APIServer) Init(_ context.Context) error {
 
 // The kube-apiserver launch config.
 type apiServerConfig struct {
-	flags       stringmap.StringMap // CLI flags without the leading dashes
-	rawArgs     []string            // Raw arguments appended after the flags
-	stopTimeout time.Duration       // How long to wait for kube-apiserver to terminate gracefully
+	flags          stringmap.StringMap   // CLI flags without the leading dashes
+	rawArgs        []string              // Raw arguments appended after the flags
+	stopTimeout    time.Duration         // How long to wait for kube-apiserver to terminate gracefully
+	egressSelector *egressSelectorConfig // The egress selector config, if konnectivity is enabled
 }
 
 // Computes the kube-apiserver launch config from the k0s configuration.
+// Doesn't write anything to disk.
 func (a *APIServer) buildConfig() (*apiServerConfig, error) {
 	args := stringmap.StringMap{
 		"advertise-address":                a.NodeConfig.Spec.API.Address,
@@ -133,12 +138,13 @@ func (a *APIServer) buildConfig() (*apiServerConfig, error) {
 
 	apiAudiences := []string{"https://kubernetes.default.svc"}
 
+	var egressSelector *egressSelectorConfig
 	if a.EnableKonnectivity {
-		err := a.writeKonnectivityConfig()
-		if err != nil {
-			return nil, err
+		egressSelector = &egressSelectorConfig{
+			Path:    filepath.Join(a.K0sVars.DataDir, "konnectivity.conf"),
+			UDSName: filepath.Join(a.K0sVars.KonnectivitySocketDir, "konnectivity-server.sock"),
 		}
-		args["egress-selector-config-file"] = filepath.Join(a.K0sVars.DataDir, "konnectivity.conf")
+		args["egress-selector-config-file"] = egressSelector.Path
 		apiAudiences = append(apiAudiences, "system:konnectivity-server")
 	}
 
@@ -227,10 +233,28 @@ func (a *APIServer) buildConfig() (*apiServerConfig, error) {
 	}
 
 	return &apiServerConfig{
-		flags:       args,
-		rawArgs:     a.NodeConfig.Spec.API.RawArgs,
-		stopTimeout: stopTimeout,
+		flags:          args,
+		rawArgs:        a.NodeConfig.Spec.API.RawArgs,
+		stopTimeout:    stopTimeout,
+		egressSelector: egressSelector,
 	}, nil
+}
+
+// Writes all the files that need to be in place before kube-apiserver starts.
+func (c *apiServerConfig) writeFiles() error {
+	if c.egressSelector != nil {
+		tw := templatewriter.TemplateWriter{
+			Name:     "konnectivity",
+			Template: egressSelectorConfigTemplate,
+			Data:     c.egressSelector,
+			Path:     c.egressSelector.Path,
+		}
+		if err := tw.Write(); err != nil {
+			return fmt.Errorf("failed to write konnectivity config: %w", err)
+		}
+	}
+
+	return nil
 }
 
 // Run runs kube api
@@ -239,6 +263,10 @@ func (a *APIServer) Start(ctx context.Context) error {
 
 	cfg, err := a.buildConfig()
 	if err != nil {
+		return err
+	}
+
+	if err := cfg.writeFiles(); err != nil {
 		return err
 	}
 
@@ -259,23 +287,6 @@ func (a *APIServer) Start(ctx context.Context) error {
 	}
 
 	return a.supervisor.Supervise(ctx)
-}
-
-func (a *APIServer) writeKonnectivityConfig() error {
-	tw := templatewriter.TemplateWriter{
-		Name:     "konnectivity",
-		Template: egressSelectorConfigTemplate,
-		Data: egressSelectorConfig{
-			UDSName: filepath.Join(a.K0sVars.KonnectivitySocketDir, "konnectivity-server.sock"),
-		},
-		Path: filepath.Join(a.K0sVars.DataDir, "konnectivity.conf"),
-	}
-	err := tw.Write()
-	if err != nil {
-		return fmt.Errorf("failed to write konnectivity config: %w", err)
-	}
-
-	return nil
 }
 
 // Stop stops APIServer
