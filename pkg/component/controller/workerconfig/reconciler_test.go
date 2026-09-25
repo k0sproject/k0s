@@ -341,7 +341,7 @@ func TestReconciler_ResourceGeneration(t *testing.T) {
 				v1beta1.FeatureGate{
 					Name:       "kubelet-feature",
 					Enabled:    true,
-					Components: []string{"kubelet"},
+					Components: []v1beta1.FeatureComponent{v1beta1.FeatureComponentKubelet},
 				},
 			},
 			Network: &v1beta1.Network{
