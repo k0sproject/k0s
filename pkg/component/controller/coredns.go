@@ -4,15 +4,17 @@
 package controller
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"math"
-	"path/filepath"
 	"reflect"
 	"time"
 
+	"github.com/k0sproject/k0s/internal/sync/value"
+	"github.com/k0sproject/k0s/pkg/applier"
 	"github.com/k0sproject/k0s/pkg/component/manager"
-	"github.com/k0sproject/k0s/pkg/config"
+	"github.com/k0sproject/k0s/pkg/leaderelection"
 
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
@@ -20,10 +22,8 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/client-go/metadata"
 
-	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
-	"github.com/k0sproject/k0s/pkg/constant"
 	k8sutil "github.com/k0sproject/k0s/pkg/kubernetes"
 )
 
@@ -262,7 +262,14 @@ spec:
     protocol: TCP
 `
 
+// CoreDNSStackName is the name of the in-memory applier stack managing the CoreDNS resources.
+const CoreDNSStackName = "coredns"
+
 const HostsPerExtraReplica = 10.0
+
+// The interval between CoreDNS reconciliations that nothing else triggered,
+// so that changes in the node count are picked up.
+const reconcileInterval = 10 * time.Second
 
 var _ manager.Component = (*CoreDNS)(nil)
 var _ manager.Reconciler = (*CoreDNS)(nil)
@@ -272,12 +279,13 @@ type CoreDNS struct {
 	dnsAddress             string
 	clusterDomain          string
 	client                 metadata.Interface
+	clientFactory          k8sutil.ClientFactoryInterface
+	leaderStatus           leaderelection.StatusFunc
 	log                    *logrus.Entry
-	manifestDir            string
 	previousConfig         coreDNSConfig
 	previousPatches        v1beta1.Patches
-	stopFunc               context.CancelFunc
-	lastKnownClusterConfig *v1beta1.ClusterConfig
+	stop                   func()
+	lastKnownClusterConfig value.Latest[*v1beta1.ClusterConfig]
 }
 
 type coreDNSConfig struct {
@@ -292,7 +300,7 @@ type coreDNSConfig struct {
 }
 
 // NewCoreDNS creates new instance of CoreDNS component
-func NewCoreDNS(k0sVars *config.CfgVars, clientFactory k8sutil.ClientFactoryInterface, nodeConfig *v1beta1.ClusterConfig) (*CoreDNS, error) {
+func NewCoreDNS(clientFactory k8sutil.ClientFactoryInterface, leaderStatus leaderelection.StatusFunc, nodeConfig *v1beta1.ClusterConfig) (*CoreDNS, error) {
 	dnsAddress, err := nodeConfig.Spec.Network.DNSAddress(nodeConfig.Spec.PrimaryAddressFamily())
 	if err != nil {
 		return nil, err
@@ -307,34 +315,52 @@ func NewCoreDNS(k0sVars *config.CfgVars, clientFactory k8sutil.ClientFactoryInte
 		dnsAddress:    dnsAddress,
 		clusterDomain: nodeConfig.Spec.Network.ClusterDomain,
 		client:        client,
+		clientFactory: clientFactory,
+		leaderStatus:  leaderStatus,
 		log:           logrus.WithField("component", "coredns"),
-		manifestDir:   filepath.Join(k0sVars.ManifestsDir, "coredns"),
 	}, nil
 }
 
-// Init does nothing
+// Init does nothing as there's nothing to initialize
 func (c *CoreDNS) Init(_ context.Context) error {
-	return dir.Init(c.manifestDir, constant.ManifestsDirMode)
+	return nil
 }
 
 // Run runs the CoreDNS reconciler component
 func (c *CoreDNS) Start(ctx context.Context) error {
-	ctx, c.stopFunc = context.WithCancel(ctx)
+	ctx, cancel := context.WithCancel(ctx)
+	done := make(chan struct{})
 
+	// Reconcile always happening async, triggered either via:
+	// - changes in the last known cluster config
+	// - changes in the leader election status
+	// - periodic timer, to cover scaling when node count changes
 	go func() {
-		ticker := time.NewTicker(10 * time.Second)
-		defer ticker.Stop()
+		defer close(done)
+		timer := time.NewTimer(reconcileInterval)
+		defer timer.Stop()
+		clusterConfig, cfgExpirationChan := c.lastKnownClusterConfig.Peek()
+		_, leaderExpirationChan := c.leaderStatus()
 		for {
+			if clusterConfig == nil {
+				c.log.Info("no last known cluster config, skipping reconcile")
+			} else if err := c.reconcile(ctx, clusterConfig); err != nil {
+				c.log.Warnf("failed to reconcile coredns based on last known cluster config: %v", err)
+			}
+
+			// Timer reset ensures we always wait for the interval between
+			// reconciles, no matter how long a reconcile actually takes.
+			timer.Reset(reconcileInterval)
+
 			select {
-			case <-ticker.C:
-				if c.lastKnownClusterConfig == nil {
-					// We cannot figure out the full config without having the last known cluster config from CR
-					continue
-				}
-				err := c.Reconcile(ctx, c.lastKnownClusterConfig)
-				if err != nil {
-					c.log.Warnf("failed to reconcile coredns based on node count: %v", err)
-				}
+			case <-timer.C:
+			case <-cfgExpirationChan:
+				clusterConfig, cfgExpirationChan = c.lastKnownClusterConfig.Peek()
+			case <-leaderExpirationChan:
+				_, leaderExpirationChan = c.leaderStatus()
+				// Clear out any previous state once we lose leadership
+				// That guarantees the next leadeship obtain will trigger a full reconcile.
+				c.previousConfig, c.previousPatches = coreDNSConfig{}, nil
 			case <-ctx.Done():
 				c.log.Info("coredns node reconciler done")
 				return
@@ -342,6 +368,7 @@ func (c *CoreDNS) Start(ctx context.Context) error {
 		}
 	}()
 
+	c.stop = func() { cancel(); <-done }
 	return nil
 }
 
@@ -406,16 +433,32 @@ func replicaCount(nodeCount int) int {
 
 // Stop stops the CoreDNS reconciler
 func (c *CoreDNS) Stop() error {
-	if c.stopFunc != nil {
+	if stop := c.stop; stop != nil {
 		logrus.Debug("closing coreDNS component context")
-		c.stopFunc()
+		stop()
 	}
 	return nil
 }
 
 // Reconcile detects changes in configuration and applies them to the component
 func (c *CoreDNS) Reconcile(ctx context.Context, clusterConfig *v1beta1.ClusterConfig) error {
+	// Reconcile is the only source-of-truth for cluster config
+	// Actual reconcile is triggered async via the Latest expiration channel
+	c.lastKnownClusterConfig.Set(clusterConfig)
+	return nil
+}
+
+// reconcile peeks the last known config and reconciles CoreDNS with that
+func (c *CoreDNS) reconcile(ctx context.Context, clusterConfig *v1beta1.ClusterConfig) error {
 	logrus.Debug("reconcile method called for: CoreDNS")
+
+	ctx, cancel := leaderelection.LeaderContext(ctx, c.leaderStatus)
+	defer cancel()
+	if err := ctx.Err(); err != nil {
+		c.log.Debugf("Skipping reconciliation: %v", context.Cause(ctx))
+		return nil
+	}
+
 	cfg, err := c.getConfig(ctx, clusterConfig)
 	if err != nil {
 		return fmt.Errorf("error calculating coredns configs: %w, will retry", err)
@@ -433,15 +476,22 @@ func (c *CoreDNS) Reconcile(ctx context.Context, clusterConfig *v1beta1.ClusterC
 		Name:     "coredns",
 		Template: coreDNSTemplate,
 		Data:     cfg,
-		Path:     filepath.Join(c.manifestDir, "coredns.yaml"),
 		Patches:  patches,
 	}
-	err = tw.Write()
+	var out bytes.Buffer
+	err = tw.WriteToBuffer(&out)
 	if err != nil {
 		return fmt.Errorf("error writing coredns manifests: %w, will retry", err)
 	}
+	resources, err := applier.ReadUnstructuredStream(&out, CoreDNSStackName)
+	if err != nil {
+		return fmt.Errorf("error reading coredns resources: %w, will retry", err)
+	}
+	if err := applier.ApplyStack(ctx, c.clientFactory, resources, CoreDNSStackName); err != nil {
+		return fmt.Errorf("error applying coredns stack: %w, will retry", err)
+	}
+
 	c.previousConfig = cfg
 	c.previousPatches = patches
-	c.lastKnownClusterConfig = clusterConfig
 	return nil
 }
