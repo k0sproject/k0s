@@ -27,6 +27,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
+	apitypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/kubectl/pkg/drain"
 )
@@ -35,10 +36,10 @@ const Cordoning = "Cordoning"
 
 // cordoningEventFilter creates a controller-runtime predicate that governs which objects
 // will make it into reconciliation, and which will be ignored.
-func cordoningEventFilter(hostname string, handler apsigpred.ErrorHandler) crpred.Predicate {
+func cordoningEventFilter(nodeName apitypes.NodeName, handler apsigpred.ErrorHandler) crpred.Predicate {
 	return crpred.And(
 		crpred.AnnotationChangedPredicate{},
-		apsigpred.SignalNamePredicate(hostname),
+		apsigpred.SignalNamePredicate(nodeName),
 		apsigpred.NewSignalDataPredicateAdapter(handler).And(
 			signalDataUpdateCommandK0sPredicate(),
 			apsigpred.SignalDataStatusPredicate(Cordoning),

@@ -17,6 +17,8 @@ import (
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/k0scontext"
+
+	apitypes "k8s.io/apimachinery/pkg/types"
 )
 
 func initLogging(ctx context.Context, logDir string) error {
@@ -45,6 +47,6 @@ func initLogging(ctx context.Context, logDir string) error {
 	return nil
 }
 
-func addPlatformSpecificComponents(ctx context.Context, m *manager.Manager, k0sVars *config.CfgVars, controller EmbeddingController, certManager *worker.CertificateManager) {
+func addPlatformSpecificComponents(ctx context.Context, m *manager.Manager, k0sVars *config.CfgVars, nodeName apitypes.NodeName, controller EmbeddingController, certManager *worker.CertificateManager) {
 	// no-op
 }

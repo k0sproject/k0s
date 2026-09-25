@@ -13,18 +13,20 @@ import (
 	"github.com/k0sproject/k0s/pkg/autopilot/controller/signal/airgap"
 	"github.com/k0sproject/k0s/pkg/autopilot/controller/signal/k0s"
 
+	apitypes "k8s.io/apimachinery/pkg/types"
+
 	"github.com/sirupsen/logrus"
 	crman "sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
 // RegisterControllers registers all of the autopilot controllers used by both controller
 // and worker modes.
-func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Manager, delegate apdel.ControllerDelegate, k0sDataDir, clusterID string) error {
-	if err := k0s.RegisterControllers(ctx, logger, mgr, delegate, clusterID); err != nil {
+func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Manager, delegate apdel.ControllerDelegate, nodeName apitypes.NodeName, k0sDataDir, clusterID string) error {
+	if err := k0s.RegisterControllers(ctx, logger, mgr, delegate, nodeName, clusterID); err != nil {
 		return fmt.Errorf("unable to register k0s controllers: %w", err)
 	}
 
-	if err := airgap.RegisterControllers(ctx, logger, mgr, delegate, k0sDataDir); err != nil {
+	if err := airgap.RegisterControllers(ctx, logger, mgr, delegate, nodeName, k0sDataDir); err != nil {
 		return fmt.Errorf("unable to register airgap controllers: %w", err)
 	}
 

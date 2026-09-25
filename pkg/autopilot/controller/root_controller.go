@@ -14,6 +14,7 @@ import (
 	"github.com/k0sproject/k0s/internal/sync/value"
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
+	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
 	"github.com/k0sproject/k0s/pkg/autopilot/controller/plans"
@@ -26,6 +27,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	apitypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
 	"k8s.io/utils/ptr"
 	cr "sigs.k8s.io/controller-runtime"
@@ -234,7 +236,12 @@ func (c *rootController) startSubControllerRoutine(ctx context.Context, logger *
 	}
 	clusterID := string(ns.UID)
 
-	if err := signal.RegisterControllers(ctx, logger, mgr, delegateMap[apdel.ControllerDelegateController], c.cfg.K0sDataDir, clusterID); err != nil {
+	hostname, err := apcomm.FindEffectiveHostname()
+	if err != nil {
+		return fmt.Errorf("unable to determine hostname: %w", err)
+	}
+
+	if err := signal.RegisterControllers(ctx, logger, mgr, delegateMap[apdel.ControllerDelegateController], apitypes.NodeName(hostname), c.cfg.K0sDataDir, clusterID); err != nil {
 		logger.WithError(err).Error("unable to register signal controllers")
 		return err
 	}

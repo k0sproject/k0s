@@ -7,6 +7,7 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -50,6 +51,10 @@ func NewRootWorker(cfg aproot.RootConfig, logger *logrus.Entry, cf apcli.Factory
 }
 
 func (w *rootWorker) Run(ctx context.Context) error {
+	if w.cfg.NodeName == "" {
+		return errors.New("node name is required")
+	}
+
 	logger := w.log
 
 	managerOpts := crman.Options{
@@ -110,7 +115,7 @@ func (w *rootWorker) Run(ctx context.Context) error {
 			return fmt.Errorf("unable to register indexers: %w", err)
 		}
 
-		if err := signal.RegisterControllers(ctx, logger, mgr, apdel.NodeControllerDelegate(), w.cfg.K0sDataDir, clusterID); err != nil {
+		if err := signal.RegisterControllers(ctx, logger, mgr, apdel.NodeControllerDelegate(), w.cfg.NodeName, w.cfg.K0sDataDir, clusterID); err != nil {
 			return fmt.Errorf("unable to register signal controllers: %w", err)
 		}
 
