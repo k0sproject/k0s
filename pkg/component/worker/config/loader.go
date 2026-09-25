@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -90,7 +91,14 @@ func loadProfile(ctx context.Context, log logrus.FieldLogger, clientFactory func
 			err = fmt.Errorf("the k0s worker node credentials are invalid, the node needs to be rejoined into the cluster with a fresh bootstrap token: %w", err)
 		}
 
-		return nil, err
+		// A status response means that the API server answered and rejected the
+		// request. Only report failures to reach it at all as unreachable.
+		var status apierrors.APIStatus
+		if errors.As(err, &status) {
+			return nil, err
+		}
+
+		return nil, &APIUnreachableError{Err: err}
 	}
 
 	profile, err := FromConfigMapData(configMapData)
@@ -98,11 +106,59 @@ func loadProfile(ctx context.Context, log logrus.FieldLogger, clientFactory func
 		return nil, err
 	}
 
-	if err := storeInCacheDir(cacheDir, storedWorkerProfile{profileName, configMapData}); err != nil {
+	if err := storeInCacheDir(cacheDir, newStoredWorkerProfile(profileName, configMapData)); err != nil {
 		return nil, err
 	}
 
 	return profile, nil
+}
+
+// APIUnreachableError indicates that the worker profile couldn't be retrieved
+// because all attempts to reach the Kubernetes API failed without ever getting
+// a response from it. It wraps the last error encountered.
+type APIUnreachableError struct{ Err error }
+
+func (e *APIUnreachableError) Error() string { return e.Err.Error() }
+func (e *APIUnreachableError) Unwrap() error { return e.Err }
+
+// IsAPIUnreachable returns true if err indicates that the worker profile
+// couldn't be retrieved because the Kubernetes API couldn't be reached at all,
+// as opposed to the API rejecting the request, the data it returned being
+// unusable, or a problem with the local setup.
+func IsAPIUnreachable(err error) bool {
+	var unreachable *APIUnreachableError
+	return errors.As(err, &unreachable)
+}
+
+// LoadProfileFromCache loads the worker profile with the given profile name
+// from the cache folder cacheDir, i.e. the profile that has been stored there by
+// the last successful call to [LoadProfile] or [WatchProfile]. It refuses to
+// return profiles that have been cached for another profile name or another
+// Kubernetes minor version. If there's no cached profile at all, the returned
+// error will match [fs.ErrNotExist].
+func LoadProfileFromCache(cacheDir, profileName string) (*Profile, error) {
+	cached, err := loadFromCacheDir(cacheDir)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil, fmt.Errorf("no worker profile has been cached yet in %s: %w", cacheDir, err)
+		}
+
+		return nil, err
+	}
+
+	if cached.Name != profileName {
+		return nil, fmt.Errorf("cached worker profile is for profile %q, not %q", cached.Name, profileName)
+	}
+
+	if cached.KubernetesVersion == "" {
+		return nil, errors.New("cached worker profile doesn't record a Kubernetes version")
+	}
+
+	if cached.KubernetesVersion != constant.KubernetesMajorMinorVersion {
+		return nil, fmt.Errorf("cached worker profile is for Kubernetes %s, not %s", cached.KubernetesVersion, constant.KubernetesMajorMinorVersion)
+	}
+
+	return FromConfigMapData(cached.Data)
 }
 
 func loadAPIServerAddressesFromCache(log logrus.FieldLogger, cacheDir string) (addresses []string) {
@@ -167,7 +223,7 @@ func WatchProfile(ctx context.Context, log logrus.FieldLogger, client kubernetes
 				return false, err
 			}
 
-			if err := storeInCacheDir(cacheDir, storedWorkerProfile{profileName, configMap.Data}); err != nil {
+			if err := storeInCacheDir(cacheDir, newStoredWorkerProfile(profileName, configMap.Data)); err != nil {
 				log.WithError(err).Errorf(
 					"Failed to write worker profile %q in resource version %q to disk",
 					profileName, lastObservedVersion,
@@ -194,8 +250,18 @@ func configMapNameForProfile(profileName string) string {
 const cacheFileName = "worker-profile.yaml"
 
 type storedWorkerProfile struct {
-	Name string            `json:"name"`
-	Data map[string]string `json:"data"`
+	Name string `json:"name"`
+	// The Kubernetes minor version this profile has been generated for.
+	KubernetesVersion string            `json:"kubernetesVersion,omitempty"`
+	Data              map[string]string `json:"data"`
+}
+
+func newStoredWorkerProfile(profileName string, data map[string]string) storedWorkerProfile {
+	return storedWorkerProfile{
+		Name:              profileName,
+		KubernetesVersion: constant.KubernetesMajorMinorVersion,
+		Data:              data,
+	}
 }
 
 func loadFromCacheDir(cacheDir string) (*storedWorkerProfile, error) {
