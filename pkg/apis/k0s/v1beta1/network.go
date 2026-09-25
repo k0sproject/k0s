@@ -183,6 +183,9 @@ func (n *Network) Validate() []error {
 	for _, err := range n.NodeLocalLoadBalancing.Validate(field.NewPath("nodeLocalLoadBalancing")) {
 		errors = append(errors, err)
 	}
+	for _, err := range n.ControlPlaneLoadBalancing.Validate(field.NewPath("controlPlaneLoadBalancing")) {
+		errors = append(errors, err)
+	}
 
 	return errors
 }

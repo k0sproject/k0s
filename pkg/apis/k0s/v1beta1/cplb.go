@@ -8,9 +8,13 @@ import (
 	"fmt"
 	"math"
 	"net"
+	"slices"
+	"sync"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/validation"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 // Defaults are keepalived's defaults.
@@ -135,75 +139,81 @@ type VRRPInstance struct {
 	AddressLabel uint32 `json:"addressLabel,omitempty"`
 }
 
-// validateVRRPInstances validates existing configuration and sets the default
-// values of undefined fields.
-func (k *KeepalivedSpec) validateVRRPInstances(getDefaultNICFn func() (string, error)) []error {
-	errs := []error{}
+// Validates existing configuration and sets the default values of undefined fields.
+func (i VRRPInstances) validate(path *field.Path, getDefaultNICFn func() (string, error)) (errs field.ErrorList) {
 	if getDefaultNICFn == nil {
-		getDefaultNICFn = getDefaultNIC
+		getDefaultNICFn = sync.OnceValues(getDefaultNIC)
 	}
-	for i := range k.VRRPInstances {
-		if k.VRRPInstances[i].Interface == "" {
-			nic, err := getDefaultNICFn()
-			if err != nil {
-				errs = append(errs, fmt.Errorf("failed to get default NIC: %w", err))
-			}
-			k.VRRPInstances[i].Interface = nic
-		} else if _, err := net.ParseMAC(k.VRRPInstances[i].Interface); err == nil {
-			macToInterfaceName(&k.VRRPInstances[i].Interface, &errs)
-		}
+	for j := range i {
+		errs = append(errs, i[j].validate(path.Index(j), j, getDefaultNICFn)...)
+	}
+	return errs
+}
 
-		if k.VRRPInstances[i].VirtualRouterID == 0 {
-			id := defaultVirtualRouterID + int32(i)
-			if id > 255 {
-				errs = append(errs, errors.New("automatic virtualRouterIDs exceeded, specify them explicitly"))
-			}
-			k.VRRPInstances[i].VirtualRouterID = defaultVirtualRouterID + int32(i)
-		} else if k.VRRPInstances[i].VirtualRouterID < 0 || k.VRRPInstances[i].VirtualRouterID > 255 {
-			errs = append(errs, errors.New("VirtualRouterID must be in the range of 1-255"))
+func (i *VRRPInstance) validate(path *field.Path, offset int, getDefaultNICFn func() (string, error)) (errs field.ErrorList) {
+	if i.Interface == "" {
+		nic, err := getDefaultNICFn()
+		if err != nil {
+			errs = append(errs, field.InternalError(path.Child("interface"), fmt.Errorf("failed to get default NIC: %w", err)))
 		}
-
-		if k.VRRPInstances[i].AddressLabel == 0 {
-			k.VRRPInstances[i].AddressLabel = 10000
-		}
-		if k.VRRPInstances[i].AddressLabel == math.MaxUint32 {
-			errs = append(errs, errors.New("AddressLabel 0xffffffff is reserved"))
-		}
-
-		if k.VRRPInstances[i].AdvertIntervalSeconds == 0 {
-			k.VRRPInstances[i].AdvertIntervalSeconds = defaultAdvertIntervalSeconds
-		}
-
-		if k.VRRPInstances[i].AuthPass == "" {
-			errs = append(errs, errors.New("AuthPass must be defined"))
-		}
-		if len(k.VRRPInstances[i].AuthPass) > 8 {
-			errs = append(errs, errors.New("AuthPass must be 8 characters or less"))
-		}
-
-		if len(k.VRRPInstances[i].VirtualIPs) == 0 {
-			errs = append(errs, errors.New("VirtualIPs must be defined"))
-		}
-		for _, vip := range k.VRRPInstances[i].VirtualIPs {
-			if _, _, err := net.ParseCIDR(vip); err != nil {
-				errs = append(errs, fmt.Errorf("VirtualIPs must be a CIDR. Got: %s", vip))
-			}
-		}
-
-		if len(k.VRRPInstances[i].UnicastPeers) > 0 {
-			if net.ParseIP(k.VRRPInstances[i].UnicastSourceIP) == nil {
-				errs = append(errs, fmt.Errorf("UnicastPeers require a valid UnicastSourceIP. Got: %s", k.VRRPInstances[i].UnicastSourceIP))
-			}
-			for _, peer := range k.VRRPInstances[i].UnicastPeers {
-				if net.ParseIP(peer) == nil {
-					errs = append(errs, fmt.Errorf("UnicastPeers require valid IP addresses. Got: %s", peer))
-				}
-				if peer == k.VRRPInstances[i].UnicastSourceIP {
-					errs = append(errs, fmt.Errorf("UnicastPeers must not contain the UnicastSourceIP. Got: %s", peer))
-				}
-			}
+		i.Interface = nic
+	} else if _, err := net.ParseMAC(i.Interface); err == nil {
+		if nic, err := getNIC(i.Interface); err != nil {
+			errs = append(errs, field.InternalError(path.Child("interface"), fmt.Errorf("failed to get NIC for MAC address %s: %w", i.Interface, err)))
+		} else {
+			i.Interface = nic
 		}
 	}
+
+	if id := i.VirtualRouterID; id == 0 {
+		if id := defaultVirtualRouterID + int32(offset); id > 255 {
+			errs = append(errs, field.InternalError(path.Child("virtualRouterID"), errors.New("automatic virtualRouterIDs exceeded, specify them explicitly")))
+		} else {
+			i.VirtualRouterID = id
+		}
+	} else if lo, hi := int32(1), int32(255); lo > id || id > hi {
+		errs = append(errs, field.Invalid(path.Child("virtualRouterID"), id, fmt.Sprintf("must be between %d and %d, inclusive", lo, hi)))
+	}
+
+	switch i.AddressLabel {
+	case 0:
+		i.AddressLabel = 10000
+	case math.MaxUint32:
+		errs = append(errs, field.Invalid(path.Child("addressLabel"), i.AddressLabel, "0xffffffff is reserved"))
+	}
+
+	if i.AdvertIntervalSeconds == 0 {
+		i.AdvertIntervalSeconds = defaultAdvertIntervalSeconds
+	}
+
+	if i.AuthPass == "" {
+		errs = append(errs, field.Required(path.Child("authPass"), ""))
+	} else if maxLen := 8; len(i.AuthPass) > maxLen {
+		errs = append(errs, field.TooLong(path.Child("authPass"), i.AuthPass, maxLen))
+	}
+
+	if len(i.VirtualIPs) == 0 {
+		errs = append(errs, field.Required(path.Child("virtualIPs"), ""))
+	}
+	for j, vip := range i.VirtualIPs {
+		errs = append(errs, validation.IsValidInterfaceAddress(path.Child("virtualIPs").Index(j), vip)...)
+	}
+
+	if len(i.UnicastPeers) > 0 {
+		if path, ip := path.Child("unicastSourceIP"), i.UnicastSourceIP; ip == "" {
+			errs = append(errs, field.Required(path, "when unicastPeers are specified"))
+		} else {
+			errs = append(errs, validation.IsValidIP(path, ip)...)
+		}
+		for j, peer := range i.UnicastPeers {
+			path := path.Child("unicastPeers").Index(j)
+			errs = append(errs, validation.IsValidIP(path, peer)...)
+			if peer != "" && peer == i.UnicastSourceIP {
+				errs = append(errs, field.Invalid(path, peer, "must not be the same as unicastSourceIP"))
+			}
+		}
+	}
+
 	return errs
 }
 
@@ -258,6 +268,18 @@ const (
 	NQAlgo   KeepalivedLBAlgo = "nq"
 )
 
+var validLBAlgos = [...]KeepalivedLBAlgo{
+	RRAlgo,
+	WRRAlgo,
+	LCAlgo,
+	WLCAlgo,
+	LBLCAlgo,
+	DHAlgo,
+	SHAlgo,
+	SEDAlgo,
+	NQAlgo,
+}
+
 // KeepalivedLBKind describes the load balancing forwarding method.
 // +kubebuilder:validation:Enum=NAT;DR;TUN
 type KeepalivedLBKind string
@@ -268,60 +290,61 @@ const (
 	TUNLBKind KeepalivedLBKind = "TUN"
 )
 
-// validateVirtualServers validates existing configuration and sets the default
-// values of undefined fields.
-func (k *KeepalivedSpec) validateVirtualServers() []error {
-	errs := []error{}
-	for i := range k.VirtualServers {
-		if k.VirtualServers[i].IPAddress == "" {
-			errs = append(errs, errors.New("IPAddress must be defined"))
-		}
-		if net.ParseIP(k.VirtualServers[i].IPAddress) == nil {
-			errs = append(errs, fmt.Errorf("invalid IP address: %s", k.VirtualServers[i].IPAddress))
-		}
-
-		if k.VirtualServers[i].LBAlgo == "" {
-			k.VirtualServers[i].LBAlgo = RRAlgo
-		} else {
-			switch k.VirtualServers[i].LBAlgo {
-			case RRAlgo, WRRAlgo, LCAlgo, WLCAlgo, LBLCAlgo, DHAlgo, SHAlgo, SEDAlgo, NQAlgo:
-				// valid LBAlgo
-			default:
-				errs = append(errs, fmt.Errorf("invalid LBAlgo: %s ", k.VirtualServers[i].LBAlgo))
-			}
-		}
-
-		if k.VirtualServers[i].LBKind == "" {
-			k.VirtualServers[i].LBKind = DRLBKind
-		} else {
-			switch k.VirtualServers[i].LBKind {
-			case NATLBKind, DRLBKind, TUNLBKind:
-				// valid LBKind
-			default:
-				errs = append(errs, fmt.Errorf("invalid LBKind: %s ", k.VirtualServers[i].LBKind))
-			}
-		}
-
-		if k.VirtualServers[i].PersistenceTimeoutSeconds == 0 {
-			k.VirtualServers[i].PersistenceTimeoutSeconds = 360
-		} else if k.VirtualServers[i].PersistenceTimeoutSeconds < 1 || k.VirtualServers[i].PersistenceTimeoutSeconds > 2678400 {
-			errs = append(errs, errors.New("PersistenceTimeout must be in the range of 1-2678400"))
-		}
-
-		if k.VirtualServers[i].DelayLoop == (metav1.Duration{}) {
-			k.VirtualServers[i].DelayLoop = metav1.Duration{Duration: 1 * time.Minute}
-		} else {
-			k.VirtualServers[i].DelayLoop.Duration = k.VirtualServers[i].DelayLoop.Truncate(time.Microsecond)
-			if k.VirtualServers[i].DelayLoop.Microseconds() <= 0 {
-				errs = append(errs, errors.New("DelayLoop must be positive"))
-			}
-		}
+// Validates existing configuration and sets the default values of undefined fields.
+func (s VirtualServers) validate(path *field.Path) (errs field.ErrorList) {
+	for i := range s {
+		errs = append(errs, s[i].validate(path.Index(i))...)
 	}
 	return errs
 }
 
+var validLBKinds = [...]KeepalivedLBKind{
+	NATLBKind,
+	DRLBKind,
+	TUNLBKind,
+}
+
+func (s *VirtualServer) validate(path *field.Path) (errs field.ErrorList) {
+	if path, ip := path.Child("ipAddress"), s.IPAddress; ip == "" {
+		errs = append(errs, field.Required(path, ""))
+	} else {
+		errs = append(errs, validation.IsValidIP(path, ip)...)
+	}
+
+	if s.LBAlgo == "" {
+		s.LBAlgo = RRAlgo
+	} else if !slices.Contains(validLBAlgos[:], s.LBAlgo) {
+		errs = append(errs, field.NotSupported(path.Child("lbAlgo"), s.LBAlgo, validLBAlgos[:]))
+	}
+
+	if s.LBKind == "" {
+		s.LBKind = DRLBKind
+	} else if !slices.Contains(validLBKinds[:], s.LBKind) {
+		errs = append(errs, field.NotSupported(path.Child("lbKind"), s.LBKind, validLBKinds[:]))
+	}
+
+	if s.PersistenceTimeoutSeconds == 0 {
+		s.PersistenceTimeoutSeconds = 360
+	} else {
+		for _, msg := range validation.IsInRange(s.PersistenceTimeoutSeconds, 1, 2678400) {
+			errs = append(errs, field.Invalid(path.Child("persistenceTimeoutSeconds"), s.PersistenceTimeoutSeconds, msg))
+		}
+	}
+
+	if s.DelayLoop == (metav1.Duration{}) {
+		s.DelayLoop = metav1.Duration{Duration: 1 * time.Minute}
+	} else {
+		s.DelayLoop.Duration = s.DelayLoop.Truncate(time.Microsecond)
+		if s.DelayLoop.Duration <= 0 {
+			errs = append(errs, field.Invalid(path.Child("delayLoop"), s.DelayLoop, "must be positive"))
+		}
+	}
+
+	return errs
+}
+
 // Validate validates the ControlPlaneLoadBalancingSpec
-func (c *ControlPlaneLoadBalancingSpec) Validate() (errs []error) {
+func (c *ControlPlaneLoadBalancingSpec) Validate(path *field.Path) (errs field.ErrorList) {
 	if c == nil {
 		return nil
 	}
@@ -331,24 +354,26 @@ func (c *ControlPlaneLoadBalancingSpec) Validate() (errs []error) {
 	case "":
 		c.Type = CPLBTypeKeepalived
 	default:
-		errs = append(errs, fmt.Errorf("unsupported CPLB type: %s. Only allowed value: %s", c.Type, CPLBTypeKeepalived))
+		errs = append(errs, field.NotSupported(path.Child("type"), c.Type, []CPLBType{CPLBTypeKeepalived}))
 	}
 
-	return append(errs, c.Keepalived.Validate()...)
+	return append(errs, c.Keepalived.Validate(path.Child("keepalived"))...)
 }
 
 // Validate validates the KeepalivedSpec
-func (k *KeepalivedSpec) Validate() (errs []error) {
+func (k *KeepalivedSpec) Validate(path *field.Path) (errs field.ErrorList) {
 	if k == nil {
 		return nil
 	}
 
-	errs = append(errs, k.validateVRRPInstances(nil)...)
-	errs = append(errs, k.validateVirtualServers()...)
+	errs = append(errs, k.VRRPInstances.validate(path.Child("vrrpInstances"), nil)...)
+	errs = append(errs, k.VirtualServers.validate(path.Child("virtualServers"))...)
 	if k.UserSpaceProxyPort == 0 {
 		k.UserSpaceProxyPort = 6444
-	} else if k.UserSpaceProxyPort < 1 || k.UserSpaceProxyPort > 65535 {
-		errs = append(errs, errors.New("UserSpaceProxyPort must be in the range of 1-65535"))
+	} else {
+		for _, msg := range validation.IsValidPortNum(k.UserSpaceProxyPort) {
+			errs = append(errs, field.Invalid(path.Child("userSpaceProxyBindPort"), k.UserSpaceProxyPort, msg))
+		}
 	}
 
 	return errs
