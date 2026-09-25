@@ -74,11 +74,15 @@ egressSelections:
         udsName: {{ .UDSName }}
 `
 
+// The egress selector configuration file that connects kube-apiserver to
+// konnectivity-server.
 type egressSelectorConfig struct {
-	UDSName string
+	Path    string // Where kube-apiserver expects the file
+	UDSName string // UDS socket of konnectivity-server
 }
 
-// Init extracts needed binaries
+// Stages the kube-apiserver executable, resolves its launch config, writes
+// the required files and prepares the supervisor.
 func (a *APIServer) Init(_ context.Context) error {
 	var err error
 	a.uid, err = users.LookupUID(constant.ApiserverUser)
@@ -88,12 +92,49 @@ func (a *APIServer) Init(_ context.Context) error {
 		logrus.WithError(err).Warn("Running Kubernetes API server as root")
 	}
 	a.executablePath, err = assets.StageExecutable(a.K0sVars.BinDir, kubeAPIComponentName)
-	return err
+	if err != nil {
+		return err
+	}
+
+	cfg, err := a.buildConfig()
+	if err != nil {
+		return err
+	}
+
+	if err := cfg.writeFiles(); err != nil {
+		return err
+	}
+
+	a.supervisor = &supervisor.Supervisor{
+		Name:        kubeAPIComponentName,
+		BinPath:     a.executablePath,
+		RunDir:      a.K0sVars.RunDir,
+		DataDir:     a.K0sVars.DataDir,
+		Args:        append(cfg.flags.ToDashedArgs(), cfg.rawArgs...),
+		UID:         a.uid,
+		TimeoutStop: cfg.stopTimeout,
+	}
+
+	// If the API port is less than 1024, the process needs to bind to a privileged port
+	if a.NodeConfig.Spec.API.Port < 1024 {
+		a.supervisor.RequiredPrivileges.BindsPrivilegedPorts = true
+		logrus.Infof("API port %d is less than 1024, granting privilege to bind to privileged ports", a.NodeConfig.Spec.API.Port)
+	}
+
+	return nil
 }
 
-// buildSupervisor constructs and configures the supervisor for the kube-apiserver
-// without starting it. This allows for testing the configuration logic independently.
-func (a *APIServer) buildSupervisor() (*supervisor.Supervisor, error) {
+// The kube-apiserver launch config.
+type apiServerConfig struct {
+	flags          stringmap.StringMap   // CLI flags without the leading dashes
+	rawArgs        []string              // Raw arguments appended after the flags
+	stopTimeout    time.Duration         // How long to wait for kube-apiserver to terminate gracefully
+	egressSelector *egressSelectorConfig // The egress selector config, if konnectivity is enabled
+}
+
+// Computes the kube-apiserver launch config from the k0s configuration.
+// Doesn't write anything to disk.
+func (a *APIServer) buildConfig() (*apiServerConfig, error) {
 	args := stringmap.StringMap{
 		"advertise-address":                a.NodeConfig.Spec.API.Address,
 		"secure-port":                      strconv.Itoa(a.NodeConfig.Spec.API.Port),
@@ -127,16 +168,21 @@ func (a *APIServer) buildSupervisor() (*supervisor.Supervisor, error) {
 
 	apiAudiences := []string{"https://kubernetes.default.svc"}
 
+	var egressSelector *egressSelectorConfig
 	if a.EnableKonnectivity {
-		err := a.writeKonnectivityConfig()
-		if err != nil {
-			return nil, err
+		egressSelector = &egressSelectorConfig{
+			Path:    filepath.Join(a.K0sVars.DataDir, "konnectivity.conf"),
+			UDSName: filepath.Join(a.K0sVars.KonnectivitySocketDir, "konnectivity-server.sock"),
 		}
-		args["egress-selector-config-file"] = filepath.Join(a.K0sVars.DataDir, "konnectivity.conf")
+		args["egress-selector-config-file"] = egressSelector.Path
 		apiAudiences = append(apiAudiences, "system:konnectivity-server")
 	}
 
 	args["api-audiences"] = strings.Join(apiAudiences, ",")
+
+	if err := addEtcdArgs(args, a.NodeConfig.Spec.Storage, a.K0sVars); err != nil {
+		return nil, err
+	}
 
 	for name, value := range a.NodeConfig.Spec.API.ExtraArgs {
 		if _, ok := args[name]; ok {
@@ -216,65 +262,35 @@ func (a *APIServer) buildSupervisor() (*supervisor.Supervisor, error) {
 		}
 	}
 
-	var apiServerArgs []string
-	for name, value := range args {
-		apiServerArgs = append(apiServerArgs, fmt.Sprintf("--%s=%s", name, value))
-	}
-	apiServerArgs = append(apiServerArgs, a.NodeConfig.Spec.API.RawArgs...)
-
-	sup := &supervisor.Supervisor{
-		Name:        kubeAPIComponentName,
-		BinPath:     a.executablePath,
-		RunDir:      a.K0sVars.RunDir,
-		DataDir:     a.K0sVars.DataDir,
-		Args:        apiServerArgs,
-		UID:         a.uid,
-		TimeoutStop: stopTimeout,
-	}
-
-	// If the API port is less than 1024, the process needs to bind to a privileged port
-	if a.NodeConfig.Spec.API.Port < 1024 {
-		sup.RequiredPrivileges.BindsPrivilegedPorts = true
-		logrus.Infof("API port %d is less than 1024, granting privilege to bind to privileged ports", a.NodeConfig.Spec.API.Port)
-	}
-
-	etcdArgs, err := getEtcdArgs(a.NodeConfig.Spec.Storage, a.K0sVars)
-	if err != nil {
-		return nil, err
-	}
-	sup.Args = append(sup.Args, etcdArgs...)
-
-	return sup, nil
+	return &apiServerConfig{
+		flags:          args,
+		rawArgs:        a.NodeConfig.Spec.API.RawArgs,
+		stopTimeout:    stopTimeout,
+		egressSelector: egressSelector,
+	}, nil
 }
 
-// Run runs kube api
-func (a *APIServer) Start(ctx context.Context) error {
-	logrus.Info("Starting kube-apiserver")
-
-	var err error
-	a.supervisor, err = a.buildSupervisor()
-	if err != nil {
-		return err
-	}
-
-	return a.supervisor.Supervise(ctx)
-}
-
-func (a *APIServer) writeKonnectivityConfig() error {
-	tw := templatewriter.TemplateWriter{
-		Name:     "konnectivity",
-		Template: egressSelectorConfigTemplate,
-		Data: egressSelectorConfig{
-			UDSName: filepath.Join(a.K0sVars.KonnectivitySocketDir, "konnectivity-server.sock"),
-		},
-		Path: filepath.Join(a.K0sVars.DataDir, "konnectivity.conf"),
-	}
-	err := tw.Write()
-	if err != nil {
-		return fmt.Errorf("failed to write konnectivity config: %w", err)
+// Writes all the files that need to be in place before kube-apiserver starts.
+func (c *apiServerConfig) writeFiles() error {
+	if c.egressSelector != nil {
+		tw := templatewriter.TemplateWriter{
+			Name:     "konnectivity",
+			Template: egressSelectorConfigTemplate,
+			Data:     c.egressSelector,
+			Path:     c.egressSelector.Path,
+		}
+		if err := tw.Write(); err != nil {
+			return fmt.Errorf("failed to write konnectivity config: %w", err)
+		}
 	}
 
 	return nil
+}
+
+// Starts supervising kube-apiserver.
+func (a *APIServer) Start(ctx context.Context) error {
+	logrus.Info("Starting kube-apiserver")
+	return a.supervisor.Supervise(ctx)
 }
 
 // Stop stops APIServer
@@ -346,30 +362,28 @@ func authenticationConfigHasAnonymous(path string) (bool, error) {
 	return len(authConfig.Anonymous) > 0 && string(authConfig.Anonymous) != "null", nil
 }
 
-func getEtcdArgs(storage *v1beta1.StorageSpec, k0sVars *config.CfgVars) ([]string, error) {
-	var args []string
-
+// Adds the flags that connect kube-apiserver to its storage backend.
+func addEtcdArgs(args stringmap.StringMap, storage *v1beta1.StorageSpec, k0sVars *config.CfgVars) error {
 	switch storage.Type {
 	case v1beta1.KineStorageType:
 		sockURL := url.URL{
 			Scheme: "unix", OmitHost: true,
 			Path: filepath.ToSlash(k0sVars.KineSocketPath),
 		} // kine endpoint
-		args = append(args, "--etcd-servers="+sockURL.String())
+		args["etcd-servers"] = sockURL.String()
 	case v1beta1.EtcdStorageType:
-		args = append(args, "--etcd-servers="+storage.Etcd.GetEndpointsAsString())
+		args["etcd-servers"] = storage.Etcd.GetEndpointsAsString()
 		if storage.Etcd.IsTLSEnabled() {
-			args = append(args,
-				"--etcd-cafile="+storage.Etcd.GetCaFilePath(k0sVars.EtcdCertDir),
-				"--etcd-certfile="+storage.Etcd.GetCertFilePath(k0sVars.CertRootDir),
-				"--etcd-keyfile="+storage.Etcd.GetKeyFilePath(k0sVars.CertRootDir))
+			args["etcd-cafile"] = storage.Etcd.GetCaFilePath(k0sVars.EtcdCertDir)
+			args["etcd-certfile"] = storage.Etcd.GetCertFilePath(k0sVars.CertRootDir)
+			args["etcd-keyfile"] = storage.Etcd.GetKeyFilePath(k0sVars.CertRootDir)
 		}
 		if storage.Etcd.IsExternalClusterUsed() {
-			args = append(args, "--etcd-prefix="+storage.Etcd.ExternalCluster.EtcdPrefix)
+			args["etcd-prefix"] = storage.Etcd.ExternalCluster.EtcdPrefix
 		}
 	default:
-		return nil, fmt.Errorf("invalid storage type: %s", storage.Type)
+		return fmt.Errorf("invalid storage type: %s", storage.Type)
 	}
 
-	return args, nil
+	return nil
 }
