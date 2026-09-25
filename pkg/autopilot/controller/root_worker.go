@@ -18,11 +18,15 @@ import (
 	apsigk0s "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/k0s"
 	"github.com/k0sproject/k0s/pkg/leaderelection"
 
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/util/wait"
 	k8sretry "k8s.io/client-go/util/retry"
 	"k8s.io/utils/ptr"
 	cr "sigs.k8s.io/controller-runtime"
+	crcache "sigs.k8s.io/controller-runtime/pkg/cache"
+	crcli "sigs.k8s.io/controller-runtime/pkg/client"
 	crconfig "sigs.k8s.io/controller-runtime/pkg/config"
 	crman "sigs.k8s.io/controller-runtime/pkg/manager"
 	crmetricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
@@ -78,6 +82,14 @@ func (w *rootWorker) Run(ctx context.Context) error {
 			BindAddress: w.cfg.MetricsBindAddr,
 		},
 		HealthProbeBindAddress: w.cfg.HealthProbeBindAddr,
+		// The worker controllers only ever reconcile the worker's own Node. Restrict
+		// the Node informer to it, so that the worker doesn't receive every Node
+		// update in the cluster, which dominates its traffic on large clusters.
+		Cache: crcache.Options{
+			ByObject: map[crcli.Object]crcache.ByObject{
+				&corev1.Node{}: {Field: fields.OneTermEqualSelector(metav1.ObjectNameField, string(w.cfg.NodeName))},
+			},
+		},
 	}
 
 	// The restart tracker needs to outlive the individual controller managers,
