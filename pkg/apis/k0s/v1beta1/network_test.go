@@ -4,6 +4,7 @@
 package v1beta1
 
 import (
+	"net"
 	"testing"
 
 	"github.com/k0sproject/k0s/pkg/featuregate"
@@ -14,41 +15,49 @@ type NetworkSuite struct {
 	suite.Suite
 }
 
+func ipsAsStrings(ips []net.IP) []string {
+	strings := make([]string, len(ips))
+	for i, ip := range ips {
+		strings[i] = ip.String()
+	}
+	return strings
+}
+
 func (s *NetworkSuite) TestAddresses() {
 	s.Run("DNS_default_service_cidr", func() {
 		n := DefaultNetwork()
-		dns, err := n.DNSAddress(PrimaryFamilyIPv4)
+		dns, err := n.DNSAddresses(PrimaryFamilyIPv4)
 		s.Require().NoError(err)
-		s.Equal("10.96.0.10", dns)
+		s.Equal([]string{"10.96.0.10"}, ipsAsStrings(dns))
 	})
 	s.Run("DNS_uses_non_default_service_cidr", func() {
 		n := DefaultNetwork()
 		n.ServiceCIDR = "10.96.0.248/29"
-		dns, err := n.DNSAddress(PrimaryFamilyIPv4)
+		dns, err := n.DNSAddresses(PrimaryFamilyIPv4)
 		s.Require().NoError(err)
-		s.Equal("10.96.0.250", dns)
+		s.Equal([]string{"10.96.0.250"}, ipsAsStrings(dns))
 	})
 	s.Run("DNS_service_cidr_too_narrow", func() {
 		n := Network{ServiceCIDR: "192.168.178.0/31"}
-		dns, err := n.DNSAddress(PrimaryFamilyIPv4)
+		dns, err := n.DNSAddresses(PrimaryFamilyIPv4)
 		s.Empty(dns)
 		s.ErrorContains(err, "failed to calculate DNS address: CIDR too narrow: 192.168.178.0/31")
 	})
 	s.Run("DNS_uses_v6_service_cidr", func() {
 		n := Network{ServiceCIDR: "fd00:abcd:1234::/64"}
-		dns, err := n.DNSAddress(PrimaryFamilyIPv6)
+		dns, err := n.DNSAddresses(PrimaryFamilyIPv6)
 		s.NoError(err)
-		s.Equal("fd00:abcd:1234::a", dns)
+		s.Equal([]string{"fd00:abcd:1234::a"}, ipsAsStrings(dns))
 	})
 	s.Run("DNS_uses_v6_small_service_cidr", func() {
 		n := Network{ServiceCIDR: "fd00::/126"}
-		dns, err := n.DNSAddress(PrimaryFamilyIPv6)
+		dns, err := n.DNSAddresses(PrimaryFamilyIPv6)
 		s.NoError(err)
-		s.Equal("fd00::2", dns)
+		s.Equal([]string{"fd00::2"}, ipsAsStrings(dns))
 	})
 	s.Run("DNS_service_v6_cidr_too_narrow", func() {
 		n := Network{ServiceCIDR: "fd00::/127"}
-		dns, err := n.DNSAddress(PrimaryFamilyIPv6)
+		dns, err := n.DNSAddresses(PrimaryFamilyIPv6)
 		s.Empty(dns)
 		s.ErrorContains(err, "failed to calculate DNS address: CIDR too narrow: fd00::/127")
 	})
@@ -92,6 +101,30 @@ func (s *NetworkSuite) TestAddresses() {
 			n.DualStack.IPv6ServiceCIDR = "fd00::/108"
 			s.Equal(n.DualStack.IPv6ServiceCIDR+","+n.ServiceCIDR, n.BuildServiceCIDR(PrimaryFamilyIPv6))
 		})
+	})
+	s.Run("DNS_uses_dual_stack_service_cidrs_primary_ipv4", func() {
+		n := Network{
+			ServiceCIDR: "10.96.0.248/29",
+			DualStack: DualStack{
+				Enabled:         true,
+				IPv6ServiceCIDR: "fd00:abcd:1234::/64",
+			},
+		}
+		dns, err := n.DNSAddresses(PrimaryFamilyIPv4)
+		s.NoError(err)
+		s.Equal([]string{"10.96.0.250", "fd00:abcd:1234::a"}, ipsAsStrings(dns))
+	})
+	s.Run("DNS_uses_dual_stack_service_cidrs_primary_ipv6", func() {
+		n := Network{
+			ServiceCIDR: "10.96.0.248/29",
+			DualStack: DualStack{
+				Enabled:         true,
+				IPv6ServiceCIDR: "fd00:abcd:1234::/64",
+			},
+		}
+		dns, err := n.DNSAddresses(PrimaryFamilyIPv6)
+		s.NoError(err)
+		s.Equal([]string{"fd00:abcd:1234::a", "10.96.0.250"}, ipsAsStrings(dns))
 	})
 }
 
