@@ -11,16 +11,20 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/k0sproject/k0s/internal/secret"
+
 	"sigs.k8s.io/yaml"
 )
 
 type ChannelClient struct {
 	httpClient *http.Client
-	token      string
+	token      secret.String
 	channelURL string
 }
 
-func NewChannelClient(server string, channel string, token string) (*ChannelClient, error) {
+// Creates a client for the given channel on the given update server.
+// If provided, token is sent as bearer token.
+func NewChannelClient(server string, channel string, token secret.String) (*ChannelClient, error) {
 	httpClient := &http.Client{
 		Timeout: 10 * time.Second,
 	}
@@ -56,8 +60,8 @@ func (c *ChannelClient) GetLatest(ctx context.Context, headers map[string]string
 		req.Header.Add(k, v)
 	}
 
-	if c.token != "" {
-		req.Header.Add("Authorization", "Bearer "+c.token)
+	if token, err := c.token.Reveal(); err == nil {
+		req.Header.Add("Authorization", "Bearer "+token)
 	}
 
 	resp, err := c.httpClient.Do(req)
