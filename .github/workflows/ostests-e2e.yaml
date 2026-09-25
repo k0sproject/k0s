@@ -87,7 +87,7 @@ jobs:
 
     steps:
       - name: "Workflow run :: Checkout"
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -101,7 +101,7 @@ jobs:
 
       - name: "Tofu :: Requisites :: Download k0s"
         if: inputs.k0s-version == ''
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: k0s-linux-${{ inputs.arch }}
           path: ${{ github.workspace }}/.cache
@@ -136,7 +136,7 @@ jobs:
           echo TF_VAR_k0s_version="$K0S_VERSION" >>"$GITHUB_ENV"
 
       - name: "Tofu :: Setup"
-        uses: opentofu/setup-opentofu@fc711fa910b93cba0f3fbecaafc9f42fd0c411cb # v2.0.0
+        uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2
         with:
           tofu_version: ${{ inputs.tofu-version }}
           tofu_wrapper: false
@@ -235,7 +235,7 @@ jobs:
 
       - name: "e2e tests :: Upload results"
         if: always() && (steps.e2e-retrieve-parallel.conclusion == 'success' || steps.e2e-retrieve-serial.conclusion == 'success')
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ostests-e2e-${{ inputs.os }}-${{ inputs.arch }}-${{ inputs.network-provider }}-${{ inputs.kube-proxy-mode }}-sonobuoy-results
           path: |
@@ -265,7 +265,7 @@ jobs:
 
       - name: "e2e tests :: Upload k0sctl logs"
         if: always() && steps.tf-init.conclusion == 'success'
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ostests-e2e-${{ inputs.os }}-${{ inputs.arch }}-${{ inputs.network-provider }}-${{ inputs.kube-proxy-mode }}-k0sctl-logs
           path: ~/.cache/k0sctl/k0sctl.log
