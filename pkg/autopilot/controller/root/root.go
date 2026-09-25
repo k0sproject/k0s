@@ -11,6 +11,7 @@ type RootConfig struct { //nolint:revive // TODO rename to Config
 	InvocationID        string
 	KubeConfig          string
 	K0sDataDir          string
+	StatusSocketPath    string
 	KubeletExtraArgs    string
 	KubeAPIPort         int
 	Mode                string
