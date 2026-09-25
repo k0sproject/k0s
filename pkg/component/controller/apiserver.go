@@ -91,9 +91,15 @@ func (a *APIServer) Init(_ context.Context) error {
 	return err
 }
 
-// buildSupervisor constructs and configures the supervisor for the kube-apiserver
-// without starting it. This allows for testing the configuration logic independently.
-func (a *APIServer) buildSupervisor() (*supervisor.Supervisor, error) {
+// The kube-apiserver launch config.
+type apiServerConfig struct {
+	flags       stringmap.StringMap // CLI flags without the leading dashes
+	rawArgs     []string            // Raw arguments appended after the flags
+	stopTimeout time.Duration       // How long to wait for kube-apiserver to terminate gracefully
+}
+
+// Computes the kube-apiserver launch config from the k0s configuration.
+func (a *APIServer) buildConfig() (*apiServerConfig, error) {
 	args := stringmap.StringMap{
 		"advertise-address":                a.NodeConfig.Spec.API.Address,
 		"secure-port":                      strconv.Itoa(a.NodeConfig.Spec.API.Port),
@@ -220,39 +226,36 @@ func (a *APIServer) buildSupervisor() (*supervisor.Supervisor, error) {
 		}
 	}
 
-	var apiServerArgs []string
-	for name, value := range args {
-		apiServerArgs = append(apiServerArgs, fmt.Sprintf("--%s=%s", name, value))
-	}
-	apiServerArgs = append(apiServerArgs, a.NodeConfig.Spec.API.RawArgs...)
-
-	sup := &supervisor.Supervisor{
-		Name:        kubeAPIComponentName,
-		BinPath:     a.executablePath,
-		RunDir:      a.K0sVars.RunDir,
-		DataDir:     a.K0sVars.DataDir,
-		Args:        apiServerArgs,
-		UID:         a.uid,
-		TimeoutStop: stopTimeout,
-	}
-
-	// If the API port is less than 1024, the process needs to bind to a privileged port
-	if a.NodeConfig.Spec.API.Port < 1024 {
-		sup.RequiredPrivileges.BindsPrivilegedPorts = true
-		logrus.Infof("API port %d is less than 1024, granting privilege to bind to privileged ports", a.NodeConfig.Spec.API.Port)
-	}
-
-	return sup, nil
+	return &apiServerConfig{
+		flags:       args,
+		rawArgs:     a.NodeConfig.Spec.API.RawArgs,
+		stopTimeout: stopTimeout,
+	}, nil
 }
 
 // Run runs kube api
 func (a *APIServer) Start(ctx context.Context) error {
 	logrus.Info("Starting kube-apiserver")
 
-	var err error
-	a.supervisor, err = a.buildSupervisor()
+	cfg, err := a.buildConfig()
 	if err != nil {
 		return err
+	}
+
+	a.supervisor = &supervisor.Supervisor{
+		Name:        kubeAPIComponentName,
+		BinPath:     a.executablePath,
+		RunDir:      a.K0sVars.RunDir,
+		DataDir:     a.K0sVars.DataDir,
+		Args:        append(cfg.flags.ToDashedArgs(), cfg.rawArgs...),
+		UID:         a.uid,
+		TimeoutStop: cfg.stopTimeout,
+	}
+
+	// If the API port is less than 1024, the process needs to bind to a privileged port
+	if a.NodeConfig.Spec.API.Port < 1024 {
+		a.supervisor.RequiredPrivileges.BindsPrivilegedPorts = true
+		logrus.Infof("API port %d is less than 1024, granting privilege to bind to privileged ports", a.NodeConfig.Spec.API.Port)
 	}
 
 	return a.supervisor.Supervise(ctx)

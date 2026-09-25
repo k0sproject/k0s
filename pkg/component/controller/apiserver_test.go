@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
@@ -188,65 +189,154 @@ func (a *apiServerSuite) TestAddEtcdArgs() {
 	})
 }
 
-func (a *apiServerSuite) TestCapNetBindServiceForLowPorts() {
-	k0sVars := &config.CfgVars{
-		BinDir:      "/var/lib/k0s/bin",
-		CertRootDir: "/var/lib/k0s/pki",
-		DataDir:     "/var/lib/k0s",
-		RunDir:      "/run/k0s",
+func (a *apiServerSuite) TestAPIServer_BuildConfig() {
+	newAPIServer := func() *APIServer {
+		return &APIServer{
+			NodeConfig: v1beta1.DefaultClusterConfig(),
+			K0sVars: &config.CfgVars{
+				CertRootDir: "/var/lib/k0s/pki",
+				DataDir:     "/var/lib/k0s",
+				EtcdCertDir: "/var/lib/k0s/pki/etcd",
+			},
+			LogLevel: "1",
+		}
 	}
 
-	a.Run("port 443 requires CAP_NET_BIND_SERVICE", func() {
-		clusterConfig := v1beta1.DefaultClusterConfig()
-		clusterConfig.Spec.API.Port = 443
+	build := func(underTest *APIServer) *apiServerConfig {
+		cfg, err := underTest.buildConfig()
+		a.Require().NoError(err)
+		return cfg
+	}
 
-		apiServer := &APIServer{
-			NodeConfig:     clusterConfig,
-			K0sVars:        k0sVars,
-			LogLevel:       "1",
-			executablePath: "/fake/path/kube-apiserver",
+	a.Run("extra args override flags", func() {
+		underTest := newAPIServer()
+		underTest.NodeConfig.Spec.API.ExtraArgs = map[string]string{
+			"authorization-mode": "AlwaysAllow",
+			"etcd-servers":       "https://etcd.example.com:2379",
+			"custom-flag":        "custom-value",
 		}
 
-		supervisor, err := apiServer.buildSupervisor()
-		require := a.Require()
-		require.NoError(err)
-		require.True(supervisor.RequiredPrivileges.BindsPrivilegedPorts,
-			"Port 443 should require CAP_NET_BIND_SERVICE capability")
+		cfg := build(underTest)
+		a.Equal("AlwaysAllow", cfg.flags["authorization-mode"])
+		a.Equal("https://etcd.example.com:2379", cfg.flags["etcd-servers"])
+		a.Equal("custom-value", cfg.flags["custom-flag"])
 	})
 
-	a.Run("port 6443 does not require CAP_NET_BIND_SERVICE", func() {
-		clusterConfig := v1beta1.DefaultClusterConfig()
-		clusterConfig.Spec.API.Port = 6443
+	a.Run("raw args are passed through", func() {
+		underTest := newAPIServer()
+		underTest.NodeConfig.Spec.API.RawArgs = []string{"--foo", "--bar=baz"}
 
-		apiServer := &APIServer{
-			NodeConfig:     clusterConfig,
-			K0sVars:        k0sVars,
-			LogLevel:       "1",
-			executablePath: "/fake/path/kube-apiserver",
-		}
-
-		supervisor, err := apiServer.buildSupervisor()
-		require := a.Require()
-		require.NoError(err)
-		require.False(supervisor.RequiredPrivileges.BindsPrivilegedPorts,
-			"Port 6443 should not require CAP_NET_BIND_SERVICE capability")
+		cfg := build(underTest)
+		a.Equal([]string{"--foo", "--bar=baz"}, cfg.rawArgs)
 	})
 
-	a.Run("port 80 requires CAP_NET_BIND_SERVICE", func() {
-		clusterConfig := v1beta1.DefaultClusterConfig()
-		clusterConfig.Spec.API.Port = 80
+	a.Run("bind address", func() {
+		underTest := newAPIServer()
+		underTest.NodeConfig.Spec.API.Address = "192.0.2.1"
 
-		apiServer := &APIServer{
-			NodeConfig:     clusterConfig,
-			K0sVars:        k0sVars,
-			LogLevel:       "1",
-			executablePath: "/fake/path/kube-apiserver",
+		cfg := build(underTest)
+		a.NotContains(cfg.flags, "bind-address")
+
+		underTest.NodeConfig.Spec.API.OnlyBindToAddress = true
+
+		cfg = build(underTest)
+		a.Equal("192.0.2.1", cfg.flags["bind-address"])
+	})
+
+	a.Run("endpoint reconciler disabled", func() {
+		underTest := newAPIServer()
+
+		cfg := build(underTest)
+		a.NotContains(cfg.flags, "endpoint-reconciler-type")
+
+		underTest.DisableEndpointReconciler = true
+
+		cfg = build(underTest)
+		a.Equal("none", cfg.flags["endpoint-reconciler-type"])
+	})
+
+	a.Run("anonymous auth", func() {
+		writeAuthConfig := func(content string) string {
+			path := filepath.Join(a.T().TempDir(), "authentication-config.yaml")
+			a.Require().NoError(os.WriteFile(path, []byte(content), 0o600))
+			return path
 		}
 
-		supervisor, err := apiServer.buildSupervisor()
-		require := a.Require()
-		require.NoError(err)
-		require.True(supervisor.RequiredPrivileges.BindsPrivilegedPorts,
-			"Port 80 should require CAP_NET_BIND_SERVICE capability")
+		a.Run("defaults to false", func() {
+			cfg := build(newAPIServer())
+			a.Equal("false", cfg.flags["anonymous-auth"])
+		})
+
+		a.Run("not set if managed via authentication config", func() {
+			underTest := newAPIServer()
+			underTest.NodeConfig.Spec.API.ExtraArgs = map[string]string{
+				"authentication-config": writeAuthConfig("anonymous: {enabled: false}\n"),
+			}
+
+			cfg := build(underTest)
+			a.NotContains(cfg.flags, "anonymous-auth")
+		})
+
+		a.Run("defaults to false if not managed via authentication config", func() {
+			underTest := newAPIServer()
+			underTest.NodeConfig.Spec.API.ExtraArgs = map[string]string{
+				"authentication-config": writeAuthConfig("jwt: []\n"),
+			}
+
+			cfg := build(underTest)
+			a.Equal("false", cfg.flags["anonymous-auth"])
+		})
+
+		a.Run("defaults to false if authentication config is unreadable", func() {
+			underTest := newAPIServer()
+			underTest.NodeConfig.Spec.API.ExtraArgs = map[string]string{
+				"authentication-config": filepath.Join(a.T().TempDir(), "nonexistent.yaml"),
+			}
+
+			cfg := build(underTest)
+			a.Equal("false", cfg.flags["anonymous-auth"])
+		})
+	})
+
+	a.Run("stop timeout", func() {
+		for _, test := range []struct {
+			name           string
+			configured     time.Duration
+			requestTimeout string // request-timeout extra arg, if any
+			watchGrace     string // shutdown-watch-termination-grace-period extra arg, if any
+			expected       time.Duration
+			expectedGrace  string
+		}{
+			{"uses configured value", 42 * time.Second, "", "", 42 * time.Second, "40s"},
+			{"clamps default request timeout", 0, "", "", 20 * time.Second, "18s"},
+			{"derives from request timeout", 0, "10s", "", 12 * time.Second, "10s"},
+			{"clamps short request timeout", 0, "1s", "", 5 * time.Second, "3s"},
+			{"keeps user-provided watch termination grace period", 0, "1s", "7s", 9 * time.Second, "7s"},
+		} {
+			a.Run(test.name, func() {
+				underTest := newAPIServer()
+				underTest.StopTimeout = test.configured
+				underTest.NodeConfig.Spec.API.ExtraArgs = map[string]string{}
+				if test.requestTimeout != "" {
+					underTest.NodeConfig.Spec.API.ExtraArgs["request-timeout"] = test.requestTimeout
+				}
+				if test.watchGrace != "" {
+					underTest.NodeConfig.Spec.API.ExtraArgs["shutdown-watch-termination-grace-period"] = test.watchGrace
+				}
+
+				cfg := build(underTest)
+				a.Equal(test.expected, cfg.stopTimeout)
+				a.Equal(test.expectedGrace, cfg.flags["shutdown-watch-termination-grace-period"])
+			})
+		}
+	})
+
+	a.Run("invalid storage type", func() {
+		underTest := newAPIServer()
+		underTest.NodeConfig.Spec.Storage.Type = "bogus"
+
+		cfg, err := underTest.buildConfig()
+		a.ErrorContains(err, "invalid storage type: bogus")
+		a.Nil(cfg)
 	})
 }
