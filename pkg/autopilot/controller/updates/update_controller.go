@@ -12,9 +12,6 @@ import (
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
 
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/sirupsen/logrus"
 	cr "sigs.k8s.io/controller-runtime"
 	crcli "sigs.k8s.io/controller-runtime/pkg/client"
@@ -57,12 +54,11 @@ func (u *updateController) Reconcile(ctx context.Context, req cr.Request) (cr.Re
 		return cr.Result{}, fmt.Errorf("unable to get plan='%s': %w", req.NamespacedName, err)
 	}
 
-	var token string
-	tokenSecret := &corev1.Secret{}
-	if err := u.client.Get(ctx, crcli.ObjectKey{Name: "update-server-token", Namespace: metav1.NamespaceSystem}, tokenSecret); err != nil {
-		u.log.Infof("unable to get update server token='%s': %v", req.NamespacedName, err)
-	} else {
-		token = string(tokenSecret.Data["token"])
+	token, err := getUpdateServerToken(ctx, u.clientFactory)
+	if err != nil {
+		u.log.WithError(err).Error("Unable to get update server token")
+	} else if token.IsZero() {
+		u.log.Info("No update server token provided")
 	}
 
 	u.log.Debugf("processing updater config '%s'", req.NamespacedName)
