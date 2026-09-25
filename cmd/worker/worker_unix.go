@@ -18,6 +18,7 @@ func (p *platformSpecificComponents) addTo(ctx context.Context, m *manager.Manag
 	if !p.workerConfig.AutopilotDisabled && p.controller == nil {
 		m.Add(ctx, &worker.Autopilot{
 			K0sVars:       p.k0sVars,
+			NodeName:      p.nodeName,
 			ClientFactory: p.clientFactory,
 		})
 	}
