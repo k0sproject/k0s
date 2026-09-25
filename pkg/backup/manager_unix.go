@@ -6,6 +6,7 @@
 package backup
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -99,7 +100,7 @@ func (bm *Manager) discoverSteps(configFilePath string, nodeSpec *v1beta1.Cluste
 		}
 		bm.Add(NewFileSystemStep(path))
 	}
-	bm.Add(newConfigurationStep(configFilePath, restoredConfigPath, out))
+	bm.Add(newConfigurationStep(bm.tmpDir, configFilePath, restoredConfigPath, out))
 }
 
 // Add adds backup step
@@ -154,7 +155,7 @@ func (bm *Manager) RunRestore(archivePath string, k0sVars *config.CfgVars, desir
 	if err != nil {
 		return fmt.Errorf("failed to parse backed-up configuration file, check the backup archive: %w", err)
 	}
-	bm.discoverSteps(filepath.Join(bm.tmpDir, "k0s.yaml"), cfg.Spec, k0sVars, "restore", desiredRestoredConfigPath, out)
+	bm.discoverSteps(filepath.Join(bm.tmpDir, configFileName), cfg.Spec, k0sVars, "restore", desiredRestoredConfigPath, out)
 	logrus.Info("Starting restore")
 
 	for _, step := range bm.steps {
@@ -167,10 +168,16 @@ func (bm *Manager) RunRestore(archivePath string, k0sVars *config.CfgVars, desir
 }
 
 func (bm Manager) getConfigForRestore() (*v1beta1.ClusterConfig, error) {
-	configFromBackup := filepath.Join(bm.tmpDir, "k0s.yaml")
+	configFromBackup := filepath.Join(bm.tmpDir, configFileName)
 	logrus.Debugf("Using k0s.yaml from: %s", configFromBackup)
 
 	bytes, err := os.ReadFile(configFromBackup)
+	if errors.Is(err, os.ErrNotExist) {
+		// The cluster ran without a configuration file, so the archive doesn't
+		// carry one. Continue with the defaults, just like k0s does at startup.
+		logrus.Info("Backup archive contains no k0s.yaml, restoring with the default configuration")
+		return v1beta1.DefaultClusterConfig(), nil
+	}
 	if err != nil {
 		return nil, err
 	}
