@@ -17,6 +17,8 @@ import (
 	apdl "github.com/k0sproject/k0s/pkg/autopilot/download"
 	apsigv2 "github.com/k0sproject/k0s/pkg/autopilot/signaling/v2"
 
+	apitypes "k8s.io/apimachinery/pkg/types"
+
 	"github.com/sirupsen/logrus"
 	cr "sigs.k8s.io/controller-runtime"
 	crcli "sigs.k8s.io/controller-runtime/pkg/client"
@@ -27,10 +29,10 @@ import (
 
 // downloadEventFilter creates a controller-runtime predicate that governs which objects
 // will make it into reconciliation, and which will be ignored.
-func downloadEventFilter(hostname string, handler apsigpred.ErrorHandler) crpred.Predicate {
+func downloadEventFilter(nodeName apitypes.NodeName, handler apsigpred.ErrorHandler) crpred.Predicate {
 	return crpred.And(
 		crpred.AnnotationChangedPredicate{},
-		apsigpred.SignalNamePredicate(hostname),
+		apsigpred.SignalNamePredicate(nodeName),
 		apsigpred.NewSignalDataPredicateAdapter(handler).And(
 			signalDataUpdateCommandK0sPredicate(),
 			apsigpred.SignalDataStatusPredicate(apsigcomm.Downloading),
