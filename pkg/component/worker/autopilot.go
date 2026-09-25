@@ -17,6 +17,9 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
+
+	apitypes "k8s.io/apimachinery/pkg/types"
+
 	"github.com/sirupsen/logrus"
 
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -32,6 +35,7 @@ var _ manager.Component = (*Autopilot)(nil)
 
 type Autopilot struct {
 	K0sVars     *config.CfgVars
+	NodeName    apitypes.NodeName
 	CertManager *CertificateManager
 }
 
@@ -81,6 +85,7 @@ func (a *Autopilot) Start(ctx context.Context) error {
 		ManagerPort:         8899,
 		MetricsBindAddr:     "0",
 		HealthProbeBindAddr: "0",
+		NodeName:            a.NodeName,
 	}, log, autopilotClientFactory)
 	if err != nil {
 		return fmt.Errorf("failed to create autopilot worker: %w", err)
