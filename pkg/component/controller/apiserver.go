@@ -138,6 +138,10 @@ func (a *APIServer) buildSupervisor() (*supervisor.Supervisor, error) {
 
 	args["api-audiences"] = strings.Join(apiAudiences, ",")
 
+	if err := addEtcdArgs(args, a.NodeConfig.Spec.Storage, a.K0sVars); err != nil {
+		return nil, err
+	}
+
 	for name, value := range a.NodeConfig.Spec.API.ExtraArgs {
 		if _, ok := args[name]; ok {
 			logrus.Warnf("overriding apiserver flag with user provided value: %s", name)
@@ -237,12 +241,6 @@ func (a *APIServer) buildSupervisor() (*supervisor.Supervisor, error) {
 		sup.RequiredPrivileges.BindsPrivilegedPorts = true
 		logrus.Infof("API port %d is less than 1024, granting privilege to bind to privileged ports", a.NodeConfig.Spec.API.Port)
 	}
-
-	etcdArgs, err := getEtcdArgs(a.NodeConfig.Spec.Storage, a.K0sVars)
-	if err != nil {
-		return nil, err
-	}
-	sup.Args = append(sup.Args, etcdArgs...)
 
 	return sup, nil
 }
@@ -346,30 +344,28 @@ func authenticationConfigHasAnonymous(path string) (bool, error) {
 	return len(authConfig.Anonymous) > 0 && string(authConfig.Anonymous) != "null", nil
 }
 
-func getEtcdArgs(storage *v1beta1.StorageSpec, k0sVars *config.CfgVars) ([]string, error) {
-	var args []string
-
+// Adds the flags that connect kube-apiserver to its storage backend.
+func addEtcdArgs(args stringmap.StringMap, storage *v1beta1.StorageSpec, k0sVars *config.CfgVars) error {
 	switch storage.Type {
 	case v1beta1.KineStorageType:
 		sockURL := url.URL{
 			Scheme: "unix", OmitHost: true,
 			Path: filepath.ToSlash(k0sVars.KineSocketPath),
 		} // kine endpoint
-		args = append(args, "--etcd-servers="+sockURL.String())
+		args["etcd-servers"] = sockURL.String()
 	case v1beta1.EtcdStorageType:
-		args = append(args, "--etcd-servers="+storage.Etcd.GetEndpointsAsString())
+		args["etcd-servers"] = storage.Etcd.GetEndpointsAsString()
 		if storage.Etcd.IsTLSEnabled() {
-			args = append(args,
-				"--etcd-cafile="+storage.Etcd.GetCaFilePath(k0sVars.EtcdCertDir),
-				"--etcd-certfile="+storage.Etcd.GetCertFilePath(k0sVars.CertRootDir),
-				"--etcd-keyfile="+storage.Etcd.GetKeyFilePath(k0sVars.CertRootDir))
+			args["etcd-cafile"] = storage.Etcd.GetCaFilePath(k0sVars.EtcdCertDir)
+			args["etcd-certfile"] = storage.Etcd.GetCertFilePath(k0sVars.CertRootDir)
+			args["etcd-keyfile"] = storage.Etcd.GetKeyFilePath(k0sVars.CertRootDir)
 		}
 		if storage.Etcd.IsExternalClusterUsed() {
-			args = append(args, "--etcd-prefix="+storage.Etcd.ExternalCluster.EtcdPrefix)
+			args["etcd-prefix"] = storage.Etcd.ExternalCluster.EtcdPrefix
 		}
 	default:
-		return nil, fmt.Errorf("invalid storage type: %s", storage.Type)
+		return fmt.Errorf("invalid storage type: %s", storage.Type)
 	}
 
-	return args, nil
+	return nil
 }
