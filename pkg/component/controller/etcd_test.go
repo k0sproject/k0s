@@ -10,6 +10,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"sync"
 	"testing"
 	"time"
 
@@ -27,7 +28,6 @@ func TestEtcd_FixSocketMode(t *testing.T) {
 	listen := func() net.Listener {
 		l, err := net.Listen("unix", socketPath)
 		require.NoError(t, err)
-		require.NoError(t, os.Chmod(socketPath, 0600))
 		return l
 	}
 
@@ -43,21 +43,30 @@ func TestEtcd_FixSocketMode(t *testing.T) {
 	t.Run("adjusts the mode", func(t *testing.T) {
 		l := listen()
 		t.Cleanup(func() { l.Close() })
+		require.NoError(t, os.Chmod(socketPath, 0600))
 
 		require.NoError(t, e.fixSocketMode(t.Context()))
 		requireMode(etcdSocketMode, "socket mode should be adjusted")
 	})
 
 	t.Run("waits for the socket to appear", func(t *testing.T) {
-		// Simulate etcd being restarted by the supervisor: the socket doesn't
-		// exist when the hook runs, and shows up a little later.
+		// The socket shows up only after the hook is already waiting; guard
+		// the listener with a mutex, as it's assigned and read from different
+		// goroutines with no happens-before edge via the file system.
+		var mu sync.Mutex
 		var l net.Listener
 		t.Cleanup(func() {
+			mu.Lock()
+			defer mu.Unlock()
 			if l != nil {
 				l.Close()
 			}
 		})
-		time.AfterFunc(500*time.Millisecond, func() { l = listen() })
+		time.AfterFunc(500*time.Millisecond, func() {
+			mu.Lock()
+			defer mu.Unlock()
+			l = listen()
+		})
 
 		require.NoError(t, e.fixSocketMode(t.Context()))
 		requireMode(etcdSocketMode, "socket mode should be adjusted after the socket appeared")
