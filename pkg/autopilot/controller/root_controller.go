@@ -198,7 +198,7 @@ func (c *rootController) startSubControllerRoutine(ctx context.Context, logger *
 		return err
 	}
 
-	if err := RegisterIndexers(ctx, mgr, "controller"); err != nil {
+	if err := RegisterIndexers(ctx, mgr); err != nil {
 		logger.WithError(err).Error("unable to register indexers")
 		return err
 	}
