@@ -81,7 +81,8 @@ type egressSelectorConfig struct {
 	UDSName string // UDS socket of konnectivity-server
 }
 
-// Init extracts needed binaries
+// Stages the kube-apiserver executable, resolves its launch config, writes
+// the required files and prepares the supervisor.
 func (a *APIServer) Init(_ context.Context) error {
 	var err error
 	a.uid, err = users.LookupUID(constant.ApiserverUser)
@@ -91,7 +92,36 @@ func (a *APIServer) Init(_ context.Context) error {
 		logrus.WithError(err).Warn("Running Kubernetes API server as root")
 	}
 	a.executablePath, err = assets.StageExecutable(a.K0sVars.BinDir, kubeAPIComponentName)
-	return err
+	if err != nil {
+		return err
+	}
+
+	cfg, err := a.buildConfig()
+	if err != nil {
+		return err
+	}
+
+	if err := cfg.writeFiles(); err != nil {
+		return err
+	}
+
+	a.supervisor = &supervisor.Supervisor{
+		Name:        kubeAPIComponentName,
+		BinPath:     a.executablePath,
+		RunDir:      a.K0sVars.RunDir,
+		DataDir:     a.K0sVars.DataDir,
+		Args:        append(cfg.flags.ToDashedArgs(), cfg.rawArgs...),
+		UID:         a.uid,
+		TimeoutStop: cfg.stopTimeout,
+	}
+
+	// If the API port is less than 1024, the process needs to bind to a privileged port
+	if a.NodeConfig.Spec.API.Port < 1024 {
+		a.supervisor.RequiredPrivileges.BindsPrivilegedPorts = true
+		logrus.Infof("API port %d is less than 1024, granting privilege to bind to privileged ports", a.NodeConfig.Spec.API.Port)
+	}
+
+	return nil
 }
 
 // The kube-apiserver launch config.
@@ -257,35 +287,9 @@ func (c *apiServerConfig) writeFiles() error {
 	return nil
 }
 
-// Run runs kube api
+// Starts supervising kube-apiserver.
 func (a *APIServer) Start(ctx context.Context) error {
 	logrus.Info("Starting kube-apiserver")
-
-	cfg, err := a.buildConfig()
-	if err != nil {
-		return err
-	}
-
-	if err := cfg.writeFiles(); err != nil {
-		return err
-	}
-
-	a.supervisor = &supervisor.Supervisor{
-		Name:        kubeAPIComponentName,
-		BinPath:     a.executablePath,
-		RunDir:      a.K0sVars.RunDir,
-		DataDir:     a.K0sVars.DataDir,
-		Args:        append(cfg.flags.ToDashedArgs(), cfg.rawArgs...),
-		UID:         a.uid,
-		TimeoutStop: cfg.stopTimeout,
-	}
-
-	// If the API port is less than 1024, the process needs to bind to a privileged port
-	if a.NodeConfig.Spec.API.Port < 1024 {
-		a.supervisor.RequiredPrivileges.BindsPrivilegedPorts = true
-		logrus.Infof("API port %d is less than 1024, granting privilege to bind to privileged ports", a.NodeConfig.Spec.API.Port)
-	}
-
 	return a.supervisor.Supervise(ctx)
 }
 

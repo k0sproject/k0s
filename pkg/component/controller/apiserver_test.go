@@ -322,7 +322,7 @@ func (a *apiServerSuite) TestAPIServer_BuildConfig() {
 	})
 
 	a.Run("stop timeout", func() {
-		for _, test := range []struct {
+		for _, tt := range []struct {
 			name           string
 			configured     time.Duration
 			requestTimeout string // request-timeout extra arg, if any
@@ -336,20 +336,20 @@ func (a *apiServerSuite) TestAPIServer_BuildConfig() {
 			{"clamps short request timeout", 0, "1s", "", 5 * time.Second, "3s"},
 			{"keeps user-provided watch termination grace period", 0, "1s", "7s", 9 * time.Second, "7s"},
 		} {
-			a.Run(test.name, func() {
+			a.Run(tt.name, func() {
 				underTest := newAPIServer()
-				underTest.StopTimeout = test.configured
+				underTest.StopTimeout = tt.configured
 				underTest.NodeConfig.Spec.API.ExtraArgs = map[string]string{}
-				if test.requestTimeout != "" {
-					underTest.NodeConfig.Spec.API.ExtraArgs["request-timeout"] = test.requestTimeout
+				if tt.requestTimeout != "" {
+					underTest.NodeConfig.Spec.API.ExtraArgs["request-timeout"] = tt.requestTimeout
 				}
-				if test.watchGrace != "" {
-					underTest.NodeConfig.Spec.API.ExtraArgs["shutdown-watch-termination-grace-period"] = test.watchGrace
+				if tt.watchGrace != "" {
+					underTest.NodeConfig.Spec.API.ExtraArgs["shutdown-watch-termination-grace-period"] = tt.watchGrace
 				}
 
 				cfg := build(underTest)
-				a.Equal(test.expected, cfg.stopTimeout)
-				a.Equal(test.expectedGrace, cfg.flags["shutdown-watch-termination-grace-period"])
+				a.Equal(tt.expected, cfg.stopTimeout)
+				a.Equal(tt.expectedGrace, cfg.flags["shutdown-watch-termination-grace-period"])
 			})
 		}
 	})
