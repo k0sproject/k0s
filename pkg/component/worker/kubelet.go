@@ -4,18 +4,18 @@
 package worker
 
 import (
-	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"os"
 	"path/filepath"
-	"regexp"
 	"runtime"
 	"strings"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
+	"github.com/k0sproject/k0s/internal/pkg/net/resolvconf"
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/assets"
@@ -210,7 +210,19 @@ func (k *Kubelet) writeKubeletConfig() error {
 	config := k.Configuration.DeepCopy()
 	config.Authentication.X509.ClientCAFile = caPath
 	if config.ResolverConfig == nil {
-		config.ResolverConfig = determineKubeletResolvConfPath()
+		if runtime.GOOS == "windows" {
+			// https://github.com/kubernetes/kubernetes/issues/116782#issuecomment-1477536396
+			config.ResolverConfig = new("")
+		} else {
+			path := resolvconf.Path
+			if useUplink, err := useSystemdResolvedUplink("/"); err != nil {
+				logrus.WithError(err).Warn("Failed to detect systemd-resolved")
+			} else if useUplink {
+				path = resolvconf.SystemdResolvedUplinkPath
+			}
+			logrus.Info("Using resolv.conf: ", path)
+			config.ResolverConfig = &path
+		}
 	}
 	config.StaticPodURL = staticPodURL
 	config.ContainerRuntimeEndpoint = containerRuntimeEndpoint.String()
@@ -312,74 +324,52 @@ func validateTaintEffect(effect corev1.TaintEffect) error {
 	return nil
 }
 
-// determineKubeletResolvConfPath returns the path to the resolv.conf file that
-// the kubelet should use.
-func determineKubeletResolvConfPath() *string {
-	path := "/etc/resolv.conf"
-
-	switch runtime.GOOS {
-	case "windows":
-		// https://github.com/kubernetes/kubernetes/issues/116782#issuecomment-1477536396
-		return new("")
-
-	case "linux":
-		// https://www.freedesktop.org/software/systemd/man/systemd-resolved.service.html#/etc/resolv.conf
-		// If it's likely that resolv.conf is pointing to a systemd-resolved
-		// nameserver, that nameserver won't be reachable from within
-		// containers. Try to use the alternative resolv.conf path used by
-		// systemd-resolved instead.
-		detected, err := hasSystemdResolvedNameserver(path)
-		if err != nil {
-			logrus.WithError(err).Info("Failed to detect the presence of systemd-resolved")
-		} else if detected {
-			systemdPath := "/run/systemd/resolve/resolv.conf"
-			logrus.Infof("The file %s looks like it's managed by systemd-resolved, using resolv.conf: %s", path, systemdPath)
-			return &systemdPath
+// Determines if systemd-resolved's uplink resolv.conf should be used. If
+// systemd-resolved is running, /etc/resolv.conf usually points to its stub
+// resolver on localhost, which isn't reachable from within a pod's network
+// namespace. If that's the case, systemd-resolved's uplink file should be used.
+func useSystemdResolvedUplink(root string) (_ bool, err error) {
+	uplinkInfo, err := os.Stat(filepath.Join(root, resolvconf.SystemdResolvedUplinkPath))
+	if err != nil {
+		logger := logrus.WithError(err)
+		if errors.Is(err, os.ErrNotExist) {
+			logger.Debug("Didn't detect systemd-resolved")
+			return false, nil
 		}
+		return false, err
 	}
 
-	logrus.Infof("Using resolv.conf: %s", path)
-	return &path
-}
+	resolvConf, err := os.Open(filepath.Join(root, resolvconf.Path))
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			logrus.Warn(resolvconf.Path, " doesn't exist")
+			return true, nil
+		}
+		return false, err
+	}
+	defer func() { err = errors.Join(err, resolvConf.Close()) }()
 
-// hasSystemdResolvedNameserver parses the given resolv.conf file and checks if
-// it contains 127.0.0.53 as the only nameserver. Then it is assumed to be
-// systemd-resolved managed.
-func hasSystemdResolvedNameserver(resolvConfPath string) (bool, error) {
-	f, err := os.Open(resolvConfPath)
+	info, err := resolvConf.Stat()
 	if err != nil {
 		return false, err
 	}
 
-	defer f.Close()
-
-	// This is roughly how glibc and musl do it: check for "nameserver" followed
-	// by whitespace, then try to parse the next bytes as IP address,
-	// disregarding anything after any additional whitespace.
-	// https://sourceware.org/git/?p=glibc.git;a=blob;f=resolv/res_init.c;h=cce842fa9311c5bdba629f5e78c19746f75ef18e;hb=refs/tags/glibc-2.37#l396
-	// https://git.musl-libc.org/cgit/musl/tree/src/network/resolvconf.c?h=v1.2.3#n62
-
-	nameserverLine := regexp.MustCompile(`^nameserver\s+(\S+)`)
-
-	lines := bufio.NewScanner(f)
-	systemdResolvedIPSeen := false
-	for lines.Scan() {
-		match := nameserverLine.FindSubmatch(lines.Bytes())
-		if len(match) < 1 {
-			continue
-		}
-		ip := net.ParseIP(string(match[1]))
-		if ip == nil {
-			continue
-		}
-		if systemdResolvedIPSeen || !ip.Equal(net.IP{127, 0, 0, 53}) {
-			return false, nil
-		}
-		systemdResolvedIPSeen = true
+	if os.SameFile(info, uplinkInfo) {
+		logrus.Debug(resolvconf.Path, " points to systemd-resolved's uplink")
+		return false, nil
 	}
-	if err := lines.Err(); err != nil {
+
+	if isStub, err := resolvconf.IsSystemdResolvedStub(resolvConf); err != nil {
+		if errors.Is(err, resolvconf.ErrNoNameservers) {
+			logrus.Warn(resolvconf.Path, " has no nameservers, using systemd-resolved's uplink")
+			return true, nil
+		}
 		return false, err
+	} else if isStub {
+		logrus.Info(resolvconf.Path, " points to systemd-resolved's stub, using its uplink instead")
+		return true, nil
 	}
 
-	return systemdResolvedIPSeen, nil
+	logrus.Debug(resolvconf.Path, " doesn't point to systemd-resolved's stub")
+	return false, nil
 }
