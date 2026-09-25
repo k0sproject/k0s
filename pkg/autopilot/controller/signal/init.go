@@ -23,8 +23,8 @@ import (
 // controller and worker modes. The restart tracker's lifetime needs to be tied
 // to the process, i.e. it has to be shared by all the managers this function is
 // called with throughout the lifetime of the process.
-func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Manager, delegate apdel.ControllerDelegate, restartTracker *k0s.RestartTracker, k0sDataDir string, enableWorker bool, clusterID string, leaseStatus leaderelection.Status) error {
-	if err := k0s.RegisterControllers(ctx, logger, mgr, delegate, restartTracker, enableWorker, clusterID, leaseStatus); err != nil {
+func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Manager, delegate apdel.ControllerDelegate, restartTracker *k0s.RestartTracker, k0sDataDir string, statusSocketPath string, enableWorker bool, clusterID string, leaseStatus leaderelection.Status) error {
+	if err := k0s.RegisterControllers(ctx, logger, mgr, delegate, restartTracker, statusSocketPath, enableWorker, clusterID, leaseStatus); err != nil {
 		return fmt.Errorf("unable to register k0s controllers: %w", err)
 	}
 

@@ -18,6 +18,7 @@ type RootConfig struct { //nolint:revive // TODO rename to Config
 	MetricsBindAddr     string
 	HealthProbeBindAddr string
 	ExcludeFromPlans    []string
+	StatusSocketPath    string
 }
 
 // Root is the 'root' of all controllers
