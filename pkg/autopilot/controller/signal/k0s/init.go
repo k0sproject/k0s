@@ -14,7 +14,6 @@ import (
 	"path/filepath"
 
 	autopilotv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
-	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
 	"github.com/k0sproject/k0s/pkg/autopilot/constant"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
 	apsigpred "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/common/predicate"
@@ -38,17 +37,12 @@ import (
 // controller-runtime manager. The restart tracker's lifetime needs to be tied
 // to the process, i.e. it has to be shared by all the managers this function is
 // called with throughout the lifetime of the process.
-func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Manager, delegate apdel.ControllerDelegate, restartTracker *RestartTracker, enableWorker bool, clusterID string, leaseStatus leaderelection.Status) error {
+func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Manager, delegate apdel.ControllerDelegate, hostname string, restartTracker *RestartTracker, enableWorker bool, clusterID string, leaseStatus leaderelection.Status) error {
 	if restartTracker == nil {
 		return errors.New("restart tracker is required")
 	}
 
 	logger = logger.WithField("controller", delegate.Name())
-
-	hostname, err := apcomm.FindEffectiveHostname()
-	if err != nil {
-		return fmt.Errorf("unable to determine hostname: %w", err)
-	}
 
 	k0sBinaryPath, err := os.Executable()
 	if err != nil {
