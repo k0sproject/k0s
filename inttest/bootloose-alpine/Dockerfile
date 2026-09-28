@@ -1,7 +1,7 @@
-ARG ALPINE_VERSION
+ARG ALPINE_IMAGE
 ARG GOLANG_IMAGE
 
-FROM docker.io/library/alpine:$ALPINE_VERSION
+FROM $ALPINE_IMAGE
 
 ARG TARGETARCH
 ARG CRI_DOCKERD_VERSION=0.4.4 # renovate: datasource=github-releases depName=Mirantis/cri-dockerd

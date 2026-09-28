@@ -1,5 +1,5 @@
-# renovate: datasource=github-releases depName=vmware-tanzu/sonobuoy
-sonobuoy_version = 0.57.3
+sonobuoy_image = docker.io/sonobuoy/sonobuoy:v0.57.3@sha256:69d1ddf7bf84deb02807a415c0ff469358046aaf9c69409ef4c4a943d663201f
+sonobuoy_version = $(patsubst v%,%,$(lastword $(subst :, ,$(firstword $(subst @, ,$(sonobuoy_image))))))
 
 # renovate: datasource=github-releases depName=helm/helm
 helm_version = 4.3.0

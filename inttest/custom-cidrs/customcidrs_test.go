@@ -6,14 +6,14 @@ package customcidrs
 import (
 	"testing"
 
-	"github.com/k0sproject/k0s/inttest/common"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes"
 
+	"github.com/k0sproject/k0s/inttest/common"
+	"github.com/k0sproject/k0s/inttest/common/ociimages"
 	"github.com/stretchr/testify/suite"
-
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type CustomCIDRsSuite struct {
@@ -59,7 +59,7 @@ func (s *CustomCIDRsSuite) TestK0sGetsUp() {
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{{
 				Name:  "nginx",
-				Image: "docker.io/library/nginx:1.31.6-alpine",
+				Image: ociimages.Nginx,
 				ReadinessProbe: &corev1.Probe{
 					ProbeHandler: corev1.ProbeHandler{
 						HTTPGet: &corev1.HTTPGetAction{

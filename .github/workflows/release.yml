@@ -624,8 +624,8 @@ jobs:
 
       - name: Fetch Alpine version to use
         run: |
-          alpinePatchVersion="$(./vars.sh alpine_patch_version)"
-          echo "ALPINE_PATCH_VERSION=$alpinePatchVersion" >>"$GITHUB_ENV"
+          alpineImage="$(./vars.sh alpine_image)"
+          echo "ALPINE_IMAGE=$alpineImage" >>"$GITHUB_ENV"
 
       - name: Build image and push to Docker Hub and GitHub image registry
         uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
@@ -637,7 +637,7 @@ jobs:
             quay.io/k0sproject/k0s:${{ needs.release.outputs.image_tag }}
             docker.io/k0sproject/k0s:${{ needs.release.outputs.image_tag }}
           build-args: |
-            ALPINE_VERSION=${{ env.ALPINE_PATCH_VERSION }}
+            ALPINE_IMAGE=${{ env.ALPINE_IMAGE }}
           push: true
 
   conformance-test:
