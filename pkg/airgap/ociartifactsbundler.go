@@ -58,6 +58,9 @@ type OCIArtifactsBundler struct {
 	PlatformMatcher       platforms.MatchComparer
 	RewriteTarget         RewriteRefFunc
 
+	// Fail if a tag doesn't resolve to the digest given alongside it.
+	RequireMatchingTags bool
+
 	// Limits the maximum number of concurrent artifact copy tasks.
 	// Uses the ORAS default if zero.
 	Concurrency uint
@@ -151,7 +154,7 @@ func (b *OCIArtifactsBundler) Run(ctx context.Context, refs []reference.Named, o
 			PlainHTTP: b.InsecureRegistries == PlainHTTPOCIRegistry,
 		}
 
-		desc, err := copyArtifact(ctx, ref, &source, &target, copyOpts)
+		desc, err := b.copyArtifact(ctx, ref, &source, &target, copyOpts)
 		if err != nil {
 			return fmt.Errorf("failed to bundle %s: %w", ref, err)
 		}
@@ -177,28 +180,36 @@ func (b *OCIArtifactsBundler) Run(ctx context.Context, refs []reference.Named, o
 	return tarWriter.Close()
 }
 
-func copyArtifact(ctx context.Context, ref reference.Named, source oras.ReadOnlyTarget, target oras.Target, copyOpts oras.CopyOptions) (imagespecv1.Descriptor, error) {
+func (b *OCIArtifactsBundler) copyArtifact(ctx context.Context, ref reference.Named, source oras.ReadOnlyTarget, target oras.Target, copyOpts oras.CopyOptions) (imagespecv1.Descriptor, error) {
 	var srcRef string
-	if tagged, ok := reference.TagNameOnly(ref).(reference.Tagged); ok {
-		srcRef = tagged.Tag()
-	}
 	if digested, ok := ref.(reference.Digested); ok {
-		expectedDigest := digested.Digest()
-		if srcRef == "" {
-			srcRef = expectedDigest.String()
-		} else {
-			// Pull via tag, but ensure that it matches the digest!
-			mapRoot := copyOpts.MapRoot
-			copyOpts.MapRoot = func(ctx context.Context, src content.ReadOnlyStorage, root imagespecv1.Descriptor) (d imagespecv1.Descriptor, _ error) {
-				if root.Digest == expectedDigest {
-					if mapRoot != nil {
-						return mapRoot(ctx, src, root)
+		// The digest is authoritative. If there's a tag as well, it's only
+		// used to name the artifact in the bundle, but the tag is still
+		// expected to point to the digest on the registry.
+		srcRef = digested.Digest().String()
+		if tagged, ok := ref.(reference.Tagged); ok {
+			resolved, err := source.Resolve(ctx, tagged.Tag())
+			if err == nil {
+				if resolved.Digest != digested.Digest() {
+					if b.RequireMatchingTags {
+						return imagespecv1.Descriptor{}, fmt.Errorf("%w for tag: %s", content.ErrMismatchedDigest, resolved.Digest)
 					}
-					return root, nil
+					k0scontext.ValueOr(ctx, b.Log).Warn("Tag resolves to a different digest: ", resolved.Digest)
 				}
-				return d, fmt.Errorf("%w for %s: %s", content.ErrMismatchedDigest, ref, root.Digest)
+			} else if errors.Is(err, errdef.ErrNotFound) {
+				if b.RequireMatchingTags {
+					return imagespecv1.Descriptor{}, fmt.Errorf("tag %w", errdef.ErrNotFound)
+				}
+				k0scontext.ValueOr(ctx, b.Log).Warn("Tag not found")
+			} else {
+				if b.RequireMatchingTags {
+					return imagespecv1.Descriptor{}, fmt.Errorf("failed to resolve tag: %w", err)
+				}
+				k0scontext.ValueOr(ctx, b.Log).WithError(err).Warn("Failed to resolve tag")
 			}
 		}
+	} else if tagged, ok := reference.TagNameOnly(ref).(reference.Tagged); ok {
+		srcRef = tagged.Tag()
 	}
 
 	return oras.Copy(ctx, source, srcRef, target, "", copyOpts)
