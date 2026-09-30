@@ -30,7 +30,7 @@ func newWindows(name string) *windowsService {
 	return &windowsService{name: name, displayName: displayName}
 }
 
-func (s *windowsService) Install(ctx context.Context, args []string, env []string) (retErr error) {
+func (s *windowsService) Install(ctx context.Context, opts InstallOpts) (retErr error) {
 	m, err := mgr.Connect()
 	if err != nil {
 		return fmt.Errorf("connect to SCM: %w", err)
@@ -43,39 +43,65 @@ func (s *windowsService) Install(ctx context.Context, args []string, env []strin
 	}
 
 	// Prepend "service=<name>" so k0s knows it's running as a Windows service.
-	args = append([]string{"service=" + s.name}, args...)
+	args := append([]string{"service=" + s.name}, opts.Args...)
 
 	sv, err := m.CreateService(s.name, exec, mgr.Config{
 		DisplayName: s.displayName,
 		Description: "k0s - Zero Friction Kubernetes",
 		StartType:   mgr.StartManual,
 	}, args...)
-	if err != nil {
-		if errors.Is(err, windows.ERROR_SERVICE_EXISTS) {
-			return fmt.Errorf("%w: %s", ErrAlreadyInstalled, s.name)
-		}
-		return fmt.Errorf("create service: %w", err)
-	}
-	defer func() {
-		if retErr != nil {
-			_ = sv.Delete()
-		}
-		sv.Close()
-	}()
+	switch {
+	case err == nil:
+		// The service is ours, so remove it again if anything below fails.
+		defer func() {
+			if retErr != nil {
+				_ = sv.Delete()
+			}
+			sv.Close()
+		}()
 
-	if len(env) > 0 {
-		// Set environment via the service's registry key. The SCM has no API
-		// for this; the key is removed automatically when the service is deleted.
-		key, err := registry.OpenKey(registry.LOCAL_MACHINE,
-			`SYSTEM\CurrentControlSet\Services\`+s.name,
-			registry.SET_VALUE)
-		if err != nil {
-			return fmt.Errorf("open service registry key: %w", err)
+	case !errors.Is(err, windows.ERROR_SERVICE_EXISTS):
+		return fmt.Errorf("create service: %w", err)
+
+	case !opts.Force:
+		return fmt.Errorf("%w: %s", ErrAlreadyInstalled, s.name)
+
+	default:
+		// Reconfigure the existing service rather than deleting and recreating
+		// it. Deletion is asynchronous for as long as anyone holds a handle to
+		// the service, which would make the subsequent create fail.
+		if sv, err = m.OpenService(s.name); err != nil {
+			return fmt.Errorf("open service: %w", err)
 		}
-		defer key.Close()
-		if err := key.SetStringsValue("Environment", env); err != nil {
+		defer sv.Close()
+
+		config, err := sv.Config()
+		if err != nil {
+			return fmt.Errorf("get service config: %w", err)
+		}
+		config.BinaryPathName = windows.ComposeCommandLine(append([]string{exec}, args...))
+		config.DisplayName = s.displayName
+		if err := sv.UpdateConfig(config); err != nil {
+			return fmt.Errorf("update service config: %w", err)
+		}
+	}
+
+	// Set the environment via the service's registry key. The SCM has no API
+	// for this. The key is removed along with the service.
+	key, err := registry.OpenKey(registry.LOCAL_MACHINE,
+		`SYSTEM\CurrentControlSet\Services\`+s.name,
+		registry.SET_VALUE)
+	if err != nil {
+		return fmt.Errorf("open service registry key: %w", err)
+	}
+	defer key.Close()
+	if len(opts.Env) > 0 {
+		if err := key.SetStringsValue("Environment", opts.Env); err != nil {
 			return fmt.Errorf("set service environment: %w", err)
 		}
+	} else if err := key.DeleteValue("Environment"); err != nil && !errors.Is(err, registry.ErrNotExist) {
+		// Don't leak the environment of a previous installation.
+		return fmt.Errorf("delete service environment: %w", err)
 	}
 
 	return nil

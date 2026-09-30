@@ -7,6 +7,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -27,7 +28,10 @@ func TestSystemdInstall_WritesUnitUnderRoot_AndReloadsDaemon(t *testing.T) {
 
 	r.When("systemctl", []string{"daemon-reload"}, reply{exit: 0})
 
-	require.NoError(t, svc.Install(ctx, []string{"controller", "--config", "/etc/k0s/k0s.yaml"}, []string{"K0S_LOG_LEVEL=info", "K0S_FOO=bar baz"}))
+	require.NoError(t, svc.Install(ctx, InstallOpts{
+		Args: []string{"controller", "--config", "/etc/k0s/k0s.yaml"},
+		Env:  []string{"K0S_LOG_LEVEL=info", "K0S_FOO=bar baz"},
+	}))
 
 	unitPath := filepath.Join(root, "etc/systemd/system/k0scontroller.service")
 	unitBytes, err := os.ReadFile(unitPath)
@@ -76,8 +80,42 @@ func TestSystemdInstall_FailsIfAlreadyInstalled(t *testing.T) {
 
 	r.When("systemctl", []string{"daemon-reload"}, reply{exit: 0})
 
-	require.NoError(t, svc.Install(ctx, nil, nil), "first Install() should succeed")
-	assert.ErrorIs(t, svc.Install(ctx, nil, nil), ErrAlreadyInstalled)
+	require.NoError(t, svc.Install(ctx, InstallOpts{}), "first Install() should succeed")
+	assert.ErrorIs(t, svc.Install(ctx, InstallOpts{}), ErrAlreadyInstalled)
+}
+
+func TestSystemdInstall_ForceReplacesUnit(t *testing.T) {
+	ctx := t.Context()
+	root := t.TempDir()
+	require.NoError(t, os.MkdirAll(filepath.Join(root, "etc/systemd/system"), 0o755))
+	r := newFakeRunner()
+
+	svc := newSystemd("k0scontroller")
+	svc.root = root
+	svc.runner = r
+	svc.exec = func() (string, error) { return "/usr/local/bin/k0s", nil }
+
+	r.When("systemctl", []string{"daemon-reload"}, reply{exit: 0})
+
+	require.NoError(t, svc.Install(ctx, InstallOpts{Args: []string{"worker"}}))
+	require.NoError(t, svc.Install(ctx, InstallOpts{Args: []string{"controller"}, Force: true}))
+
+	unitPath := filepath.Join(root, "etc/systemd/system/k0scontroller.service")
+	unitBytes, err := os.ReadFile(unitPath)
+	require.NoError(t, err)
+	assert.Contains(t, string(unitBytes), "ExecStart=/usr/local/bin/k0s controller\n")
+	assert.NotContains(t, string(unitBytes), "worker")
+
+	if runtime.GOOS != "windows" { // no POSIX permissions there
+		info, err := os.Stat(unitPath)
+		require.NoError(t, err)
+		assert.Equal(t, os.FileMode(0o644), info.Mode().Perm())
+	}
+
+	// Only the daemon-reloads, no stop or start.
+	for _, call := range r.calls {
+		assert.Equal(t, []string{"daemon-reload"}, call.args)
+	}
 }
 
 func TestSystemdEnable_Disable_Start_Stop(t *testing.T) {

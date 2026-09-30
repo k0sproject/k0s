@@ -45,19 +45,21 @@ func (s *systemdService) unitPath() string {
 	return filepath.Join(s.unitDir(), s.unitName())
 }
 
-func (s *systemdService) Install(ctx context.Context, args []string, env []string) error {
+func (s *systemdService) Install(ctx context.Context, opts InstallOpts) error {
 	exec, err := s.exec()
 	if err != nil {
 		return fmt.Errorf("get executable: %w", err)
 	}
-	unit, err := renderSystemdUnit(exec, args, env)
+	unit, err := renderSystemdUnit(exec, opts.Args, opts.Env)
 	if err != nil {
 		return err
 	}
-	if err := file.WriteNew(s.unitPath(), unit, 0o644); err != nil {
-		if errors.Is(err, fs.ErrExist) {
-			return fmt.Errorf("%w: %s", ErrAlreadyInstalled, s.name)
-		}
+	if opts.Force {
+		err = file.AtomicWithTarget(s.unitPath()).WithPermissions(0o644).Write(unit)
+	} else if err = file.WriteNew(s.unitPath(), unit, 0o644); errors.Is(err, fs.ErrExist) {
+		return fmt.Errorf("%w: %s", ErrAlreadyInstalled, s.name)
+	}
+	if err != nil {
 		return err
 	}
 

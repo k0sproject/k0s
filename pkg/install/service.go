@@ -57,15 +57,12 @@ func InstallService(ctx context.Context, args []string, envVars []string, force 
 		return err
 	}
 
-	if force {
-		logrus.Infof("Uninstalling %s service", name)
-		if err := svc.Uninstall(ctx); err != nil && !errors.Is(err, sysservice.ErrNotInstalled) {
-			logrus.Warnf("failed to uninstall service: %v", err)
-		}
-	}
-
 	logrus.Infof("Installing %s service", name)
-	err = svc.Install(ctx, args, envVars)
+	err = svc.Install(ctx, sysservice.InstallOpts{
+		Args:  args,
+		Env:   envVars,
+		Force: force,
+	})
 	if err != nil {
 		return err
 	}

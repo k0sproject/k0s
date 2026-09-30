@@ -39,14 +39,17 @@ func (s *openrcService) initDir() string {
 
 func (s *openrcService) initPath() string { return filepath.Join(s.initDir(), s.name) }
 
-func (s *openrcService) Install(ctx context.Context, args []string, env []string) error {
+func (s *openrcService) Install(ctx context.Context, opts InstallOpts) error {
 	exec, err := s.exec()
 	if err != nil {
 		return fmt.Errorf("get executable: %w", err)
 	}
-	initScript, err := renderOpenRCInit(exec, args, env)
+	initScript, err := renderOpenRCInit(exec, opts.Args, opts.Env)
 	if err != nil {
 		return err
+	}
+	if opts.Force {
+		return file.AtomicWithTarget(s.initPath()).WithPermissions(0o755).Write(initScript)
 	}
 	if err := file.WriteNew(s.initPath(), initScript, 0o755); err != nil {
 		if errors.Is(err, fs.ErrExist) {

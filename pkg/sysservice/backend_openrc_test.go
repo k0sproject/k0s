@@ -6,6 +6,7 @@ package sysservice
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -24,7 +25,10 @@ func TestOpenRCInstall_WritesInitScript_UnderRoot(t *testing.T) {
 	svc.runner = r
 	svc.exec = func() (string, error) { return "/usr/local/bin/k0s", nil }
 
-	require.NoError(t, svc.Install(ctx, []string{"controller", "--config", "/etc/k0s/k0s.yaml"}, []string{"K0S_FOO=bar", "K0S_BAR=baz"}))
+	require.NoError(t, svc.Install(ctx, InstallOpts{
+		Args: []string{"controller", "--config", "/etc/k0s/k0s.yaml"},
+		Env:  []string{"K0S_FOO=bar", "K0S_BAR=baz"},
+	}))
 
 	initPath := filepath.Join(root, "etc/init.d/k0scontroller")
 	initBytes, err := os.ReadFile(initPath)
@@ -50,9 +54,38 @@ func TestOpenRCInstall_FailsIfAlreadyInstalled(t *testing.T) {
 	svc.runner = r
 	svc.exec = func() (string, error) { return "/usr/local/bin/k0s", nil }
 
-	require.NoError(t, svc.Install(ctx, nil, nil), "first Install() should succeed")
+	require.NoError(t, svc.Install(ctx, InstallOpts{}), "first Install() should succeed")
 
-	assert.ErrorIs(t, svc.Install(ctx, nil, nil), ErrAlreadyInstalled)
+	assert.ErrorIs(t, svc.Install(ctx, InstallOpts{}), ErrAlreadyInstalled)
+}
+
+func TestOpenRCInstall_ForceReplacesInitScript(t *testing.T) {
+	ctx := t.Context()
+	root := t.TempDir()
+	require.NoError(t, os.MkdirAll(filepath.Join(root, "etc/init.d"), 0o755))
+	r := newFakeRunner()
+
+	svc := newOpenRC("k0scontroller")
+	svc.root = root
+	svc.runner = r
+	svc.exec = func() (string, error) { return "/usr/local/bin/k0s", nil }
+
+	require.NoError(t, svc.Install(ctx, InstallOpts{Args: []string{"worker"}}))
+	require.NoError(t, svc.Install(ctx, InstallOpts{Args: []string{"controller"}, Force: true}))
+
+	initPath := filepath.Join(root, "etc/init.d/k0scontroller")
+	initBytes, err := os.ReadFile(initPath)
+	require.NoError(t, err)
+	assert.Contains(t, string(initBytes), `command_args="'controller'"`)
+	assert.NotContains(t, string(initBytes), `'worker'`)
+
+	if runtime.GOOS != "windows" { // no POSIX permissions there
+		info, err := os.Stat(initPath)
+		require.NoError(t, err)
+		assert.Equal(t, os.FileMode(0o755), info.Mode().Perm(), "the init script has to stay executable")
+	}
+
+	assert.Empty(t, r.calls, "the service must not be stopped or started")
 }
 
 func TestOpenRCInstall_QuotesArgs(t *testing.T) {
@@ -65,12 +98,12 @@ func TestOpenRCInstall_QuotesArgs(t *testing.T) {
 	svc.runner = newFakeRunner()
 	svc.exec = func() (string, error) { return "/usr/local/bin/k0s", nil }
 
-	require.NoError(t, svc.Install(ctx, []string{
+	require.NoError(t, svc.Install(ctx, InstallOpts{Args: []string{
 		"controller",
 		"--kubelet-extra-args=--node-labels foo=bar",
 		`--config=it's.yaml`,
 		"--profile=$(reboot)",
-	}, nil))
+	}}))
 
 	initBytes, err := os.ReadFile(filepath.Join(root, "etc/init.d/k0scontroller"))
 	require.NoError(t, err)

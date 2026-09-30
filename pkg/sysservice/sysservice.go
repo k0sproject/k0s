@@ -33,10 +33,25 @@ var (
 	ErrUnsupportedInitSystem = errors.New("no supported init system detected")
 )
 
+// InstallOpts describes the service to be installed.
+type InstallOpts struct {
+	// Args are the arguments to the k0s executable.
+	Args []string
+
+	// Env are the environment variables for the service, as KEY=value.
+	Env []string
+
+	// Force replaces the definition of an already installed service instead of
+	// failing.
+	Force bool
+}
+
 type Service interface {
 	// Install registers the service with the service manager. It fails with an
-	// error wrapping [ErrAlreadyInstalled] if the service already exists.
-	Install(ctx context.Context, args []string, env []string) error
+	// error wrapping [ErrAlreadyInstalled] if the service already exists and
+	// [InstallOpts.Force] isn't set. It never starts or stops the service, so a
+	// replaced definition only takes effect once the service is restarted.
+	Install(ctx context.Context, opts InstallOpts) error
 
 	// Uninstall removes the service from the service manager. It fails with an
 	// error wrapping [ErrNotInstalled] if the service does not exist.
