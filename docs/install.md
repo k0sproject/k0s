@@ -98,7 +98,6 @@ systemd or OpenRC as its init system.
     Process ID: 436
     Role: controller
     Workloads: true
-    Init System: linux-systemd
     ```
 
 5. Access the cluster using kubectl
