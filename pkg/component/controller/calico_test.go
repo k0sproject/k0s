@@ -155,7 +155,7 @@ func (ds daemonSetContainersEnv) RequireContainerHasEnvVariable(t *testing.T, co
 		for _, envSpec := range container.Env {
 			if envSpec.Name == varName {
 				found = true
-				require.Equal(t, envSpec.Value, varValue)
+				require.Equal(t, varValue, envSpec.Value)
 			}
 		}
 		require.Truef(t, found, "Variable %s not found", varName)
