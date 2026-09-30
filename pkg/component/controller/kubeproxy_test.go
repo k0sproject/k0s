@@ -4,23 +4,19 @@
 package controller
 
 import (
-	"bytes"
-	"io"
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
+	"testing/synctest"
 
 	"github.com/k0sproject/k0s/internal/testutil"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/config"
-
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/kubernetes/scheme"
 	kubeproxyv1alpha1 "k8s.io/kube-proxy/config/v1alpha1"
-
 	"sigs.k8s.io/yaml"
 
 	"github.com/stretchr/testify/assert"
@@ -34,36 +30,46 @@ func TestKubeProxyConfig_FeatureGates(t *testing.T) {
 		{Name: "Feature1", Enabled: false, Components: []string{"kube-proxy"}},
 	}
 
-	_, manifestsDir := startComponent(t, cfg)
-	_, _, configMap := awaitUpdate(t, manifestsDir, nil)
+	synctest.Test(t, func(t *testing.T) {
 
-	var kubeProxyConfigData unstructured.Unstructured
-	require.NoError(t, yaml.Unmarshal([]byte(configMap.Data["config.conf"]), &kubeProxyConfigData.Object))
-	assert.Equal(t, kubeproxyv1alpha1.SchemeGroupVersion.String(), kubeProxyConfigData.GetAPIVersion())
-	assert.Equal(t, "KubeProxyConfiguration", kubeProxyConfigData.GetKind())
+		_, manifestsDir := startComponent(t, cfg)
+		_, _, configMap := awaitUpdate(t, manifestsDir, nil)
 
-	renderedFeatureGates, ok := kubeProxyConfigData.Object["featureGates"].(map[string]any)
-	require.True(t, ok)
-	assert.Equal(t, map[string]any{
-		"Feature0": true,
-		"Feature1": false,
-	}, renderedFeatureGates)
+		var kubeProxyConfigData unstructured.Unstructured
+		require.NoError(t, yaml.Unmarshal([]byte(configMap.Data["config.conf"]), &kubeProxyConfigData.Object))
+		assert.Equal(t, kubeproxyv1alpha1.SchemeGroupVersion.String(), kubeProxyConfigData.GetAPIVersion())
+		assert.Equal(t, "KubeProxyConfiguration", kubeProxyConfigData.GetKind())
+
+		renderedFeatureGates, ok := kubeProxyConfigData.Object["featureGates"].(map[string]any)
+		require.True(t, ok)
+		assert.Equal(t, map[string]any{
+			"Feature0": true,
+			"Feature1": false,
+		}, renderedFeatureGates)
+	})
 }
 
 func TestKubeProxyConfig_HashChangesWhenConfigMapChanges(t *testing.T) {
 	cfg := v1beta1.DefaultClusterConfig()
-	underTest, manifestsDir := startComponent(t, cfg)
 
-	stat, initialDaemonSet, _ := awaitUpdate(t, manifestsDir, nil)
+	synctest.Test(t, func(t *testing.T) {
+		underTest, manifestsDir := startComponent(t, cfg)
 
-	cfg.Spec.FeatureGates = v1beta1.FeatureGates{
-		{Name: "Feature0", Enabled: true, Components: []string{"kube-proxy"}},
-	}
-	require.NoError(t, underTest.Reconcile(t.Context(), cfg))
+		stat, initialDaemonSet, _ := awaitUpdate(t, manifestsDir, nil)
 
-	_, updatedDaemonSet, _ := awaitUpdate(t, manifestsDir, stat)
+		cfg.Spec.FeatureGates = v1beta1.FeatureGates{
+			{Name: "Feature0", Enabled: true, Components: []string{"kube-proxy"}},
+		}
+		require.NoError(t, underTest.Reconcile(t.Context(), cfg))
 
-	assert.NotEqual(t, initialDaemonSet.Spec.Template.Annotations["k0sproject.io/config-hash"], updatedDaemonSet.Spec.Template.Annotations["k0sproject.io/config-hash"])
+		stat, updatedDaemonSet, _ := awaitUpdate(t, manifestsDir, stat)
+		require.NotNil(t, stat, "Manifest file wasn't reconciled")
+
+		assert.NotEqual(t,
+			initialDaemonSet.Spec.Template.Annotations["k0sproject.io/config-hash"],
+			updatedDaemonSet.Spec.Template.Annotations["k0sproject.io/config-hash"],
+		)
+	})
 }
 
 func startComponent(t *testing.T, cfg *v1beta1.ClusterConfig) (*KubeProxy, string) {
@@ -82,36 +88,21 @@ func startComponent(t *testing.T, cfg *v1beta1.ClusterConfig) (*KubeProxy, strin
 	return underTest, k0sVars.ManifestsDir
 }
 
-func awaitUpdate(t *testing.T, manifestsDir string, prev os.FileInfo) (stat os.FileInfo, ds *appsv1.DaemonSet, cm *corev1.ConfigMap) {
+func awaitUpdate(t *testing.T, manifestsDir string, prev os.FileInfo) (_ os.FileInfo, ds *appsv1.DaemonSet, cm *corev1.ConfigMap) {
 	manifestPath := filepath.Join(manifestsDir, "kubeproxy", "kube-proxy.yaml")
 
-	var manifestData []byte
-	require.EventuallyWithT(t, func(t *assert.CollectT) {
-		f, err := os.OpenFile(manifestPath, os.O_RDONLY, 0)
-		if !assert.NoError(t, err) {
-			return
-		}
-		defer f.Close()
+	synctest.Wait()
+	manifestFile, err := os.Open(manifestPath)
+	require.NoError(t, err)
+	defer manifestFile.Close()
 
-		stat, err = f.Stat()
-		if !assert.NoError(t, err) {
-			return
-		}
+	stat, err := manifestFile.Stat()
+	require.NoError(t, err)
+	if prev != nil && prev.ModTime().Equal(stat.ModTime()) && prev.Size() == stat.Size() {
+		return nil, nil, nil
+	}
 
-		if prev != nil && !assert.True(t, prev.ModTime().Before(stat.ModTime()) || prev.Size() != stat.Size(), "manifest unchanged") {
-			return
-		}
-
-		size := int(stat.Size())
-		manifestData = make([]byte, size+1)
-		n, err := io.ReadFull(f, manifestData)
-		if !assert.Equal(t, io.ErrUnexpectedEOF, err) || !assert.Equal(t, size, n) {
-			return
-		}
-		manifestData = manifestData[:size]
-	}, 5*time.Second, 50*time.Millisecond)
-
-	for obj, err := range testutil.ParseObjects(scheme.Scheme, bytes.NewReader(manifestData)) {
+	for obj, err := range testutil.ParseObjects(scheme.Scheme, manifestFile) {
 		require.NoError(t, err)
 		switch obj := obj.(type) {
 		case *appsv1.DaemonSet:
