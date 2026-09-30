@@ -59,7 +59,6 @@ systemd or OpenRC as its init system.
 
     ```shell
     sudo k0s install controller --single --force
-    sudo systemctl daemon-reload
     ```
 
     If you need to reinstall and immediately start the service, combine `--force` with `--start`:
