@@ -4,10 +4,10 @@
 package controller
 
 import (
+	"bytes"
 	"io"
 	"os"
 	"path/filepath"
-	"slices"
 	"testing"
 	"time"
 
@@ -18,7 +18,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/kubernetes/scheme"
 	kubeproxyv1alpha1 "k8s.io/kube-proxy/config/v1alpha1"
 
 	"sigs.k8s.io/yaml"
@@ -35,8 +35,7 @@ func TestKubeProxyConfig_FeatureGates(t *testing.T) {
 	}
 
 	_, manifestsDir := startComponent(t, cfg)
-	_, resources := awaitUpdate(t, manifestsDir, nil)
-	configMap := findKubeProxyConfigMap(t, resources)
+	_, _, configMap := awaitUpdate(t, manifestsDir, nil)
 
 	var kubeProxyConfigData unstructured.Unstructured
 	require.NoError(t, yaml.Unmarshal([]byte(configMap.Data["config.conf"]), &kubeProxyConfigData.Object))
@@ -55,16 +54,14 @@ func TestKubeProxyConfig_HashChangesWhenConfigMapChanges(t *testing.T) {
 	cfg := v1beta1.DefaultClusterConfig()
 	underTest, manifestsDir := startComponent(t, cfg)
 
-	stat, resources := awaitUpdate(t, manifestsDir, nil)
-	initialDaemonSet := findKubeProxyDaemonSet(t, resources)
+	stat, initialDaemonSet, _ := awaitUpdate(t, manifestsDir, nil)
 
 	cfg.Spec.FeatureGates = v1beta1.FeatureGates{
 		{Name: "Feature0", Enabled: true, Components: []string{"kube-proxy"}},
 	}
 	require.NoError(t, underTest.Reconcile(t.Context(), cfg))
 
-	_, resources = awaitUpdate(t, manifestsDir, stat)
-	updatedDaemonSet := findKubeProxyDaemonSet(t, resources)
+	_, updatedDaemonSet, _ := awaitUpdate(t, manifestsDir, stat)
 
 	assert.NotEqual(t, initialDaemonSet.Spec.Template.Annotations["k0sproject.io/config-hash"], updatedDaemonSet.Spec.Template.Annotations["k0sproject.io/config-hash"])
 }
@@ -85,13 +82,10 @@ func startComponent(t *testing.T, cfg *v1beta1.ClusterConfig) (*KubeProxy, strin
 	return underTest, k0sVars.ManifestsDir
 }
 
-func awaitUpdate(t *testing.T, manifestsDir string, prev os.FileInfo) (os.FileInfo, []*unstructured.Unstructured) {
+func awaitUpdate(t *testing.T, manifestsDir string, prev os.FileInfo) (stat os.FileInfo, ds *appsv1.DaemonSet, cm *corev1.ConfigMap) {
 	manifestPath := filepath.Join(manifestsDir, "kubeproxy", "kube-proxy.yaml")
 
-	var (
-		stat         os.FileInfo
-		manifestData []byte
-	)
+	var manifestData []byte
 	require.EventuallyWithT(t, func(t *assert.CollectT) {
 		f, err := os.OpenFile(manifestPath, os.O_RDONLY, 0)
 		if !assert.NoError(t, err) {
@@ -108,46 +102,35 @@ func awaitUpdate(t *testing.T, manifestsDir string, prev os.FileInfo) (os.FileIn
 			return
 		}
 
-		manifestData, err = io.ReadAll(f)
-		if !assert.NoError(t, err) || !assert.Len(t, manifestData, int(stat.Size())) {
+		size := int(stat.Size())
+		manifestData = make([]byte, size+1)
+		n, err := io.ReadFull(f, manifestData)
+		if !assert.Equal(t, io.ErrUnexpectedEOF, err) || !assert.Equal(t, size, n) {
 			return
 		}
+		manifestData = manifestData[:size]
 	}, 5*time.Second, 50*time.Millisecond)
 
-	resources, err := testutil.ParseManifests(manifestData)
-	require.NoError(t, err)
-	return stat, resources
-}
+	for obj, err := range testutil.ParseObjects(scheme.Scheme, bytes.NewReader(manifestData)) {
+		require.NoError(t, err)
+		switch obj := obj.(type) {
+		case *appsv1.DaemonSet:
+			if ds == nil {
+				ds = obj
+				continue
+			}
+		case *corev1.ConfigMap:
+			if cm == nil {
+				cm = obj
+				continue
+			}
+		default:
+			continue
+		}
+		require.Failf(t, "Unexpected object", "%#v", obj)
+	}
 
-func findKubeProxyConfigMap(t *testing.T, resources []*unstructured.Unstructured) *corev1.ConfigMap {
-	t.Helper()
-
-	idx := slices.IndexFunc(resources, func(u *unstructured.Unstructured) bool {
-		return u.GetAPIVersion() == corev1.SchemeGroupVersion.String() &&
-			u.GetKind() == "ConfigMap" &&
-			u.GetNamespace() == "kube-system" &&
-			u.GetName() == "kube-proxy"
-	})
-	require.GreaterOrEqual(t, idx, 0, "kube-proxy ConfigMap not found")
-
-	var configMap corev1.ConfigMap
-	require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(resources[idx].Object, &configMap))
-
-	return &configMap
-}
-
-func findKubeProxyDaemonSet(t *testing.T, resources []*unstructured.Unstructured) *appsv1.DaemonSet {
-	t.Helper()
-
-	idx := slices.IndexFunc(resources, func(u *unstructured.Unstructured) bool {
-		return u.GetAPIVersion() == appsv1.SchemeGroupVersion.String() &&
-			u.GetKind() == "DaemonSet" &&
-			u.GetNamespace() == "kube-system" &&
-			u.GetName() == "kube-proxy"
-	})
-	require.GreaterOrEqual(t, idx, 0, "kube-proxy DaemonSet not found")
-
-	var daemonSet appsv1.DaemonSet
-	require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(resources[idx].Object, &daemonSet))
-	return &daemonSet
+	require.NotNil(t, ds, "kube-proxy DaemonSet not found in manifests")
+	require.NotNil(t, cm, "kube-proxy ConfigMap not found in manifests")
+	return stat, ds, cm
 }
