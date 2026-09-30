@@ -10,11 +10,11 @@ import (
 	"fmt"
 	"time"
 
-	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
 	aproot "github.com/k0sproject/k0s/pkg/autopilot/controller/root"
 	"github.com/k0sproject/k0s/pkg/autopilot/controller/signal"
 	apsigk0s "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/k0s"
+	"github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/leaderelection"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -32,7 +32,7 @@ import (
 type rootWorker struct {
 	cfg           aproot.RootConfig
 	log           *logrus.Entry
-	clientFactory apcli.FactoryInterface
+	clientFactory kubernetes.ClientFactoryInterface
 
 	initialized bool
 }
@@ -40,7 +40,7 @@ type rootWorker struct {
 var _ aproot.Root = (*rootWorker)(nil)
 
 // NewRootWorker builds a root for autopilot "worker" operations.
-func NewRootWorker(cfg aproot.RootConfig, logger *logrus.Entry, cf apcli.FactoryInterface) (aproot.Root, error) {
+func NewRootWorker(cfg aproot.RootConfig, logger *logrus.Entry, cf kubernetes.ClientFactoryInterface) (aproot.Root, error) {
 	c := &rootWorker{
 		cfg:           cfg,
 		log:           logger,
