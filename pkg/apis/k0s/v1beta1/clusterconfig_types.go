@@ -15,9 +15,9 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/k0sproject/k0s/internal/pkg/strictyaml"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"sigs.k8s.io/yaml"
 )
 
 const (
@@ -43,6 +43,23 @@ type ClusterSpec struct {
 	Konnectivity      *KonnectivitySpec      `json:"konnectivity,omitempty"`
 	FeatureGates      FeatureGates           `json:"featureGates,omitempty"`
 	MetricsServer     *MetricsServer         `json:"metricsServer,omitempty"`
+}
+
+func (s *ClusterSpec) UnmarshalJSON(data []byte) error {
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+
+	// podSecurityPolicy configured the (now removed) pod security policy
+	// admission controller. It may still be present in on-disk configs
+	// (e.g. written by k0sctl), so it's accepted and discarded here
+	// instead of failing strict decoding.
+	type clusterSpec ClusterSpec
+	spec := struct {
+		*clusterSpec
+		PodSecurityPolicy json.RawMessage `json:"podSecurityPolicy"`
+	}{(*clusterSpec)(s), nil}
+
+	return decoder.Decode(&spec)
 }
 
 // ClusterConfigStatus defines the observed state of ClusterConfig
@@ -310,8 +327,7 @@ func ConfigFromBytes(bytes []byte) (*ClusterConfig, error) {
 
 func (c *ClusterConfig) MergedWithYAML(bytes []byte) (*ClusterConfig, error) {
 	merged := c.DeepCopy()
-	err := strictyaml.YamlUnmarshalStrictIgnoringFields(bytes, merged, "interval", "podSecurityPolicy")
-	if err != nil {
+	if err := yaml.UnmarshalStrict(bytes, merged); err != nil {
 		return nil, err
 	}
 	if merged.Spec == nil {
