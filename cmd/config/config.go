@@ -4,7 +4,7 @@
 package config
 
 import (
-	"github.com/k0sproject/k0s/pkg/featuregate"
+	"github.com/k0sproject/k0s/internal/pkg/featuregate"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
