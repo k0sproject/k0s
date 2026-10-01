@@ -554,7 +554,13 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 			return fmt.Errorf("failed to create Calico component: %w", err)
 		}
 		clusterComponents.Add(ctx, calico)
-		clusterComponents.Add(ctx, controller.NewKubeRouter(c.K0sVars, nodeConfig.Spec.PrimaryAddressFamily(), nodeConfig.Spec.Network.BuildServiceCIDR(nodeConfig.Spec.PrimaryAddressFamily())))
+		primaryAddressFamily := nodeConfig.Spec.PrimaryAddressFamily()
+		clusterComponents.Add(ctx, controller.NewKubeRouter(
+			c.K0sVars,
+			primaryAddressFamily,
+			nodeConfig.Spec.Network.BuildServiceCIDR(primaryAddressFamily),
+			nodeConfig.Spec.Network.IsSingleStackIPv6(),
+		))
 	}
 
 	if !slices.Contains(flags.DisableComponents, constant.MetricsServerComponentName) {
@@ -622,7 +628,8 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 			K0sVars:               c.K0sVars,
 			DisableLeaderElection: singleController,
 			ServiceClusterIPRange: nodeConfig.Spec.Network.BuildServiceCIDR(nodeConfig.Spec.PrimaryAddressFamily()),
-			PrimaryAddressFamily:  nodeConfig.Spec.PrimaryAddressFamily(),
+			ClusterCIDR:           nodeConfig.Spec.Network.BuildPodCIDR(nodeConfig.Spec.PrimaryAddressFamily()),
+			SingleStackIPv6:       nodeConfig.Spec.Network.IsSingleStackIPv6(),
 			ExtraArgs:             flags.KubeControllerManagerExtraArgs,
 		})
 	}

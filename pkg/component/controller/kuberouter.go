@@ -30,6 +30,7 @@ type KubeRouter struct {
 	k0sVars              *config.CfgVars
 	primaryAddressFamily v1beta1.PrimaryAddressFamilyType
 	serviceCIDRs         string
+	singleStackIPv6      bool
 
 	previousConfig  kubeRouterConfig
 	previousPatches v1beta1.Patches
@@ -53,13 +54,14 @@ type kubeRouterConfig struct {
 }
 
 // NewKubeRouter creates new KubeRouter reconciler component
-func NewKubeRouter(k0sVars *config.CfgVars, primaryAddressFamily v1beta1.PrimaryAddressFamilyType, serviceCIDRs string) *KubeRouter {
+func NewKubeRouter(k0sVars *config.CfgVars, primaryAddressFamily v1beta1.PrimaryAddressFamilyType, serviceCIDRs string, singleStackIPv6 bool) *KubeRouter {
 	return &KubeRouter{
 		log: logrus.WithFields(logrus.Fields{"component": "kube-router"}),
 
 		k0sVars:              k0sVars,
 		primaryAddressFamily: primaryAddressFamily,
 		serviceCIDRs:         serviceCIDRs,
+		singleStackIPv6:      singleStackIPv6,
 	}
 }
 
@@ -106,8 +108,15 @@ func (k *KubeRouter) Reconcile(_ context.Context, clusterConfig *v1beta1.Cluster
 	}
 
 	cniHairpin, globalHairpin := getHairpinConfig(clusterConfig.Spec.Network.KubeRouter)
+	var enableIPv4, enableIPv6 bool
+	if clusterConfig.Spec.Network.DualStack.Enabled {
+		enableIPv4, enableIPv6 = true, true
+	} else if k.singleStackIPv6 {
+		enableIPv6 = true
+	} else {
+		enableIPv4 = true
+	}
 
-	isSingleStackIPv6 := clusterConfig.Spec.Network.IsSingleStackIPv6()
 	args := stringmap.StringMap{
 		// k0s set default args
 		"run-router":           "true",
@@ -115,8 +124,8 @@ func (k *KubeRouter) Reconcile(_ context.Context, clusterConfig *v1beta1.Cluster
 		"run-service-proxy":    "false",
 		"bgp-graceful-restart": "true",
 		// Args from config values
-		"enable-ipv4":              strconv.FormatBool(!isSingleStackIPv6),
-		"enable-ipv6":              strconv.FormatBool(clusterConfig.Spec.Network.DualStack.Enabled || isSingleStackIPv6),
+		"enable-ipv4":              strconv.FormatBool(enableIPv4),
+		"enable-ipv6":              strconv.FormatBool(enableIPv6),
 		"auto-mtu":                 strconv.FormatBool(clusterConfig.Spec.Network.KubeRouter.IsAutoMTU()),
 		"metrics-port":             strconv.Itoa(clusterConfig.Spec.Network.KubeRouter.MetricsPort),
 		"hairpin-mode":             strconv.FormatBool(globalHairpin),

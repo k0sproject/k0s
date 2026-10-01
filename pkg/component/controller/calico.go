@@ -73,6 +73,8 @@ type calicoConfig struct {
 type calicoNodeConfig struct {
 	APIServer       *k0snet.HostPort
 	ServiceCIDRIPv4 string
+	ClusterCIDRIPv4 string
+	ClusterCIDRIPv6 string
 	ClusterDNSIP    string
 }
 
@@ -81,8 +83,6 @@ type calicoClusterConfig struct {
 	Mode                 calicoMode
 	VxlanPort            int
 	VxlanVNI             int
-	ClusterCIDRIPv4      string
-	ClusterCIDRIPv6      string
 	EnableWireguard      bool
 	FlexVolumeDriverPath string
 	EnableIPv4           bool
@@ -112,14 +112,25 @@ func NewCalico(nodeConfig *v1beta1.ClusterConfig, manifestsDir string, hasWindow
 		return nil, err
 	}
 
+	calicoNodeConfig := calicoNodeConfig{
+		APIServer:       apiServer,
+		ServiceCIDRIPv4: nodeConfig.Spec.Network.ServiceCIDR,
+		ClusterDNSIP:    dnsAddress,
+	}
+	primaryAddressFamily := nodeConfig.Spec.PrimaryAddressFamily()
+	if nodeConfig.Spec.Network.DualStack.Enabled {
+		calicoNodeConfig.ClusterCIDRIPv4 = nodeConfig.Spec.Network.PodCIDR
+		calicoNodeConfig.ClusterCIDRIPv6 = nodeConfig.Spec.Network.DualStack.IPv6PodCIDR
+	} else if primaryAddressFamily == v1beta1.PrimaryFamilyIPv4 {
+		calicoNodeConfig.ClusterCIDRIPv4 = nodeConfig.Spec.Network.PodCIDR
+	} else {
+		calicoNodeConfig.ClusterCIDRIPv6 = nodeConfig.Spec.Network.PodCIDR
+	}
+
 	return &Calico{
-		log: logrus.WithFields(logrus.Fields{"component": "calico"}),
-		nodeConfig: calicoNodeConfig{
-			APIServer:       apiServer,
-			ServiceCIDRIPv4: nodeConfig.Spec.Network.ServiceCIDR,
-			ClusterDNSIP:    dnsAddress,
-		},
-		primaryAddressFamily: nodeConfig.Spec.PrimaryAddressFamily(),
+		log:                  logrus.WithFields(logrus.Fields{"component": "calico"}),
+		nodeConfig:           calicoNodeConfig,
+		primaryAddressFamily: primaryAddressFamily,
 		manifestsDir:         manifestsDir,
 		hasWindowsNodes:      hasWindowsNodes,
 	}, nil
@@ -329,14 +340,6 @@ func (c *Calico) getConfig(clusterConfig *v1beta1.ClusterConfig) (*calicoCluster
 		return nil, fmt.Errorf("unsupported mode: %q", clusterConfig.Spec.Network.Calico.Mode)
 	}
 
-	if isDualStack {
-		config.ClusterCIDRIPv4 = clusterConfig.Spec.Network.PodCIDR
-		config.ClusterCIDRIPv6 = clusterConfig.Spec.Network.DualStack.IPv6PodCIDR
-	} else if primaryAFIPv4 {
-		config.ClusterCIDRIPv4 = clusterConfig.Spec.Network.PodCIDR
-	} else {
-		config.ClusterCIDRIPv6 = clusterConfig.Spec.Network.PodCIDR
-	}
 	return &config, nil
 }
 

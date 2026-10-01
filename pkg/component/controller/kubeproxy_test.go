@@ -72,6 +72,26 @@ func TestKubeProxyConfig_HashChangesWhenConfigMapChanges(t *testing.T) {
 	})
 }
 
+func TestKubeProxyConfig_ClusterCIDRComesFromNodeConfig(t *testing.T) {
+	nodeConfig := v1beta1.DefaultClusterConfig()
+
+	synctest.Test(t, func(t *testing.T) {
+		underTest, manifestsDir := startComponent(t, nodeConfig)
+
+		stat, _, configMap := awaitUpdate(t, manifestsDir, nil)
+		var kubeProxyConfig kubeproxyv1alpha1.KubeProxyConfiguration
+		require.NoError(t, yaml.Unmarshal([]byte(configMap.Data["config.conf"]), &kubeProxyConfig))
+		require.Equal(t, "10.244.0.0/16", kubeProxyConfig.ClusterCIDR)
+
+		clusterConfig := nodeConfig.DeepCopy()
+		clusterConfig.Spec.Network.PodCIDR = "10.10.0.0/16"
+		require.NoError(t, underTest.Reconcile(t.Context(), clusterConfig))
+
+		stat, _, _ = awaitUpdate(t, manifestsDir, stat)
+		assert.Nil(t, stat, "Manifest file was reconciled, the pod CIDR from the cluster config should be ignored")
+	})
+}
+
 func startComponent(t *testing.T, cfg *v1beta1.ClusterConfig) (*KubeProxy, string) {
 	k0sVars, err := config.NewCfgVars(nil, t.TempDir())
 	require.NoError(t, err)
@@ -79,11 +99,11 @@ func startComponent(t *testing.T, cfg *v1beta1.ClusterConfig) (*KubeProxy, strin
 		return new(false), nil
 	}
 
-	underTest := NewKubeProxy(k0sVars, cfg, noWindowsNodes)
+	underTest := NewKubeProxy(k0sVars, cfg.DeepCopy(), noWindowsNodes)
 	require.NoError(t, underTest.Init(t.Context()))
 	require.NoError(t, underTest.Start(t.Context()))
 	t.Cleanup(func() { assert.NoError(t, underTest.Stop()) })
-	require.NoError(t, underTest.Reconcile(t.Context(), cfg))
+	require.NoError(t, underTest.Reconcile(t.Context(), cfg.DeepCopy()))
 
 	return underTest, k0sVars.ManifestsDir
 }

@@ -33,11 +33,16 @@ func TestKubeRouterManifests(t *testing.T) {
 		k0sVars, err := config.NewCfgVars(nil, t.TempDir())
 		require.NoError(t, err)
 
-		kr := NewKubeRouter(k0sVars, paf, "10.96.0.0/12")
+		serviceCIDRs, singleStackIPv6 := "10.96.0.0/12", false
+		if paf == v1beta1.PrimaryFamilyIPv6 {
+			serviceCIDRs, singleStackIPv6 = "fd01::/108", true
+		}
+
+		kr := NewKubeRouter(k0sVars, paf, serviceCIDRs, singleStackIPv6)
 		require.NoError(t, kr.Init(t.Context()))
 		require.NoError(t, kr.Start(t.Context()))
 		t.Cleanup(func() { assert.NoError(t, kr.Stop()) })
-		require.NoError(t, kr.Reconcile(t.Context(), cfg))
+		require.NoError(t, kr.Reconcile(t.Context(), cfg.DeepCopy()))
 
 		f, err := os.Open(filepath.Join(k0sVars.ManifestsDir, "kuberouter", "kube-router.yaml"))
 		require.NoError(t, err)
@@ -160,6 +165,16 @@ func TestKubeRouterManifests(t *testing.T) {
 		// Verify that both extraArgs and rawArgs are present
 		args := ds.Spec.Template.Spec.Containers[0].Args
 		assert.Equal(t, []string{"--log-level=debug", "--log-level=debug"}, args[len(args)-2:])
+	})
+
+	t.Run("address families come from node config", func(t *testing.T) {
+		cfg := newClusterConfig()
+
+		ds, _ := reconcile(t, v1beta1.PrimaryFamilyIPv6, cfg)
+
+		args := ds.Spec.Template.Spec.Containers[0].Args
+		assert.Contains(t, args, "--enable-ipv4=false")
+		assert.Contains(t, args, "--enable-ipv6=true")
 	})
 }
 
