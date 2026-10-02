@@ -128,6 +128,9 @@ jobs:
       - name: Check generated code to be consistent
         run: make codegen && git diff --exit-code
 
+      - name: Check editor schema regular expressions
+        run: node --test hack/config-schema/regex.test.cjs
+
       - name: Check copyright headers
         run: WHAT=code make lint-copyright
 

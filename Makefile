@@ -163,6 +163,15 @@ $(controller_gen_targets): $(GO_ENV_REQUISITES) hack/tools/boilerplate.go.txt ha
 	  && mv -f -- "$$gendir"/zz_generated.deepcopy.go '$(dir $@).'
 	touch -- '$@'
 
+# Derive the config-file JSON Schema from the same CRD used by the API server.
+codegen_targets += schemas/k0s.json
+schemas/k0s.json: pkg/apis/k0s/v1beta1/.controller-gen.stamp hack/config-schema/main.go
+	mkdir -p -- '$(@D)'
+	$(GO) run ./hack/config-schema static/_crds/k0s/k0s.k0sproject.io_clusterconfigs.yaml > '$@'
+
+.PHONY: config-schema
+config-schema: schemas/k0s.json
+
 # Run register-gen for each API group version.
 register_gen_targets := $(foreach gv,$(api_group_versions),pkg/apis/$(gv)/zz_generated.register.go)
 codegen_targets += $(register_gen_targets)
