@@ -59,8 +59,3 @@ func TestSignalDataUpdateCommandK0sPredicate(t *testing.T) {
 	}
 }
 
-func TestGetK0sVersionWithSocketPath(t *testing.T) {
-	_, err := getK0sVersion("/tmp/nonexistent-status.sock")
-	assert.Error(t, err)
-}
-

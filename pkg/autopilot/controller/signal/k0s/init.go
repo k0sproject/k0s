@@ -6,6 +6,7 @@
 package k0s
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"errors"
@@ -59,11 +60,7 @@ func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Ma
 	logger.Infof("Using effective hostname = '%v'", hostname)
 
 	k0sVersionHandler := func() (string, error) {
-		socket := statusSocketPath
-		if socket == "" {
-			socket = status.DefaultSocketPath
-		}
-		return getK0sVersion(socket)
+		return getK0sVersion(cmp.Or(statusSocketPath, status.DefaultSocketPath))
 	}
 
 	if enableWorker {
