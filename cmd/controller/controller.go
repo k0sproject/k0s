@@ -48,7 +48,6 @@ import (
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/leaderelection"
-	"github.com/k0sproject/k0s/pkg/performance"
 	"github.com/k0sproject/k0s/pkg/telemetry"
 	"github.com/k0sproject/k0s/pkg/token"
 
@@ -199,8 +198,6 @@ func (c *command) initDirs() error {
 func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig, nodeConfig *v1beta1.ClusterConfig, flags *config.ControllerOptions, debug bool) error {
 	ctx, cancel := context.WithCancelCause(ctx)
 	defer cancel(nil)
-
-	perfTimer := performance.NewTimer("controller-start").Buffer().Start()
 
 	nodeComponents := manager.New(prober.DefaultProber)
 	clusterComponents := manager.New(prober.DefaultProber)
@@ -439,7 +436,6 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 	}
 	nodeComponents.Add(ctx, &statusComponent)
 
-	perfTimer.Checkpoint("starting-certificates-init")
 	certs := &Certificates{
 		ClusterSpec:         nodeConfig.Spec,
 		CertManager:         certificateManager,
@@ -450,14 +446,10 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 		return err
 	}
 
-	perfTimer.Checkpoint("starting-node-component-init")
 	// init Node components
 	if err := nodeComponents.Init(ctx); err != nil {
 		return err
 	}
-	perfTimer.Checkpoint("finished-node-component-init")
-
-	perfTimer.Checkpoint("starting-node-components")
 
 	if flags.InitOnly {
 		return errInitOnly
@@ -465,7 +457,6 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 
 	// Start components
 	err = nodeComponents.Start(ctx)
-	perfTimer.Checkpoint("finished-starting-node-components")
 	if err != nil {
 		return fmt.Errorf("failed to start controller node components: %w", err)
 	}
@@ -697,18 +688,15 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 	// starts after all other components have been started.
 	clusterComponents.Add(ctx, configSource)
 
-	perfTimer.Checkpoint("starting-cluster-components-init")
 	// init Cluster components
 	if err := clusterComponents.Init(ctx); err != nil {
 		return err
 	}
-	perfTimer.Checkpoint("finished cluster-component-init")
 
 	err = clusterComponents.Start(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to start cluster components: %w", err)
 	}
-	perfTimer.Checkpoint("finished-starting-cluster-components")
 	defer func() {
 		// Stop Cluster components
 		if err := clusterComponents.Stop(); err != nil {
@@ -717,8 +705,6 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 			logrus.Info("All cluster components stopped")
 		}
 	}()
-
-	perfTimer.Output()
 
 	if controllerMode.WorkloadsEnabled() {
 		return c.startWorker(ctx, nodeName, kubeletExtraArgs, &workerInterface)
