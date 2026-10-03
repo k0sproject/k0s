@@ -13,9 +13,6 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/log"
 	"github.com/k0sproject/k0s/pkg/component/manager"
-	"github.com/k0sproject/k0s/pkg/component/worker"
-	workerconfig "github.com/k0sproject/k0s/pkg/component/worker/config"
-	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/k0scontext"
 )
@@ -46,6 +43,6 @@ func initLogging(ctx context.Context, logDir string) error {
 	return nil
 }
 
-func addPlatformSpecificComponents(ctx context.Context, m *manager.Manager, k0sVars *config.CfgVars, workerConfig *workerconfig.Profile, controller EmbeddingController, certManager *worker.CertificateManager) {
+func (*platformSpecificComponents) addTo(context.Context, *manager.Manager) {
 	// no-op
 }
