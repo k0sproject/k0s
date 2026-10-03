@@ -1348,7 +1348,7 @@ func (s *BootlooseSuite) generateRegistryMachineSpec() *config.Machine {
 
 	return &config.Machine{
 		Name:     registryNodeNameFormat,
-		Image:    "docker.io/library/registry:3.1.1@sha256:fd374bae807c225661adfe2c0c1f9970a0b8fab1761fd7dfb91e0fd9a8748f9b",
+		Image:    "docker.io/library/registry:3.1.1@sha256:325b4b29b041e82803abeb703e201655e4e23ab83264ec1a7c9ddb0a5b14a6e0",
 		Cmd:      "/etc/distribution/config.yml",
 		Networks: s.Networks,
 		PortMappings: []config.PortMapping{
