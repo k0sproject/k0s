@@ -119,6 +119,39 @@ kubelet APIs remain unavailable.
 [Certificate Signing Requests]: https://kubernetes.io/docs/reference/access-authn-authz/certificate-signing-requests/
 [Kubernetes Metrics Server]: https://github.com/kubernetes-sigs/metrics-server
 
+## Starting with a cached worker profile
+
+A worker loads its worker profile from the Kubernetes API when it starts. If the
+API cannot be reached, the worker retries for a few minutes and then exits, so
+the kubelet never comes up. On nodes that are expected to boot while the control
+plane is unreachable, such as edge nodes recovering from a power loss, this
+turns a temporary outage into a node that stays down.
+
+The `k0s worker` command accepts the `--allow-cached-config` flag to opt into a
+fallback. k0s still asks the Kubernetes API first, exactly as it does without
+the flag, and only if that fails does it start with the worker profile that the
+previous successful load stored on disk:
+
+```shell
+k0s worker --token-file k0s.token --allow-cached-config
+```
+
+The fallback is deliberately narrow:
+
+- It is opt-in. Without the flag, an unreachable API remains a fatal error.
+- It does not apply to rejected or forbidden credentials. A node whose
+  credentials are invalid still needs to be rejoined into the cluster.
+- It refuses a profile that was cached for another `--profile` name or for
+  another Kubernetes minor version. A profile cached by a k0s version that
+  didn't record the Kubernetes version yet is refused as well; it is rewritten
+  in the current format on the next successful start.
+- If there is no usable cached profile, k0s reports both the API error and the
+  reason the cache was unusable, and exits.
+
+A worker that started from the cache logs a warning and runs with a
+configuration that may be out of date. It keeps that configuration until it is
+restarted.
+
 ## IPTables Mode
 
 k0s detects the iptables backend automatically based on the existing records. On a brand-new setup, `iptables-nft` will be used.

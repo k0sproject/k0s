@@ -7,6 +7,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/fs"
+	"net"
 	"os"
 	"path/filepath"
 	"sync"
@@ -18,12 +20,14 @@ import (
 	"github.com/k0sproject/k0s/pkg/constant"
 
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
 	k8stesting "k8s.io/client-go/testing"
 
+	"github.com/avast/retry-go"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -88,12 +92,9 @@ data:
 		})
 		defer timer.Stop()
 
-		log := logrus.New()
-		log.SetLevel(logrus.DebugLevel)
-
 		workerConfig, err := loadProfile(
 			ctx,
-			log.WithField("test", t.Name()),
+			testLogger(t),
 			clientFactory,
 			cacheDir,
 			"fake",
@@ -170,10 +171,7 @@ func TestWatchProfile(t *testing.T) {
 		return nil
 	}
 
-	log := logrus.New()
-	log.SetLevel(logrus.DebugLevel)
-
-	err := WatchProfile(ctx, log.WithField("test", t.Name()), client, cacheDir, t.Name(), callback)
+	err := WatchProfile(ctx, testLogger(t), client, cacheDir, t.Name(), callback)
 	assert.ErrorIs(t, err, ctx.Err())
 	assert.Equal(t, uint32(1), timesCallbackCalled.Load())
 
@@ -187,4 +185,166 @@ func TestWatchProfile(t *testing.T) {
 	var kubeletConfig metav1.TypeMeta
 	require.NoError(t, yaml.Unmarshal([]byte(kubeConfigData), &kubeletConfig))
 	require.Equal(t, "foo", kubeletConfig.Kind)
+}
+
+func TestLoadProfileFromCache(t *testing.T) {
+	t.Parallel()
+
+	const cachedProfile = `
+name: fake
+kubernetesVersion: ` + constant.KubernetesMajorMinorVersion + `
+data:
+  nodeLocalLoadBalancing: |
+    {enabled: true}
+  konnectivity: |
+    {agentPort: 1337}
+`
+
+	t.Run("returns_the_cached_profile", func(t *testing.T) {
+		t.Parallel()
+
+		profile, err := LoadProfileFromCache(cacheDirContaining(t, cachedProfile), "fake")
+
+		require.NoError(t, err)
+		require.NotNil(t, profile)
+		assert.True(t, profile.NodeLocalLoadBalancing.IsEnabled(), "Cached node-local load balancing settings weren't restored")
+		assert.Equal(t, uint16(1337), profile.Konnectivity.AgentPort, "Cached Konnectivity settings weren't restored")
+	})
+
+	t.Run("reports_a_missing_cache_as_fs_ErrNotExist", func(t *testing.T) {
+		t.Parallel()
+
+		profile, err := LoadProfileFromCache(t.TempDir(), "fake")
+
+		assert.ErrorIs(t, err, fs.ErrNotExist, "Callers should be able to detect a missing cache file")
+		assert.Nil(t, profile)
+	})
+
+	for _, test := range []struct {
+		name, content, profileName, errorContains string
+	}{
+		{"rejects_corrupt_caches", "name: [unterminated", "fake", ""},
+		{"rejects_caches_for_another_profile", cachedProfile, "other", `cached worker profile is for profile "fake", not "other"`},
+		{"rejects_caches_for_another_kubernetes_version", "name: fake\nkubernetesVersion: \"1.0\"\ndata: {}\n", "fake", "cached worker profile is for Kubernetes 1.0, not " + constant.KubernetesMajorMinorVersion},
+		{"rejects_caches_without_a_kubernetes_version", "name: fake\ndata: {}\n", "fake", "cached worker profile doesn't record a Kubernetes version"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			profile, err := LoadProfileFromCache(cacheDirContaining(t, test.content), test.profileName)
+
+			require.Error(t, err)
+			if test.errorContains != "" {
+				assert.ErrorContains(t, err, test.errorContains)
+			}
+			assert.Nil(t, profile)
+		})
+	}
+}
+
+func TestLoadProfile_Cache(t *testing.T) {
+	t.Parallel()
+
+	const cachedProfile = `
+name: fake
+kubernetesVersion: ` + constant.KubernetesMajorMinorVersion + `
+data:
+  konnectivity: |
+    {agentPort: 1}
+`
+
+	t.Run("is_overwritten_when_the_load_succeeds", func(t *testing.T) {
+		t.Parallel()
+
+		cacheDir := cacheDirContaining(t, cachedProfile)
+		clientFactory := func(string) (kubernetes.Interface, error) {
+			return fake.NewSimpleClientset(&corev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "worker-config-fake-" + constant.KubernetesMajorMinorVersion,
+					Namespace: metav1.NamespaceSystem,
+				},
+				Data: map[string]string{"konnectivity": "{agentPort: 1337}"},
+			}), nil
+		}
+
+		profile, err := loadProfile(t.Context(), testLogger(t), clientFactory, cacheDir, "fake")
+		require.NoError(t, err)
+		assert.Equal(t, uint16(1337), profile.Konnectivity.AgentPort)
+
+		cached, err := LoadProfileFromCache(cacheDir, "fake")
+		require.NoError(t, err)
+		assert.Equal(t, uint16(1337), cached.Konnectivity.AgentPort, "The stale cache should have been replaced by the profile from the API")
+	})
+
+	t.Run("is_left_untouched_when_the_load_is_aborted", func(t *testing.T) {
+		t.Parallel()
+
+		cacheDir := cacheDirContaining(t, cachedProfile)
+		clientFactory := func(string) (kubernetes.Interface, error) {
+			return nil, assert.AnError
+		}
+
+		ctx, cancel := context.WithCancel(t.Context())
+		cancel() // don't wait for the retries to be exhausted
+		profile, err := loadProfile(ctx, testLogger(t), clientFactory, cacheDir, "fake")
+		require.Error(t, err)
+		assert.Nil(t, profile)
+
+		cached, err := LoadProfileFromCache(cacheDir, "fake")
+		require.NoError(t, err)
+		assert.Equal(t, uint16(1), cached.Konnectivity.AgentPort, "A failed load shouldn't modify the cached worker profile")
+	})
+}
+
+func TestLoadProfile_APIReachability(t *testing.T) {
+	t.Parallel()
+
+	// The errors are marked unrecoverable so that the tests don't have to sit
+	// through the retry backoff. retry-go unpacks them again before returning.
+	clientFactoryFailingWith := func(err error) func(string) (kubernetes.Interface, error) {
+		return func(string) (kubernetes.Interface, error) {
+			client := fake.NewSimpleClientset()
+			client.PrependReactor("get", "configmaps", func(k8stesting.Action) (bool, runtime.Object, error) {
+				return true, nil, retry.Unrecoverable(err)
+			})
+			return client, nil
+		}
+	}
+
+	t.Run("rejections_by_the_api_server_are_not_unreachable", func(t *testing.T) {
+		t.Parallel()
+
+		clientFactory := clientFactoryFailingWith(apierrors.NewUnauthorized("no credentials provided"))
+		_, err := loadProfile(t.Context(), testLogger(t), clientFactory, t.TempDir(), "fake")
+
+		require.Error(t, err)
+		assert.False(t, IsAPIUnreachable(err), "The API server responded, so it was reachable")
+		assert.True(t, apierrors.IsUnauthorized(err), "The rejection should remain detectable")
+	})
+
+	t.Run("transport_failures_are_unreachable", func(t *testing.T) {
+		t.Parallel()
+
+		clientFactory := clientFactoryFailingWith(&net.OpError{Op: "dial", Net: "tcp", Err: errors.New("connection refused")})
+		_, err := loadProfile(t.Context(), testLogger(t), clientFactory, t.TempDir(), "fake")
+
+		require.Error(t, err)
+		assert.True(t, IsAPIUnreachable(err), "The API server never responded, so it was unreachable")
+	})
+}
+
+func cacheDirContaining(t *testing.T, content string) string {
+	t.Helper()
+
+	cacheDir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(cacheDir, "worker-profile.yaml"), []byte(content), 0644))
+	return cacheDir
+}
+
+func testLogger(t *testing.T) logrus.FieldLogger {
+	t.Helper()
+
+	log := logrus.New()
+	log.SetLevel(logrus.DebugLevel)
+	return log.WithField("test", t.Name())
 }
