@@ -77,6 +77,7 @@ func (a *Autopilot) Start(ctx context.Context) error {
 		InvocationID:        a.K0sVars.InvocationID,
 		KubeConfig:          a.K0sVars.KubeletAuthConfigPath,
 		K0sDataDir:          a.K0sVars.DataDir,
+		StatusSocketPath:    a.K0sVars.StatusSocketPath,
 		Mode:                "worker",
 		ManagerPort:         8899,
 		MetricsBindAddr:     "0",
