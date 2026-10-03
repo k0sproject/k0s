@@ -8,13 +8,14 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 Thank you for taking the time to contribute to k0s! This page gives you an
 overview of how to contribute, and where to find the details.
 
-Please follow the **[k0sproject community's code of conduct][coc]** in all your
-interactions with the project.
+Please follow the **[k0sproject community's code of conduct][coc]** and 
+the **[k0sproject AI policy][ai policy]** in all your interactions with the project.
 
 If you have found a security vulnerability, don't disclose it publicly. Report
 it confidentially, as described in the **[security policy]**.
 
 [coc]: https://github.com/k0sproject/community/blob/main/CODE_OF_CONDUCT.md
+[ai policy]: https://github.com/k0sproject/community/blob/main/AI-POLICY.md
 [security policy]: https://github.com/k0sproject/k0s/blob/main/SECURITY.md
 
 ## Contributing to the repository
