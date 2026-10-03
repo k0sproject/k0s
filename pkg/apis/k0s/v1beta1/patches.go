@@ -4,8 +4,6 @@
 package v1beta1
 
 import (
-	"fmt"
-
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
@@ -62,34 +60,48 @@ const (
 )
 
 // Validate checks every patch for a known type and a non-empty target.
-func (p Patches) Validate() []error {
+func (p Patches) Validate() field.ErrorList {
 	return p.validate(field.NewPath("patches"))
 }
 
 // validate checks every patch for a known type and a non-empty target,
 // reporting errors relative to the given field path.
-func (p Patches) validate(path *field.Path) []error {
-	var errs []error
+func (p Patches) validate(path *field.Path) (errs field.ErrorList) {
 	for i, patch := range p {
 		errs = append(errs, patch.Validate(path.Index(i))...)
 	}
 	return errs
 }
 
-func (p *Patch) Validate(item *field.Path) []error {
-	var errs []error
+// toErrors converts a field.ErrorList into a plain []error slice, so it can
+// be spread into []error-based Validate implementations.
+func toErrors(errs field.ErrorList) []error {
+	if len(errs) == 0 {
+		return nil
+	}
+	out := make([]error, len(errs))
+	for i, err := range errs {
+		out[i] = err
+	}
+	return out
+}
+
+func (p *Patch) Validate(item *field.Path) (errs field.ErrorList) {
+	if p == nil {
+		return
+	}
 	switch p.Patch.Type {
 	case JSONPatchType, StrategicMergePatchType, MergePatchType:
 		// valid
 	default:
-		errs = append(errs, fmt.Errorf("%s: invalid type %q: must be one of JSON, StrategicMergePatch, MergePatch", item.Child("patch", "type"), p.Patch.Type))
+		errs = append(errs, field.Invalid(item.Child("patch", "type"), p.Patch.Type, "must be one of JSON, StrategicMergePatch, MergePatch"))
 	}
 
 	if p.Target.Kind == "" {
-		errs = append(errs, fmt.Errorf("%s is required", item.Child("target", "kind")))
+		errs = append(errs, field.Required(item.Child("target", "kind"), "must be specified"))
 	}
 	if p.Target.Name == "" {
-		errs = append(errs, fmt.Errorf("%s is required", item.Child("target", "name")))
+		errs = append(errs, field.Required(item.Child("target", "name"), "must be specified"))
 	}
 
 	return errs
