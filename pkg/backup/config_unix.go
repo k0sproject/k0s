@@ -9,20 +9,26 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path"
+	"path/filepath"
 
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/sirupsen/logrus"
 )
 
+// configFileName is the name the configuration has inside a backup archive,
+// independent of the file name the cluster was started with.
+const configFileName = "k0s.yaml"
+
 type configurationStep struct {
+	tmpDir             string
 	cfgPath            string
 	restoredConfigPath string
 	out                io.Writer
 }
 
-func newConfigurationStep(cfgPath, restoredConfigPath string, out io.Writer) *configurationStep {
+func newConfigurationStep(tmpDir, cfgPath, restoredConfigPath string, out io.Writer) *configurationStep {
 	return &configurationStep{
+		tmpDir:             tmpDir,
 		cfgPath:            cfgPath,
 		restoredConfigPath: restoredConfigPath,
 		out:                out,
@@ -34,11 +40,22 @@ func (c configurationStep) Name() string {
 }
 
 func (c configurationStep) Backup() (StepResult, error) {
-	return StepResult{filesForBackup: []string{c.cfgPath}}, nil
+	if !file.Exists(c.cfgPath) {
+		logrus.Warnf("configuration file %s does not exist, the backup archive won't contain one", c.cfgPath)
+		return StepResult{}, nil
+	}
+
+	// Stage the configuration under the name that Restore looks for, so that
+	// clusters started with a differently named file can be restored, too.
+	staged := filepath.Join(c.tmpDir, configFileName)
+	if err := file.Copy(c.cfgPath, staged); err != nil {
+		return StepResult{}, fmt.Errorf("failed to stage configuration file %s: %w", c.cfgPath, err)
+	}
+	return StepResult{filesForBackup: []string{staged}}, nil
 }
 
 func (c configurationStep) Restore(restoreFrom, restoreTo string) error {
-	objectPathInArchive := path.Join(restoreFrom, "k0s.yaml")
+	objectPathInArchive := filepath.Join(restoreFrom, configFileName)
 
 	if !file.Exists(objectPathInArchive) {
 		logrus.Debugf("%s does not exist in the backup file", objectPathInArchive)
