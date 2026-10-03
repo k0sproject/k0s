@@ -132,7 +132,7 @@ func (k *Kine) Start(ctx context.Context) error {
 		GID:     kineGID,
 
 		AdditionalEnv: []string{"KINE_ENDPOINT=" + k.Config.DataSource},
-		KeepEnvPrefix: true,
+		KeepEnvPrefix: false,
 	}
 	return k.supervisor.Supervise(ctx)
 }

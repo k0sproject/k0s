@@ -352,8 +352,8 @@ func (s *Supervisor) maybeCleanupPIDFile(ctx context.Context) error {
 // Prepare the env for exec:
 // - handle component specific env
 // - inject k0s embedded bins into path
-func getEnv(dataDir, component string, keepEnvPrefix bool, env []string) []string {
-	env = append(env, os.Environ()...)
+func getEnv(dataDir, component string, keepEnvPrefix bool, additionalEnv []string) []string {
+	env := os.Environ()
 	componentPrefix := strings.ToUpper(component) + "_"
 
 	// put the component specific env vars in the front.
@@ -396,7 +396,7 @@ func getEnv(dataDir, component string, keepEnvPrefix bool, env []string) []strin
 	env = append([]string{k0sManaged}, env...)
 	i++
 
-	return env[:i]
+	return append(env[:i], additionalEnv...)
 }
 
 // GetProcess returns the last started process
