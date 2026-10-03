@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"net"
 	"path"
 	"path/filepath"
 	"strings"
@@ -73,7 +74,7 @@ type calicoConfig struct {
 type calicoNodeConfig struct {
 	APIServer       *k0snet.HostPort
 	ServiceCIDRIPv4 string
-	ClusterDNSIP    string
+	ClusterDNSIPs   []net.IP
 }
 
 type calicoClusterConfig struct {
@@ -102,7 +103,7 @@ type calicoClusterConfig struct {
 
 // NewCalico creates new Calico reconciler component
 func NewCalico(nodeConfig *v1beta1.ClusterConfig, manifestsDir string, hasWindowsNodes func() (*bool, <-chan struct{})) (*Calico, error) {
-	dnsAddress, err := nodeConfig.Spec.Network.DNSAddress(nodeConfig.Spec.PrimaryAddressFamily())
+	dnsAddresses, err := nodeConfig.Spec.Network.DNSAddresses(nodeConfig.Spec.PrimaryAddressFamily())
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +118,7 @@ func NewCalico(nodeConfig *v1beta1.ClusterConfig, manifestsDir string, hasWindow
 		nodeConfig: calicoNodeConfig{
 			APIServer:       apiServer,
 			ServiceCIDRIPv4: nodeConfig.Spec.Network.ServiceCIDR,
-			ClusterDNSIP:    dnsAddress,
+			ClusterDNSIPs:   dnsAddresses,
 		},
 		primaryAddressFamily: nodeConfig.Spec.PrimaryAddressFamily(),
 		manifestsDir:         manifestsDir,
