@@ -120,9 +120,10 @@ func (m *Manager) runWatchers(ctx context.Context) {
 	ctx, cancel := context.WithCancelCause(ctx)
 	defer cancel(nil) // satisfy linter, not required for correctness
 	stacks := make(map[string]stack, len(dirs))
+	clients := NewClients(m.KubeClientFactory)
 
 	for _, dir := range dirs {
-		m.createStack(ctx, stacks, filepath.Join(m.bundleDir, dir))
+		m.createStack(ctx, stacks, clients, filepath.Join(m.bundleDir, dir))
 	}
 
 	for {
@@ -135,7 +136,7 @@ func (m *Manager) runWatchers(ctx context.Context) {
 			switch event.Op {
 			case fsnotify.Create:
 				if dir.IsDirectory(event.Name) {
-					m.createStack(ctx, stacks, event.Name)
+					m.createStack(ctx, stacks, clients, event.Name)
 				}
 			case fsnotify.Remove:
 				m.removeStack(ctx, stacks, event.Name)
@@ -152,7 +153,7 @@ func (m *Manager) runWatchers(ctx context.Context) {
 	}
 }
 
-func (m *Manager) createStack(ctx context.Context, stacks map[string]stack, name string) {
+func (m *Manager) createStack(ctx context.Context, stacks map[string]stack, clients Clients, name string) {
 	// safeguard in case the fswatcher would trigger an event for an already existing stack
 	if _, ok := stacks[name]; ok {
 		return
@@ -174,7 +175,7 @@ func (m *Manager) createStack(ctx context.Context, stacks map[string]stack, name
 	ctx, cancel := context.WithCancelCause(ctx)
 	stopped := make(chan struct{})
 
-	stack := stack{cancel, stopped, NewStackApplier(name, m.KubeClientFactory)}
+	stack := stack{cancel, stopped, NewStackApplier(name, clients)}
 	stacks[name] = stack
 
 	go func() {

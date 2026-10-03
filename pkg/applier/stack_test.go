@@ -34,7 +34,7 @@ func TestStack_StripsNamespaceFromClusterScopedResource(t *testing.T) {
 	s := applier.Stack{
 		Name:      "strip-ns",
 		Resources: []*unstructured.Unstructured{resources},
-		Clients:   fakes,
+		Clients:   applier.NewClients(fakes),
 	}
 
 	err = s.Apply(t.Context(), true)
@@ -61,11 +61,12 @@ func TestStack_StackNameChangeTriggersUpdateWithoutChecksumChange(t *testing.T) 
 	require.NoError(t, err)
 
 	fakes := testutil.NewFakeClientFactory()
+	clients := applier.NewClients(fakes)
 
 	oldStack := applier.Stack{
 		Name:      "old",
 		Resources: []*unstructured.Unstructured{resources},
-		Clients:   fakes,
+		Clients:   clients,
 	}
 	require.NoError(t, oldStack.Apply(t.Context(), true))
 
@@ -80,7 +81,7 @@ func TestStack_StackNameChangeTriggersUpdateWithoutChecksumChange(t *testing.T) 
 	newStack := applier.Stack{
 		Name:      "new",
 		Resources: []*unstructured.Unstructured{resources},
-		Clients:   fakes,
+		Clients:   clients,
 	}
 	require.NoError(t, newStack.Apply(t.Context(), false))
 

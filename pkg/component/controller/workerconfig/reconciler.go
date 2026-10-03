@@ -128,7 +128,7 @@ func (r *Reconciler) Init(context.Context) error {
 	apply := func(ctx context.Context, resources resources) error {
 		return (&applier.Stack{
 			Name:      fmt.Sprintf("k0s-%s-%s", constant.WorkerConfigComponentName, constant.KubernetesMajorMinorVersion),
-			Clients:   clientFactory,
+			Clients:   applier.NewClients(clientFactory),
 			Resources: resources,
 		}).Apply(ctx, true)
 	}
