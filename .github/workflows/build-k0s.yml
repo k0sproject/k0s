@@ -66,14 +66,14 @@ jobs:
 
       - name: "Cache :: embedded binaries"
         id: cache-embedded-bins
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           key: "build-k0s-${{ inputs.target-os }}-${{ inputs.target-arch }}-embedded-bins-${{ hashFiles('embedded-bins/**/*') }}"
           path: embedded-bins/staging/${{ inputs.target-os }}/bin/
 
       - name: "Cache :: Go cache"
         id: cache-gocache
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           key: "build-k0s-${{ inputs.target-os }}-${{ inputs.target-arch }}-gocache-go${{ env.GO_VERSION }}-${{ github.sha }}"
           restore-keys: "build-k0s-${{ inputs.target-os }}-${{ inputs.target-arch }}-gocache-go${{ env.GO_VERSION }}-"
