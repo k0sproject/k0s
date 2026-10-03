@@ -127,7 +127,9 @@ func compressFile(ctx context.Context, filePath string) (*compressedFile, error)
 		return nil, err
 	}
 
-	f.header.Name = filepath.Base(filePath)
+	// Embedded executables live in the payload's bin directory. Keep this in
+	// sync with EmbeddedBinDir in pkg/assets.
+	f.header.Name = "bin/" + filepath.Base(filePath)
 	f.header.UncompressedSize64 = uint64(bytesWritten)
 	f.header.CompressedSize64 = uint64(f.buf.Len())
 	f.header.Method = zip.Deflate
