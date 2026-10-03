@@ -565,7 +565,7 @@ func (s *ClusterSpec) PrimaryAddressFamily() PrimaryAddressFamilyType {
 			return s.Network.PrimaryAddressFamily
 		}
 
-		// Try to determin the primary address based on the address family of
+		// Try to determine the primary address based on the address family of
 		// the cluster's external address, or, of this isn't set, based on the
 		// address family of the API server's address.
 		if s.API != nil {

@@ -308,9 +308,9 @@ func (n *Network) BuildPodCIDR(primaryAddressFamily PrimaryAddressFamilyType) st
 	}
 }
 
-// IsSingleStackIPv6 returns true if the ServiceCIDR is IPv6.
-// This function relies on being called after Validate() and it
-// assumes that n.PodCIDR has a legal value.
+// Returns true if it's a single-stack cluster and the PodCIDR is not IPv4.
+//
+// Deprecated: New code should rely on the primary address family.
 func (n *Network) IsSingleStackIPv6() bool {
 	if n.DualStack.Enabled {
 		return false

@@ -5,305 +5,199 @@ package controller
 
 import (
 	"encoding/json"
-	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/k0sproject/k0s/internal/testutil"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/config"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/kubernetes/scheme"
+
+	"github.com/k0sproject/k0s/internal/testutil"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func TestKubeRouterConfig(t *testing.T) {
-	k0sVars, err := config.NewCfgVars(nil, t.TempDir())
-	require.NoError(t, err)
-	cfg := v1beta1.DefaultClusterConfig()
-	cfg.Spec.Network.Calico = nil
-	cfg.Spec.Network.Provider = "kuberouter"
-	cfg.Spec.Network.KubeRouter = v1beta1.DefaultKubeRouter()
-	cfg.Spec.Network.KubeRouter.AutoMTU = new(false)
-	cfg.Spec.Network.KubeRouter.MTU = 1450
-	cfg.Spec.Network.KubeRouter.PeerRouterASNs = "12345,67890"
-	cfg.Spec.Network.KubeRouter.PeerRouterIPs = "1.2.3.4,4.3.2.1"
-	cfg.Spec.Network.KubeRouter.Hairpin = v1beta1.HairpinAllowed
-	cfg.Spec.Network.KubeRouter.IPMasq = true
+func TestKubeRouterManifests(t *testing.T) {
+	newClusterConfig := func() *v1beta1.ClusterConfig {
+		return &v1beta1.ClusterConfig{Spec: &v1beta1.ClusterSpec{
+			Network: v1beta1.DefaultNetwork(),
+			Images:  v1beta1.DefaultClusterImages(),
+		}}
+	}
 
-	ctx := t.Context()
-	kr := NewKubeRouter(k0sVars, v1beta1.PrimaryFamilyIPv4, cfg.Spec.Network.BuildServiceCIDR(cfg.Spec.PrimaryAddressFamily()))
-	require.NoError(t, kr.Init(ctx))
-	require.NoError(t, kr.Start(ctx))
-	t.Cleanup(func() { assert.NoError(t, kr.Stop()) })
-	require.NoError(t, kr.Reconcile(ctx, cfg))
+	reconcile := func(t *testing.T, paf v1beta1.PrimaryAddressFamilyType, cfg *v1beta1.ClusterConfig) (ds *appsv1.DaemonSet, cm *corev1.ConfigMap) {
+		k0sVars, err := config.NewCfgVars(nil, t.TempDir())
+		require.NoError(t, err)
 
-	manifestData, err := os.ReadFile(filepath.Join(k0sVars.ManifestsDir, "kuberouter", "kube-router.yaml"))
-	assert.NoError(t, err, "must have manifests for kube-router")
+		serviceCIDRs, singleStackIPv6 := "10.96.0.0/12", false
+		if paf == v1beta1.PrimaryFamilyIPv6 {
+			serviceCIDRs, singleStackIPv6 = "fd01::/108", true
+		}
 
-	resources, err := testutil.ParseManifests(manifestData)
-	require.NoError(t, err)
-	ds, err := findDaemonset(resources)
-	require.NoError(t, err)
-	require.NotNil(t, ds)
-	require.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--peer-router-ips=1.2.3.4,4.3.2.1")
-	require.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--peer-router-asns=12345,67890")
-	require.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--hairpin-mode=false")
+		kr := NewKubeRouter(k0sVars, paf, serviceCIDRs, singleStackIPv6)
+		require.NoError(t, kr.Init(t.Context()))
+		require.NoError(t, kr.Start(t.Context()))
+		t.Cleanup(func() { assert.NoError(t, kr.Stop()) })
+		require.NoError(t, kr.Reconcile(t.Context(), cfg.DeepCopy()))
 
-	cm, err := findConfig(resources)
-	require.NoError(t, err)
-	require.NotNil(t, cm)
+		f, err := os.Open(filepath.Join(k0sVars.ManifestsDir, "kuberouter", "kube-router.yaml"))
+		require.NoError(t, err)
+		defer f.Close()
 
-	p, err := getKubeRouterPlugin(cm, "bridge")
-	require.NoError(t, err)
-	assert.InEpsilon(t, 1450, p["mtu"], 0)
-	assert.Equal(t, true, p["hairpinMode"])
-	assert.Equal(t, true, p["ipMasq"])
-}
+		for obj, err := range testutil.ParseObjects(scheme.Scheme, f) {
+			require.NoError(t, err)
+			switch obj := obj.(type) {
+			case *appsv1.DaemonSet:
+				if ds == nil {
+					ds = obj
+					continue
+				}
+			case *corev1.ConfigMap:
+				if cm == nil {
+					cm = obj
+					continue
+				}
+			default:
+				continue
+			}
+			require.Failf(t, "Unexpected object", "%#v", obj)
+		}
 
-type hairpinTest struct {
-	krc                 *v1beta1.KubeRouter
-	resultCNIHairpin    bool
-	resultGlobalHairpin bool
+		require.NotNil(t, ds, "kube-router DaemonSet not found in manifests")
+		require.NotNil(t, cm, "kube-router ConfigMap not found in manifests")
+		return ds, cm
+	}
+
+	requireBridgePlugin := func(t *testing.T, cm *corev1.ConfigMap) map[string]any {
+		var data struct {
+			Plugins []map[string]any `json:"plugins"`
+		}
+		require.NoError(t, json.Unmarshal([]byte(cm.Data["cni-conf.json"]), &data))
+		for _, plugin := range data.Plugins {
+			if plugin["type"] == "bridge" {
+				return plugin
+			}
+		}
+		require.Fail(t, "bridge plugin not found in CNI config")
+		return nil
+	}
+
+	t.Run("defaults", func(t *testing.T) {
+		ds, cm := reconcile(t, v1beta1.PrimaryFamilyIPv4, newClusterConfig())
+
+		args := ds.Spec.Template.Spec.Containers[0].Args
+		assert.Contains(t, args, "--auto-mtu=true")
+		assert.Contains(t, args, "--hairpin-mode=true")
+		assert.Contains(t, args, "--enable-ipv4=true")
+		assert.Contains(t, args, "--enable-ipv6=false")
+		assert.Contains(t, args, "--metrics-port=8080")
+
+		p := requireBridgePlugin(t, cm)
+		assert.NotContains(t, p, "mtu")
+		assert.Equal(t, true, p["hairpinMode"])
+		assert.Equal(t, false, p["ipMasq"])
+	})
+
+	t.Run("manual MTU", func(t *testing.T) {
+		cfg := newClusterConfig()
+		cfg.Spec.Network.KubeRouter.AutoMTU = new(false)
+		cfg.Spec.Network.KubeRouter.MTU = 1234
+
+		ds, cm := reconcile(t, v1beta1.PrimaryFamilyIPv4, cfg)
+
+		assert.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--auto-mtu=false")
+		assert.InEpsilon(t, 1234, requireBridgePlugin(t, cm)["mtu"], 0)
+	})
+
+	t.Run("peer routers, hairpin and IP masquerading", func(t *testing.T) {
+		cfg := newClusterConfig()
+		cfg.Spec.Network.KubeRouter.AutoMTU = new(false)
+		cfg.Spec.Network.KubeRouter.MTU = 1450
+		cfg.Spec.Network.KubeRouter.PeerRouterASNs = "12345,67890"
+		cfg.Spec.Network.KubeRouter.PeerRouterIPs = "1.2.3.4,4.3.2.1"
+		cfg.Spec.Network.KubeRouter.Hairpin = v1beta1.HairpinAllowed
+		cfg.Spec.Network.KubeRouter.IPMasq = true
+
+		ds, cm := reconcile(t, v1beta1.PrimaryFamilyIPv4, cfg)
+
+		args := ds.Spec.Template.Spec.Containers[0].Args
+		assert.Contains(t, args, "--peer-router-ips=1.2.3.4,4.3.2.1")
+		assert.Contains(t, args, "--peer-router-asns=12345,67890")
+		assert.Contains(t, args, "--hairpin-mode=false")
+
+		p := requireBridgePlugin(t, cm)
+		assert.InEpsilon(t, 1450, p["mtu"], 0)
+		assert.Equal(t, true, p["hairpinMode"])
+		assert.Equal(t, true, p["ipMasq"])
+	})
+
+	t.Run("extra args", func(t *testing.T) {
+		cfg := newClusterConfig()
+		cfg.Spec.Network.KubeRouter.ExtraArgs = map[string]string{
+			"foo":          "bar",   // Add some random arg
+			"run-firewall": "false", // Override the default arg
+		}
+
+		ds, _ := reconcile(t, v1beta1.PrimaryFamilyIPv6, cfg)
+
+		args := ds.Spec.Template.Spec.Containers[0].Args
+		assert.Contains(t, args, "--router-id=generate", "IPv6 related flags not found")
+		assert.Contains(t, args, "--run-firewall=false")
+		assert.Contains(t, args, "--foo=bar")
+	})
+
+	t.Run("raw args", func(t *testing.T) {
+		cfg := newClusterConfig()
+		cfg.Spec.Network.KubeRouter.ExtraArgs = map[string]string{
+			"log-level": "debug",
+		}
+		cfg.Spec.Network.KubeRouter.RawArgs = []string{
+			"--log-level=debug",
+			"--log-level=debug",
+		}
+
+		ds, _ := reconcile(t, v1beta1.PrimaryFamilyIPv4, cfg)
+
+		// Verify that both extraArgs and rawArgs are present
+		args := ds.Spec.Template.Spec.Containers[0].Args
+		assert.Equal(t, []string{"--log-level=debug", "--log-level=debug"}, args[len(args)-2:])
+	})
+
+	t.Run("address families come from node config", func(t *testing.T) {
+		cfg := newClusterConfig()
+
+		ds, _ := reconcile(t, v1beta1.PrimaryFamilyIPv6, cfg)
+
+		args := ds.Spec.Template.Spec.Containers[0].Args
+		assert.Contains(t, args, "--enable-ipv4=false")
+		assert.Contains(t, args, "--enable-ipv6=true")
+	})
 }
 
 func TestGetHairpinConfig(t *testing.T) {
-	hairpinTests := []hairpinTest{
-		{
-			krc:                 &v1beta1.KubeRouter{Hairpin: v1beta1.HairpinUndefined, HairpinMode: true},
-			resultCNIHairpin:    true,
-			resultGlobalHairpin: true,
-		},
-		{
-			krc:                 &v1beta1.KubeRouter{Hairpin: v1beta1.HairpinUndefined, HairpinMode: false},
-			resultCNIHairpin:    false,
-			resultGlobalHairpin: false,
-		},
-		{
-			krc:                 &v1beta1.KubeRouter{Hairpin: v1beta1.HairpinAllowed, HairpinMode: true},
-			resultCNIHairpin:    true,
-			resultGlobalHairpin: false,
-		},
-		{
-			krc:                 &v1beta1.KubeRouter{Hairpin: v1beta1.HairpinDisabled, HairpinMode: true},
-			resultCNIHairpin:    false,
-			resultGlobalHairpin: false,
-		},
-		{
-			krc:                 &v1beta1.KubeRouter{Hairpin: v1beta1.HairpinEnabled, HairpinMode: false},
-			resultCNIHairpin:    true,
-			resultGlobalHairpin: true,
-		},
+	for _, tt := range []struct {
+		name                              string
+		hairpin                           v1beta1.Hairpin
+		hairpinMode                       bool
+		wantCNIHairpin, wantGlobalHairpin bool
+	}{
+		{"undefined with hairpin mode", v1beta1.HairpinUndefined, true, true, true},
+		{"undefined without hairpin mode", v1beta1.HairpinUndefined, false, false, false},
+		{"allowed", v1beta1.HairpinAllowed, true, true, false},
+		{"disabled", v1beta1.HairpinDisabled, true, false, false},
+		{"enabled", v1beta1.HairpinEnabled, false, true, true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			cniHairpin, globalHairpin := getHairpinConfig(&v1beta1.KubeRouter{
+				Hairpin:     tt.hairpin,
+				HairpinMode: tt.hairpinMode,
+			})
+			assert.Equal(t, tt.wantCNIHairpin, cniHairpin, "CNI hairpin")
+			assert.Equal(t, tt.wantGlobalHairpin, globalHairpin, "global hairpin")
+		})
 	}
-
-	for _, test := range hairpinTests {
-		cfg := &kubeRouterConfig{}
-		cniHairpin, globalHairpin := getHairpinConfig(test.krc)
-		if cniHairpin != test.resultCNIHairpin {
-			t.Fatalf("CNI hairpin configuration (%#v) does not match exepected output (%#v) ", cfg, test.resultCNIHairpin)
-		}
-		if globalHairpin != test.resultGlobalHairpin {
-			t.Fatalf("Global hairpin configuration (%#v) does not match exepected output (%#v) ", cfg, test.resultGlobalHairpin)
-		}
-
-	}
-}
-
-func TestKubeRouterDefaultManifests(t *testing.T) {
-	k0sVars, err := config.NewCfgVars(nil, t.TempDir())
-	require.NoError(t, err)
-	cfg := v1beta1.DefaultClusterConfig()
-	cfg.Spec.Network.Calico = nil
-	cfg.Spec.Network.Provider = "kuberouter"
-	cfg.Spec.Network.KubeRouter = v1beta1.DefaultKubeRouter()
-	ctx := t.Context()
-	kr := NewKubeRouter(k0sVars, v1beta1.PrimaryFamilyIPv4, cfg.Spec.Network.BuildServiceCIDR(cfg.Spec.PrimaryAddressFamily()))
-	require.NoError(t, kr.Init(ctx))
-	require.NoError(t, kr.Start(ctx))
-	t.Cleanup(func() { assert.NoError(t, kr.Stop()) })
-	require.NoError(t, kr.Reconcile(ctx, cfg))
-
-	manifestData, err := os.ReadFile(filepath.Join(k0sVars.ManifestsDir, "kuberouter", "kube-router.yaml"))
-	assert.NoError(t, err, "must have manifests for kube-router")
-
-	resources, err := testutil.ParseManifests(manifestData)
-	require.NoError(t, err)
-	ds, err := findDaemonset(resources)
-	require.NoError(t, err)
-	require.NotNil(t, ds)
-
-	assert.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--hairpin-mode=true")
-
-	cm, err := findConfig(resources)
-	require.NoError(t, err)
-	require.NotNil(t, cm)
-
-	p, err := getKubeRouterPlugin(cm, "bridge")
-	require.NoError(t, err)
-	assert.NotContains(t, p, "mtu")
-	assert.Equal(t, true, p["hairpinMode"])
-	assert.Equal(t, false, p["ipMasq"])
-}
-
-func TestKubeRouterManualMTUManifests(t *testing.T) {
-	k0sVars, err := config.NewCfgVars(nil, t.TempDir())
-	require.NoError(t, err)
-	cfg := v1beta1.DefaultClusterConfig()
-	cfg.Spec.Network.Calico = nil
-	cfg.Spec.Network.Provider = "kuberouter"
-	cfg.Spec.Network.KubeRouter = v1beta1.DefaultKubeRouter()
-	cfg.Spec.Network.KubeRouter.AutoMTU = new(false)
-	cfg.Spec.Network.KubeRouter.MTU = 1234
-	ctx := t.Context()
-	kr := NewKubeRouter(k0sVars, v1beta1.PrimaryFamilyIPv4, cfg.Spec.Network.BuildServiceCIDR(cfg.Spec.PrimaryAddressFamily()))
-	require.NoError(t, kr.Init(ctx))
-	require.NoError(t, kr.Start(ctx))
-	t.Cleanup(func() { assert.NoError(t, kr.Stop()) })
-	require.NoError(t, kr.Reconcile(ctx, cfg))
-
-	manifestData, err := os.ReadFile(filepath.Join(k0sVars.ManifestsDir, "kuberouter", "kube-router.yaml"))
-	assert.NoError(t, err, "must have manifests for kube-router")
-
-	resources, err := testutil.ParseManifests(manifestData)
-	require.NoError(t, err)
-	ds, err := findDaemonset(resources)
-	require.NoError(t, err)
-	require.NotNil(t, ds)
-
-	assert.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--auto-mtu=false")
-
-	cm, err := findConfig(resources)
-	require.NoError(t, err)
-	require.NotNil(t, cm)
-
-	p, err := getKubeRouterPlugin(cm, "bridge")
-	require.NoError(t, err)
-	assert.InEpsilon(t, 1234, p["mtu"], 0)
-}
-
-func TestExtraArgs(t *testing.T) {
-	k0sVars, err := config.NewCfgVars(nil, t.TempDir())
-	require.NoError(t, err)
-	cfg := v1beta1.DefaultClusterConfig()
-	cfg.Spec.Network.Calico = nil
-	cfg.Spec.Network.Provider = "kuberouter"
-	cfg.Spec.Network.KubeRouter = v1beta1.DefaultKubeRouter()
-	cfg.Spec.Network.KubeRouter.ExtraArgs = map[string]string{
-		// Add some random arg
-		"foo": "bar",
-		// Override the default arg
-		"run-firewall": "false",
-	}
-
-	ctx := t.Context()
-	kr := NewKubeRouter(k0sVars, v1beta1.PrimaryFamilyIPv6, cfg.Spec.Network.BuildServiceCIDR(cfg.Spec.PrimaryAddressFamily()))
-	require.NoError(t, kr.Init(ctx))
-	require.NoError(t, kr.Start(ctx))
-	t.Cleanup(func() { assert.NoError(t, kr.Stop()) })
-	require.NoError(t, kr.Reconcile(ctx, cfg))
-
-	manifestData, err := os.ReadFile(filepath.Join(k0sVars.ManifestsDir, "kuberouter", "kube-router.yaml"))
-	assert.NoError(t, err, "must have manifests for kube-router")
-
-	resources, err := testutil.ParseManifests(manifestData)
-	require.NoError(t, err)
-	ds, err := findDaemonset(resources)
-	require.NoError(t, err)
-	require.NotNil(t, ds)
-
-	assert.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--router-id=generate", "IPv6 related flags not found")
-	assert.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--run-firewall=false")
-	assert.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--foo=bar")
-}
-
-func TestRawArgs(t *testing.T) {
-	k0sVars, err := config.NewCfgVars(nil, t.TempDir())
-	require.NoError(t, err)
-	cfg := v1beta1.DefaultClusterConfig()
-	cfg.Spec.Network.Calico = nil
-	cfg.Spec.Network.Provider = "kuberouter"
-	cfg.Spec.Network.KubeRouter = v1beta1.DefaultKubeRouter()
-	cfg.Spec.Network.KubeRouter.ExtraArgs = map[string]string{
-		"log-level": "debug",
-	}
-	cfg.Spec.Network.KubeRouter.RawArgs = []string{
-		"--log-level=debug",
-		"--log-level=debug",
-	}
-
-	ctx := t.Context()
-	kr := NewKubeRouter(k0sVars, v1beta1.PrimaryFamilyIPv4, cfg.Spec.Network.BuildServiceCIDR(cfg.Spec.PrimaryAddressFamily()))
-	require.NoError(t, kr.Init(ctx))
-	require.NoError(t, kr.Start(ctx))
-	t.Cleanup(func() { assert.NoError(t, kr.Stop()) })
-	require.NoError(t, kr.Reconcile(ctx, cfg))
-
-	manifestData, err := os.ReadFile(filepath.Join(k0sVars.ManifestsDir, "kuberouter", "kube-router.yaml"))
-	assert.NoError(t, err, "must have manifests for kube-router")
-
-	resources, err := testutil.ParseManifests(manifestData)
-	require.NoError(t, err)
-	ds, err := findDaemonset(resources)
-	require.NoError(t, err)
-	require.NotNil(t, ds)
-
-	// Verify that both extraArgs and rawArgs are present
-	args := ds.Spec.Template.Spec.Containers[0].Args[len(ds.Spec.Template.Spec.Containers[0].Args)-2:]
-	for _, arg := range args {
-		assert.Equal(t, "--log-level=debug", arg)
-	}
-}
-
-func findConfig(resources []*unstructured.Unstructured) (corev1.ConfigMap, error) {
-	var cm corev1.ConfigMap
-	for _, r := range resources {
-		if r.GetKind() == "ConfigMap" {
-			err := runtime.DefaultUnstructuredConverter.FromUnstructured(r.Object, &cm)
-			if err != nil {
-				return cm, err
-			}
-
-			return cm, nil
-		}
-	}
-
-	return cm, errors.New("kube-router cm not found in manifests")
-}
-
-func getKubeRouterPlugin(cm corev1.ConfigMap, pluginType string) (map[string]any, error) {
-	var data map[string]any
-	err := json.Unmarshal([]byte(cm.Data["cni-conf.json"]), &data)
-	if err != nil {
-		return data, err
-	}
-	if plugins, ok := data["plugins"].([]any); ok {
-		for _, plugin := range plugins {
-			if p, ok := plugin.(map[string]any); ok && p["type"] == pluginType {
-				return p, nil
-			}
-		}
-	}
-
-	return data, fmt.Errorf("failed to find plugin of type %s", pluginType)
-}
-
-func findDaemonset(resources []*unstructured.Unstructured) (appsv1.DaemonSet, error) {
-	var ds appsv1.DaemonSet
-	for _, r := range resources {
-		if r.GetKind() == "DaemonSet" {
-			err := runtime.DefaultUnstructuredConverter.FromUnstructured(r.Object, &ds)
-			if err != nil {
-				return ds, err
-			}
-
-			return ds, nil
-		}
-	}
-
-	return ds, errors.New("kube-router ds not found in manifests")
 }
