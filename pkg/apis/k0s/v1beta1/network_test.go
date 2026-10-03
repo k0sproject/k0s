@@ -6,7 +6,7 @@ package v1beta1
 import (
 	"testing"
 
-	"github.com/k0sproject/k0s/pkg/featuregate"
+	"github.com/k0sproject/k0s/internal/pkg/featuregate"
 	"github.com/stretchr/testify/suite"
 )
 
