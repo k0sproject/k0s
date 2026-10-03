@@ -187,8 +187,9 @@ func (hc *Commands) getActionCfg(ctx context.Context, namespace string) (*action
 	}
 
 	// Add transport control to the config.
-	transportControl := transportControl{ctx.Done(), errHelmOperationInterrupted}
-	config.WrapTransport = transportControl.wrap(config.WrapTransport)
+	if err := new(transportControl{ctx.Done(), errHelmOperationInterrupted}).injectInto(config); err != nil {
+		return nil, err
+	}
 
 	// Add Helm's retrying round-tripper for transient etcd errors.
 	config.Wrap(func(rt http.RoundTripper) http.RoundTripper {

@@ -11,7 +11,6 @@ import (
 	"io"
 	"net"
 	"net/http"
-	"net/url"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -24,6 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/transport"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -35,7 +35,7 @@ func TestControlledRESTClientGetter_InterruptsRegularRequests(t *testing.T) {
 
 	underTest := transportControl{interrupted, assert.AnError}
 
-	cfg.WrapTransport = underTest.wrap(cfg.WrapTransport)
+	require.NoError(t, underTest.injectInto(cfg))
 	clients, err := kubernetes.NewForConfig(cfg)
 	require.NoError(t, err)
 
@@ -50,20 +50,18 @@ func TestTransportControl_InterruptsInflightDials(t *testing.T) {
 	dialCtxDoneCause := make(chan error, 1)
 	cfg := &rest.Config{
 		Host: "http://does-not-matter.example.com",
-		Transport: &http.Transport{
-			DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
-				close(dialStarted)
-				<-ctx.Done()
-				dialCtxDoneCause <- context.Cause(ctx)
-				return nil, ctx.Err()
-			},
+		Dial: func(ctx context.Context, _, _ string) (net.Conn, error) {
+			close(dialStarted)
+			<-ctx.Done()
+			dialCtxDoneCause <- context.Cause(ctx)
+			return nil, ctx.Err()
 		},
 	}
 	interrupted := make(chan struct{})
 
 	underTest := transportControl{interrupted, assert.AnError}
 
-	cfg.WrapTransport = underTest.wrap(cfg.WrapTransport)
+	require.NoError(t, underTest.injectInto(cfg))
 	clients, err := kubernetes.NewForConfig(cfg)
 	require.NoError(t, err)
 
@@ -84,71 +82,70 @@ func TestTransportControl_InterruptsInflightDials(t *testing.T) {
 	assert.ErrorIs(t, listErr, assert.AnError)
 }
 
-func TestTransportControl_RejectsUnsupportedTransports(t *testing.T) {
+func TestTransportControl_RejectsCustomTransports(t *testing.T) {
 	underTest := transportControl{t.Context().Done(), assert.AnError}
+	cfg := &rest.Config{
+		Transport: roundTripperFunc(func(*http.Request) (*http.Response, error) {
+			panic("unreachable")
+		}),
+	}
 
-	t.Run("OnlyHTTPTransports", func(t *testing.T) {
-		cfg := &rest.Config{
-			Transport: roundTripperFunc(func(*http.Request) (*http.Response, error) {
-				panic("unreachable")
-			}),
+	assert.ErrorContains(t, underTest.injectInto(cfg), "custom transports are not supported")
+}
+
+func TestTransportControl_NonCachedTransports(t *testing.T) {
+	// Ensures that transport configs produced from a transportControl-wrapped
+	// REST config aren't cached by client-go's TLS transport cache. If the
+	// transport was cached, client-go would hand out the same, potentially
+	// interrupted, transport for the same config over and over.
+
+	cfg := &rest.Config{
+		Host:            "https://does-not-matter.example.com",
+		TLSClientConfig: rest.TLSClientConfig{Insecure: true},
+	}
+
+	// Capture the transport as built by client-go. This needs to be the first
+	// wrapper, so that it gets to see the innermost transport.
+	var (
+		one, another http.RoundTripper
+		next         *http.RoundTripper
+	)
+	cfg.Wrap(func(rt http.RoundTripper) http.RoundTripper {
+		if assert.NotNil(t, next, "test setup broken") && assert.Nil(t, *next, "RoundTripper called more than once") {
+			*next = rt
 		}
-		cfg.WrapTransport = underTest.wrap(cfg.WrapTransport)
-		clients, err := kubernetes.NewForConfig(cfg)
-		require.NoError(t, err)
-
-		result := clients.RESTClient().Get().Do(t.Context())
-		assert.ErrorContains(t, result.Error(), "expected an *http.Transport")
+		return rt
 	})
 
-	t.Run("NoDeprecatedDial", func(t *testing.T) {
-		cfg := &rest.Config{
-			Transport: &http.Transport{
-				Dial: func(_, _ string) (net.Conn, error) {
-					panic("unreachable")
-				},
-			},
-		}
-		cfg.WrapTransport = underTest.wrap(cfg.WrapTransport)
-		clients, err := kubernetes.NewForConfig(cfg)
-		require.NoError(t, err)
+	underTest := transportControl{t.Context().Done(), assert.AnError}
+	require.NoError(t, underTest.injectInto(cfg))
 
-		result := clients.RESTClient().Get().Do(t.Context())
-		var urlErr *url.Error
-		if assert.ErrorAs(t, result.Error(), &urlErr) && assert.Error(t, urlErr.Err) {
-			assert.Equal(t, "cannot deal with the deprecated transport.Dial", urlErr.Err.Error())
-		}
-	})
+	// Use the very same transport config twice to ensure that it's not hitting the cache.
+	transportCfg, err := cfg.TransportConfig()
+	require.NoError(t, err)
 
-	t.Run("NoDeprecatedDialTLS", func(t *testing.T) {
-		cfg := &rest.Config{
-			Transport: &http.Transport{
-				DialTLS: func(_, _ string) (net.Conn, error) {
-					panic("unreachable")
-				},
-			},
-		}
-		cfg.WrapTransport = underTest.wrap(cfg.WrapTransport)
-		clients, err := kubernetes.NewForConfig(cfg)
-		require.NoError(t, err)
+	next = &one
+	_, err = transport.New(transportCfg)
+	assert.NoError(t, err)
+	assert.NotNil(t, one)
 
-		result := clients.RESTClient().Get().Do(t.Context())
-		var urlErr *url.Error
-		if assert.ErrorAs(t, result.Error(), &urlErr) && assert.Error(t, urlErr.Err) {
-			assert.Equal(t, "cannot deal with the deprecated transport.DialTLS", urlErr.Err.Error())
-		}
-	})
+	next = &another
+	_, err = transport.New(transportCfg)
+	assert.NoError(t, err)
+	assert.NotNil(t, another)
+
+	assert.NotSame(t, one, another)
 }
 
 func TestTransportControl_ResponseBodyClosePropagates(t *testing.T) {
 	cfg := &rest.Config{
-		Host:      "http://does-not-matter.example.com",
-		Transport: startHTTPPipeServer(t),
+		Host: "http://does-not-matter.example.com",
+		Dial: startHTTPPipeServer(t),
 	}
 
 	underTest := transportControl{t.Context().Done(), assert.AnError}
 
-	cfg.WrapTransport = underTest.wrap(cfg.WrapTransport)
+	require.NoError(t, underTest.injectInto(cfg))
 	clients, err := kubernetes.NewForConfig(cfg)
 	require.NoError(t, err)
 
@@ -187,14 +184,14 @@ func TestTransportControl_ResponseBodyClosePropagates(t *testing.T) {
 
 func TestTransportControl_InterruptsLogsStream(t *testing.T) {
 	cfg := &rest.Config{
-		Host:      "http://does-not-matter.example.com",
-		Transport: startHTTPPipeServer(t),
+		Host: "http://does-not-matter.example.com",
+		Dial: startHTTPPipeServer(t),
 	}
 	interrupted := make(chan struct{})
 
 	underTest := transportControl{interrupted, assert.AnError}
 
-	cfg.WrapTransport = underTest.wrap(cfg.WrapTransport)
+	require.NoError(t, underTest.injectInto(cfg))
 	clients, err := kubernetes.NewForConfig(cfg)
 	require.NoError(t, err)
 
@@ -231,14 +228,14 @@ func TestTransportControl_InterruptsLogsStream(t *testing.T) {
 
 func TestTransportControl_InterruptsWatchStream(t *testing.T) {
 	cfg := &rest.Config{
-		Host:      "http://does-not-matter.example.com",
-		Transport: startHTTPPipeServer(t),
+		Host: "http://does-not-matter.example.com",
+		Dial: startHTTPPipeServer(t),
 	}
 	interrupted := make(chan struct{})
 
 	underTest := transportControl{interrupted, errHelmOperationInterrupted}
 
-	cfg.WrapTransport = underTest.wrap(cfg.WrapTransport)
+	require.NoError(t, underTest.injectInto(cfg))
 	clients, err := kubernetes.NewForConfig(cfg)
 	require.NoError(t, err)
 
@@ -408,7 +405,7 @@ func TestTransportControl_RoundTrip(t *testing.T) {
 	})
 }
 
-func startHTTPPipeServer(t *testing.T) *http.Transport {
+func startHTTPPipeServer(t *testing.T) dialFunc {
 	server := http.Server{
 		Addr: "pipe",
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -432,28 +429,26 @@ func startHTTPPipeServer(t *testing.T) *http.Transport {
 	go func() { serverDone <- server.Serve(&listener) }()
 	t.Cleanup(func() { server.Close(); assert.ErrorIs(t, http.ErrServerClosed, <-serverDone) })
 
-	return &http.Transport{
-		DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
-			responder := k0scontext.Value[*httpResponder](ctx)
-			if !assert.NotNil(t, responder, "No HTTP responder in dial context") {
-				return nil, errors.New("no HTTP responder in dial context")
-			}
+	return func(ctx context.Context, _, _ string) (net.Conn, error) {
+		responder := k0scontext.Value[*httpResponder](ctx)
+		if !assert.NotNil(t, responder, "No HTTP responder in dial context") {
+			return nil, errors.New("no HTTP responder in dial context")
+		}
 
-			client, server := net.Pipe()
-			cc := &clientConn{Conn: client, closed: make(chan struct{})}
-			sc := &serverConn{Conn: server, handler: responder.handler}
-			responder.conn.Store(cc)
+		client, server := net.Pipe()
+		cc := &clientConn{Conn: client, closed: make(chan struct{})}
+		sc := &serverConn{Conn: server, handler: responder.handler}
+		responder.conn.Store(cc)
 
-			select {
-			case listener.queue <- sc:
-			case <-ctx.Done():
-				cause := context.Cause(ctx)
-				assert.Failf(t, "Dial context done", "Cause: %v", cause)
-				return nil, fmt.Errorf("dial context done: %w", cause)
-			}
+		select {
+		case listener.queue <- sc:
+		case <-ctx.Done():
+			cause := context.Cause(ctx)
+			assert.Failf(t, "Dial context done", "Cause: %v", cause)
+			return nil, fmt.Errorf("dial context done: %w", cause)
+		}
 
-			return cc, nil
-		},
+		return cc, nil
 	}
 }
 
