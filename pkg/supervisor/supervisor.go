@@ -50,6 +50,9 @@ type Supervisor struct {
 	KeepEnvPrefix bool
 	// A function to clean some leftovers before starting or restarting the supervised process
 	CleanBeforeFn func() error
+	// A function to run after each start of the supervised process. It delays
+	// the detection of process exits, so it should return promptly.
+	AfterStartFn func(context.Context) error
 	// Required privileges for the supervised process
 	RequiredPrivileges RequiredPrivileges
 
@@ -279,6 +282,11 @@ func (s *Supervisor) Supervise(ctx context.Context) error {
 					s.log.Infof("Restarted (%d)", restarts)
 				}
 				restarts++
+				if s.AfterStartFn != nil {
+					if err := s.AfterStartFn(ctx); err != nil {
+						s.log.Warnf("Failed to run after start function for %s: %s", s.BinPath, err)
+					}
+				}
 				if s.processWaitQuit(ctx, s.cmd) {
 					return
 				}

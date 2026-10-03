@@ -98,6 +98,7 @@ anonymous: null
 func (a *apiServerSuite) TestGetEtcdArgs() {
 	k0sVars := &config.CfgVars{
 		KineSocketPath: "/run/k0s/kine/kine.sock:2379",
+		EtcdSocketPath: "/run/k0s/etcd/localhost:2379",
 		CertRootDir:    "/var/lib/k0s/pki",
 		EtcdCertDir:    "/var/lib/k0s/pki/etcd",
 	}
@@ -129,7 +130,7 @@ func (a *apiServerSuite) TestGetEtcdArgs() {
 		require := a.Require()
 		require.NoError(err)
 		require.Len(result, 4)
-		require.Contains(result[0], "--etcd-servers=https://127.0.0.1:2379")
+		require.Contains(result[0], "--etcd-servers=unixs:///run/k0s/etcd/localhost:2379")
 		require.Contains(result[1], "--etcd-cafile="+filepath.FromSlash("/var/lib/k0s/pki/etcd/ca.crt"))
 		require.Contains(result[2], "--etcd-certfile="+filepath.FromSlash("/var/lib/k0s/pki/apiserver-etcd-client.crt"))
 		require.Contains(result[3], "--etcd-keyfile="+filepath.FromSlash("/var/lib/k0s/pki/apiserver-etcd-client.key"))
