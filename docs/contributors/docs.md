@@ -10,6 +10,7 @@ This guide will provide a simple how-to on how to configure and deploy newly add
 
 ## Requirements
 
+Install mkdocs: https://www.mkdocs.org/#installation
 Install mike: https://github.com/jimporter/mike#installation
 
 ## Adding A New link to the Navigation
