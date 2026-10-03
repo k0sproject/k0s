@@ -8,15 +8,14 @@ import (
 	"strings"
 
 	"github.com/Masterminds/semver/v3"
+
+	"github.com/k0sproject/k0s/pkg/autopilot/channels"
 )
 
 type Update struct {
-	Version      Version      `yaml:"version"`
-	DownloadURLs DownloadURLs `yaml:"downloadURLs"`
+	Version      Version                `yaml:"version"`
+	DownloadURLs []channels.DownloadURL `yaml:"downloadURLs"`
 }
-
-// DownloadURLs is a mapping from os-arch to download URLs
-type DownloadURLs map[string]map[string]string
 
 type Version string
 
