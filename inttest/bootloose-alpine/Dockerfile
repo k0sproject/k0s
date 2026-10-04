@@ -4,7 +4,7 @@ ARG GOLANG_IMAGE
 FROM $ALPINE_IMAGE
 
 ARG TARGETARCH
-ARG CRI_DOCKERD_VERSION=0.4.4 # renovate: datasource=github-releases depName=Mirantis/cri-dockerd
+ARG CRI_DOCKERD_VERSION=0.4.7 # renovate: datasource=github-releases depName=Mirantis/cri-dockerd
 ARG ETCD_VERSION
 ARG TROUBLESHOOT_VERSION=0.134.1 # renovate: datasource=github-releases depName=replicatedhq/troubleshoot
 ARG HELM_VERSION
