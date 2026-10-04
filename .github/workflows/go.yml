@@ -285,7 +285,7 @@ jobs:
           echo "k0s binary size: **$(du -sh k0s | cut -f1)**" >>"$GITHUB_STEP_SUMMARY"
 
       - name: Upload compiled executable
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: k0s-arm
           path: k0s
@@ -310,7 +310,7 @@ jobs:
         run: make airgap-image-bundle-linux-arm.tar
 
       - name: Upload airgap bundle
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: airgap-image-bundle-linux-arm.tar
           path: airgap-image-bundle-linux-arm.tar
@@ -375,7 +375,7 @@ jobs:
 
       - name: Collect k0s logs and support bundle
         if: failure()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: smoketest-arm-check-basic-files
           path: |
