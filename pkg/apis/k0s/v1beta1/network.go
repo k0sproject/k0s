@@ -187,32 +187,44 @@ func (n *Network) Validate() []error {
 	return errors
 }
 
-// DNSAddress calculates the 10th address of configured service CIDR block.
-func (n *Network) DNSAddress(primaryAddressFamily PrimaryAddressFamilyType) (string, error) {
-	serviceCIDR := n.ServiceCIDR
-	if n.DualStack.Enabled && primaryAddressFamily == PrimaryFamilyIPv6 {
-		serviceCIDR = n.DualStack.IPv6ServiceCIDR
-	}
-
-	_, ipnet, err := net.ParseCIDR(serviceCIDR)
-	if err != nil {
-		return "", fmt.Errorf("failed to parse service CIDR %q: %w", serviceCIDR, err)
-	}
-
-	addr := slices.Clone(ipnet.IP)
-
-	maskLen, netLen := ipnet.Mask.Size()
-	if netLen-maskLen > 3 {
-		addr[len(addr)-1] += 10
+func (n *Network) DNSAddresses(primaryAddressFamily PrimaryAddressFamilyType) ([]net.IP, error) {
+	var cidrs []string
+	if n.DualStack.Enabled {
+		if primaryAddressFamily == PrimaryFamilyIPv6 {
+			cidrs = []string{n.DualStack.IPv6ServiceCIDR, n.ServiceCIDR}
+		} else {
+			cidrs = []string{n.ServiceCIDR, n.DualStack.IPv6ServiceCIDR}
+		}
 	} else {
-		addr[len(addr)-1] += 2
+		cidrs = []string{n.ServiceCIDR}
 	}
 
-	if !ipnet.Contains(addr) {
-		return "", fmt.Errorf("failed to calculate DNS address: CIDR too narrow: %s", n.ServiceCIDR)
+	var addresses []net.IP
+
+	for _, cidr := range cidrs {
+
+		_, ipnet, err := net.ParseCIDR(cidr)
+		if err != nil {
+			return []net.IP{}, fmt.Errorf("failed to parse service CIDR %q: %w", cidr, err)
+		}
+
+		addr := slices.Clone(ipnet.IP)
+
+		maskLen, netLen := ipnet.Mask.Size()
+		if netLen-maskLen > 3 {
+			addr[len(addr)-1] += 10
+		} else {
+			addr[len(addr)-1] += 2
+		}
+
+		if !ipnet.Contains(addr) {
+			return []net.IP{}, fmt.Errorf("failed to calculate DNS address: CIDR too narrow: %s", cidr)
+		}
+
+		addresses = append(addresses, addr)
 	}
 
-	return addr.String(), nil
+	return addresses, nil
 }
 
 // InternalAPIAddresses calculates the internal API address of configured service CIDR block.
