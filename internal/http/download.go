@@ -13,8 +13,8 @@ import (
 	"time"
 
 	internalio "github.com/k0sproject/k0s/internal/io"
+	"github.com/k0sproject/k0s/internal/k0scontext"
 	"github.com/k0sproject/k0s/pkg/build"
-	"github.com/k0sproject/k0s/pkg/k0scontext"
 )
 
 type DownloadOption func(*downloadOptions)

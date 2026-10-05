@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/k0sproject/k0s/pkg/k0scontext"
+	"github.com/k0sproject/k0s/internal/k0scontext"
 )
 
 // A URL that may be retrieved to determine the nodename.

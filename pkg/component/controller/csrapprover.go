@@ -16,11 +16,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/k0sproject/k0s/internal/k0scontext"
 	k0snet "github.com/k0sproject/k0s/internal/pkg/net"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	"github.com/k0sproject/k0s/pkg/component/manager"
-	"github.com/k0sproject/k0s/pkg/k0scontext"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 
 	authorizationv1 "k8s.io/api/authorization/v1"
