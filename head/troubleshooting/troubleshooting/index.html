@@ -3217,29 +3217,38 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 <h2 id="coredns-in-crash-loop">CoreDNS in crash-loop<a class="headerlink" href="#coredns-in-crash-loop" title="Permanent link">#</a></h2>
 <p>The most common case we've encountered so far has been CoreDNS getting into crash-loop on the node(s).</p>
 <p>With kubectl you see something like this:</p>
-<div class="highlight"><pre><span></span><code>$<span class="w"> </span>kubectl<span class="w"> </span>get<span class="w"> </span>pod<span class="w"> </span>--all-namespaces
-NAMESPACE<span class="w">     </span>NAME<span class="w">                                       </span>READY<span class="w">   </span>STATUS<span class="w">    </span>RESTARTS<span class="w">   </span>AGE
-kube-system<span class="w">   </span>calico-kube-controllers-5f6546844f-25px6<span class="w">   </span><span class="m">1</span>/1<span class="w">     </span>Running<span class="w">   </span><span class="m">0</span><span class="w">          </span>167m
-kube-system<span class="w">   </span>calico-node-fwjx5<span class="w">                          </span><span class="m">1</span>/1<span class="w">     </span>Running<span class="w">   </span><span class="m">0</span><span class="w">          </span>164m
-kube-system<span class="w">   </span>calico-node-t4tx5<span class="w">                          </span><span class="m">1</span>/1<span class="w">     </span>Running<span class="w">   </span><span class="m">0</span><span class="w">          </span>164m
-kube-system<span class="w">   </span>calico-node-whwsg<span class="w">                          </span><span class="m">1</span>/1<span class="w">     </span>Running<span class="w">   </span><span class="m">0</span><span class="w">          </span>164m
-kube-system<span class="w">   </span>coredns-5c98d7d4d8-tfs4q<span class="w">                   </span><span class="m">1</span>/1<span class="w">     </span>Error<span class="w">     </span><span class="m">17</span><span class="w">         </span>167m
-kube-system<span class="w">   </span>konnectivity-agent-9jkfd<span class="w">                   </span><span class="m">1</span>/1<span class="w">     </span>Running<span class="w">   </span><span class="m">0</span><span class="w">          </span>164m
-kube-system<span class="w">   </span>konnectivity-agent-bvhdb<span class="w">                   </span><span class="m">1</span>/1<span class="w">     </span>Running<span class="w">   </span><span class="m">0</span><span class="w">          </span>164m
-kube-system<span class="w">   </span>konnectivity-agent-r6mzj<span class="w">                   </span><span class="m">1</span>/1<span class="w">     </span>Running<span class="w">   </span><span class="m">0</span><span class="w">          </span>164m
-kube-system<span class="w">   </span>kube-proxy-kr2r9<span class="w">                           </span><span class="m">1</span>/1<span class="w">     </span>Running<span class="w">   </span><span class="m">0</span><span class="w">          </span>164m
-kube-system<span class="w">   </span>kube-proxy-tbljr<span class="w">                           </span><span class="m">1</span>/1<span class="w">     </span>Running<span class="w">   </span><span class="m">0</span><span class="w">          </span>164m
-kube-system<span class="w">   </span>kube-proxy-xbw7p<span class="w">                           </span><span class="m">1</span>/1<span class="w">     </span>Running<span class="w">   </span><span class="m">0</span><span class="w">          </span>164m
-kube-system<span class="w">   </span>metrics-server-7d4bcb75dd-pqkrs<span class="w">            </span><span class="m">1</span>/1<span class="w">     </span>Running<span class="w">   </span><span class="m">0</span><span class="w">          </span>167m
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>kubectl<span class="w"> </span>get<span class="w"> </span>pod<span class="w"> </span>--all-namespaces
+<span class="go">NAMESPACE     NAME                                       READY   STATUS    RESTARTS   AGE</span>
+<span class="go">kube-system   calico-kube-controllers-5f6546844f-25px6   1/1     Running   0          167m</span>
+<span class="go">kube-system   calico-node-fwjx5                          1/1     Running   0          164m</span>
+<span class="go">kube-system   calico-node-t4tx5                          1/1     Running   0          164m</span>
+<span class="go">kube-system   calico-node-whwsg                          1/1     Running   0          164m</span>
+<span class="go">kube-system   coredns-5c98d7d4d8-tfs4q                   1/1     Error     17         167m</span>
+<span class="go">kube-system   konnectivity-agent-9jkfd                   1/1     Running   0          164m</span>
+<span class="go">kube-system   konnectivity-agent-bvhdb                   1/1     Running   0          164m</span>
+<span class="go">kube-system   konnectivity-agent-r6mzj                   1/1     Running   0          164m</span>
+<span class="go">kube-system   kube-proxy-kr2r9                           1/1     Running   0          164m</span>
+<span class="go">kube-system   kube-proxy-tbljr                           1/1     Running   0          164m</span>
+<span class="go">kube-system   kube-proxy-xbw7p                           1/1     Running   0          164m</span>
+<span class="go">kube-system   metrics-server-7d4bcb75dd-pqkrs            1/1     Running   0          167m</span>
 </code></pre></div>
 <p>When you check the logs, it'll show something like this:</p>
 <div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>-n<span class="w"> </span>kube-system<span class="w"> </span>logs<span class="w"> </span>coredns-5c98d7d4d8-tfs4q
 </code></pre></div>
 <div class="highlight"><pre><span></span><code>plugin/loop:<span class="w"> </span>Loop<span class="w"> </span><span class="o">(</span><span class="m">127</span>.0.0.1:55953<span class="w"> </span>-&gt;<span class="w"> </span>:1053<span class="o">)</span><span class="w"> </span>detected<span class="w"> </span><span class="k">for</span><span class="w"> </span>zone<span class="w"> </span><span class="s2">"."</span>,<span class="w"> </span>see<span class="w"> </span>https://coredns.io/plugins/loop#troubleshooting.<span class="w"> </span>Query:<span class="w"> </span><span class="s2">"HINFO 4547991504243258144.3688648895315093531."</span>
 </code></pre></div>
-<p>This is most often caused by systemd-resolved stub (or something similar) running locally and CoreDNS detects a possible loop with DNS queries.</p>
-<p>The easiest but most crude way to workaround is to disable the systemd-resolved stub and revert the hosts <code>/etc/resolv.conf</code> to original</p>
-<p>Read more at CoreDNS <a href="https://coredns.io/plugins/loop/#troubleshooting-loops-in-kubernetes-clusters">troubleshooting docs</a>.</p>
+<p>CoreDNS forwards queries to the nameservers listed in the resolv.conf file that
+the kubelet hands to pods. If that file points to a stub resolver on the host's
+loopback interface, the queries come back to CoreDNS, which detects the loop.</p>
+<p>K0s handles systemd-resolved's stub automatically: if <code>/etc/resolv.conf</code> points
+to it, the kubelet uses <code>/run/systemd/resolve/resolv.conf</code> for pods instead.
+Don't disable the stub or empty <code>/etc/resolv.conf</code> to work around the loop. K0s
+itself relies on <code>/etc/resolv.conf</code> for name resolution, see the section about
+<a href="../../external-runtime-deps/#no-integration-with-name-service-switch-nss-apis">NSS integration</a>. If another resolver on the loopback interface causes the
+loop, point the kubelet at a resolv.conf file that lists the upstream
+nameservers via the <code>resolvConf</code> field of the <a href="../../worker-node-config/#kubelet-configuration">kubelet configuration</a>.</p>
+<p>Read more in the <a href="https://coredns.io/plugins/loop/#troubleshooting-loops-in-kubernetes-clusters">CoreDNS loop troubleshooting</a> and the <a href="https://kubernetes.io/docs/tasks/administer-cluster/dns-debugging-resolution/#known-issues">Kubernetes DNS
+debugging</a> docs.</p>
 <h2 id="k0s-controller-fails-on-arm-boxes"><code>k0s controller</code> fails on ARM boxes<a class="headerlink" href="#k0s-controller-fails-on-arm-boxes" title="Permanent link">#</a></h2>
 <p>In the logs you probably see etcd not starting up properly.</p>
 <p>Etcd is <a href="https://etcd.io/docs/v3.5/op-guide/supported-platform/#current-support">not fully supported</a> on ARM architecture, thus you need
