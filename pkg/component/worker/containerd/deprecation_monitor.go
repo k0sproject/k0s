@@ -13,6 +13,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/k0sproject/k0s/pkg/component/manager"
+	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,7 +22,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
-	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/record"
 )
 
@@ -42,10 +42,9 @@ const (
 // DeprecationMonitor watches for containerd deprecation warnings and surfaces them on Node objects
 type DeprecationMonitor struct {
 	containerdSocketPath string
-	certManager          certManager
+	clients              kubeutil.ClientFactoryInterface
 	nodeName             apitypes.NodeName
 
-	kubeClient    *kubernetes.Clientset
 	eventRecorder record.EventRecorder
 	log           *logrus.Entry
 	stopCh        chan struct{}
@@ -53,15 +52,11 @@ type DeprecationMonitor struct {
 
 var _ manager.Component = (*DeprecationMonitor)(nil)
 
-type certManager interface {
-	GetRestConfig(ctx context.Context) (*rest.Config, error)
-}
-
 // NewDeprecationMonitor creates a new deprecation monitor component
-func NewDeprecationMonitor(containerdSocketPath string, certManager certManager, nodeName apitypes.NodeName) *DeprecationMonitor {
+func NewDeprecationMonitor(containerdSocketPath string, clients kubeutil.ClientFactoryInterface, nodeName apitypes.NodeName) *DeprecationMonitor {
 	return &DeprecationMonitor{
 		containerdSocketPath: containerdSocketPath,
-		certManager:          certManager,
+		clients:              clients,
 		nodeName:             nodeName,
 		log:                  logrus.WithField("component", componentName),
 		stopCh:               make(chan struct{}),
@@ -76,23 +71,19 @@ func (d *DeprecationMonitor) Init(ctx context.Context) error {
 // Start begins the reconciliation loop
 func (d *DeprecationMonitor) Start(ctx context.Context) error {
 	d.log.Info("Starting deprecation monitor")
-	config, err := d.certManager.GetRestConfig(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to get kubernetes rest config: %w", err)
-	}
 
-	d.kubeClient, err = kubernetes.NewForConfig(config)
+	client, err := d.clients.GetClient()
 	if err != nil {
 		return fmt.Errorf("failed to create kubernetes client: %w", err)
 	}
 
 	// Create event broadcaster and recorder for proper event deduplication
 	eventBroadcaster := record.NewBroadcaster(record.WithContext(ctx))
-	eventBroadcaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{Interface: d.kubeClient.CoreV1().Events(metav1.NamespaceDefault)})
+	eventBroadcaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{Interface: client.CoreV1().Events(metav1.NamespaceDefault)})
 	d.eventRecorder = eventBroadcaster.NewRecorder(scheme.Scheme, corev1.EventSource{Component: componentName})
 
 	go func() {
-		d.reconcileLoop(ctx)
+		d.reconcileLoop(ctx, client)
 	}()
 
 	d.log.WithFields(logrus.Fields{
@@ -109,12 +100,12 @@ func (d *DeprecationMonitor) Stop() error {
 }
 
 // reconcileLoop runs the reconciliation loop
-func (d *DeprecationMonitor) reconcileLoop(ctx context.Context) {
+func (d *DeprecationMonitor) reconcileLoop(ctx context.Context, client kubernetes.Interface) {
 	// Wait for node to exist before starting reconciliation
 	d.log.WithField("node", d.nodeName).Info("Waiting for node to be registered in Kubernetes API")
 
 	if err := wait.PollUntilContextCancel(ctx, 5*time.Second, true, func(ctx context.Context) (bool, error) {
-		_, err := d.kubeClient.CoreV1().Nodes().Get(ctx, string(d.nodeName), metav1.GetOptions{})
+		_, err := client.CoreV1().Nodes().Get(ctx, string(d.nodeName), metav1.GetOptions{})
 		if err != nil {
 			d.log.WithError(err).Debug("Node not found yet, waiting...")
 			return false, nil
@@ -128,7 +119,7 @@ func (d *DeprecationMonitor) reconcileLoop(ctx context.Context) {
 	d.log.WithField("node", d.nodeName).Info("Node found, starting deprecation monitor reconciliation loop")
 
 	// Do initial reconciliation immediately
-	if err := d.reconcile(ctx); err != nil {
+	if err := d.reconcile(ctx, client); err != nil {
 		d.log.WithError(err).Error("Initial reconciliation failed")
 	}
 
@@ -141,7 +132,7 @@ func (d *DeprecationMonitor) reconcileLoop(ctx context.Context) {
 			d.log.WithField("node", d.nodeName).Info("Stopping deprecation monitor reconciliation loop")
 			return
 		case <-ticker.C:
-			if err := d.reconcile(ctx); err != nil {
+			if err := d.reconcile(ctx, client); err != nil {
 				d.log.WithError(err).Error("Reconciliation failed")
 			}
 		case <-d.stopCh:
@@ -152,7 +143,7 @@ func (d *DeprecationMonitor) reconcileLoop(ctx context.Context) {
 }
 
 // reconcile performs a single reconciliation cycle
-func (d *DeprecationMonitor) reconcile(ctx context.Context) error {
+func (d *DeprecationMonitor) reconcile(ctx context.Context, client kubernetes.Interface) error {
 	d.log.Debug("Starting reconciliation cycle")
 
 	// Query containerd for deprecation warnings
@@ -171,7 +162,7 @@ func (d *DeprecationMonitor) reconcile(ctx context.Context) error {
 
 	// Update node condition
 	hasDeprecations := len(warnings) > 0
-	if err := d.updateNodeCondition(ctx, hasDeprecations); err != nil {
+	if err := d.updateNodeCondition(ctx, client, hasDeprecations); err != nil {
 		return fmt.Errorf("failed to update node condition: %w", err)
 	}
 
@@ -203,8 +194,8 @@ func (d *DeprecationMonitor) getDeprecationWarnings(ctx context.Context) ([]*int
 }
 
 // updateNodeCondition updates the ContainerdHasNoDeprecations condition on the node
-func (d *DeprecationMonitor) updateNodeCondition(ctx context.Context, hasDeprecations bool) error {
-	node, err := d.kubeClient.CoreV1().Nodes().Get(ctx, string(d.nodeName), metav1.GetOptions{})
+func (d *DeprecationMonitor) updateNodeCondition(ctx context.Context, client kubernetes.Interface, hasDeprecations bool) error {
+	node, err := client.CoreV1().Nodes().Get(ctx, string(d.nodeName), metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to get node: %w", err)
 	}
@@ -254,7 +245,7 @@ func (d *DeprecationMonitor) updateNodeCondition(ctx context.Context, hasDepreca
 	// Update node status
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
-	_, err = d.kubeClient.CoreV1().Nodes().UpdateStatus(ctx, node, metav1.UpdateOptions{})
+	_, err = client.CoreV1().Nodes().UpdateStatus(ctx, node, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to update node status: %w", err)
 	}

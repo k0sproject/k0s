@@ -34,6 +34,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/token"
 
 	apitypes "k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
@@ -47,6 +48,7 @@ type Command config.CLIOptions
 type EmbeddingController interface {
 	IsSingleNode() bool
 	UsesIPTables() bool
+	SetWorkerClientFactory(kubernetes.ClientFactoryInterface)
 }
 
 func NewWorkerCmd() *cobra.Command {
@@ -264,14 +266,19 @@ func (c *Command) Start(ctx context.Context, nodeName apitypes.NodeName, kubelet
 		componentManager.Add(ctx, reconciler)
 	}
 
-	certManager := worker.NewCertificateManager(kubeletKubeconfigPath)
+	clientFactory := &kubernetes.ClientFactory{LoadRESTConfig: func() (*rest.Config, error) {
+		return kubernetes.ClientConfig(kubernetes.KubeconfigFromFile(kubeletKubeconfigPath))
+	}}
+	if controller != nil {
+		controller.SetWorkerClientFactory(clientFactory)
+	}
 
 	if c.CriSocket == "" {
 		componentManager.Add(ctx, containerd.NewComponent(c.LogLevels.Containerd, c.K0sVars, workerConfig))
 		componentManager.Add(ctx, worker.NewOCIBundleReconciler(c.K0sVars))
 		componentManager.Add(ctx, containerd.NewDeprecationMonitor(
 			containerd.Address(c.K0sVars.RunDir),
-			certManager,
+			clientFactory,
 			nodeName,
 		))
 	}
@@ -299,7 +306,12 @@ func (c *Command) Start(ctx context.Context, nodeName apitypes.NodeName, kubelet
 			PrimaryAddressFamily: workerConfig.PrimaryAddressFamily,
 		})
 
-	addPlatformSpecificComponents(ctx, componentManager, c.K0sVars, workerConfig, controller, certManager)
+	(&platformSpecificComponents{
+		k0sVars:       c.K0sVars,
+		workerConfig:  workerConfig,
+		controller:    controller,
+		clientFactory: clientFactory,
+	}).addTo(ctx, componentManager)
 
 	if controller == nil {
 		// if running inside a controller, status component is already running
@@ -317,8 +329,8 @@ func (c *Command) Start(ctx context.Context, nodeName apitypes.NodeName, kubelet
 				// todo: if it's needed, a worker side config client can be set up and used to load the config
 				ClusterConfig: nil,
 			},
-			CertManager: certManager,
-			Socket:      c.K0sVars.StatusSocketPath,
+			GetWorkerClientFactory: func() kubernetes.ClientFactoryInterface { return clientFactory },
+			Socket:                 c.K0sVars.StatusSocketPath,
 		})
 	}
 
@@ -354,4 +366,11 @@ func (c *Command) Start(ctx context.Context, nodeName apitypes.NodeName, kubelet
 		logrus.Info("All worker components stopped")
 	}
 	return nil
+}
+
+type platformSpecificComponents struct {
+	k0sVars       *config.CfgVars
+	workerConfig  *workerconfig.Profile
+	controller    EmbeddingController
+	clientFactory kubernetes.ClientFactoryInterface
 }
