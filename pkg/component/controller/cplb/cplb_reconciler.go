@@ -209,7 +209,6 @@ func (r *CPLBReconciler) newHealthChecker(ctx context.Context, restConfig *rest.
 		}
 
 		rc, err = rest.RESTClientFor(cfg)
-		fmt.Println(rc.Client.Transport)
 	}
 
 	c, cancel := context.WithCancel(ctx)
