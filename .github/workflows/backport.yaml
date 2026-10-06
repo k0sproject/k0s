@@ -58,7 +58,7 @@ jobs:
           git config merge.mergiraf.driver '${{ github.workspace }}/.git/mergiraf/mergiraf merge --git %O %A %B -s %S -x %X -y %Y -p %P -l %L'
 
       - name: Create backport PRs
-        uses: korthout/backport-action@3c06f323a58619da1e8522229ebc8d5de2633e46 # v4.3.0
+        uses: korthout/backport-action@8560fb503c275d433c56f05a2f64850093baa9f7 # v4.7.0
         with:
           # Inputs documented here: https://github.com/korthout/backport-action?tab=readme-ov-file#inputs
           github_token: ${{ secrets.GH_BACKPORT_TOKEN }}
