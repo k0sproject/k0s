@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/k0sproject/k0s/pkg/build"
+	"github.com/k0sproject/k0s/internal/build"
 
 	"github.com/spf13/cobra"
 )

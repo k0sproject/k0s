@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"runtime"
 
+	"github.com/k0sproject/k0s/internal/build"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
-	"github.com/k0sproject/k0s/pkg/build"
 	"github.com/k0sproject/k0s/pkg/component/controller/leasecounter"
 
 	"k8s.io/apimachinery/pkg/api/resource"
