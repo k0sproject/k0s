@@ -1,5 +1,9 @@
 name: Check for merge conflicts
 
+# This workflow runs with elevated trust on pull requests from forks. It must
+# never check out or execute pull request code. The action only reads pull
+# request metadata and updates labels and comments.
+
 on:
   push:
     branches:
