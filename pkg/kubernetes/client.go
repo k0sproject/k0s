@@ -6,10 +6,10 @@ package kubernetes
 import (
 	"sync"
 
+	"github.com/k0sproject/k0s/internal/constant"
 	k0sclientset "github.com/k0sproject/k0s/pkg/client/clientset"
 	etcdMemberClient "github.com/k0sproject/k0s/pkg/client/clientset/typed/etcd/v1beta1"
 	cfgClient "github.com/k0sproject/k0s/pkg/client/clientset/typed/k0s/v1beta1"
-	"github.com/k0sproject/k0s/pkg/constant"
 
 	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/client-go/discovery"

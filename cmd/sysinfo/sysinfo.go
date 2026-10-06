@@ -11,9 +11,9 @@ import (
 	"strings"
 
 	"github.com/k0sproject/k0s/cmd/internal"
+	"github.com/k0sproject/k0s/internal/constant"
 	"github.com/k0sproject/k0s/internal/pkg/sysinfo"
 	"github.com/k0sproject/k0s/internal/pkg/sysinfo/probes"
-	"github.com/k0sproject/k0s/pkg/constant"
 
 	"github.com/logrusorgru/aurora/v3"
 	"github.com/spf13/cobra"

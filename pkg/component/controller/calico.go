@@ -15,9 +15,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/k0sproject/k0s/internal/constant"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/manager"
-	"github.com/k0sproject/k0s/pkg/constant"
 
 	"github.com/k0sproject/k0s/static"
 

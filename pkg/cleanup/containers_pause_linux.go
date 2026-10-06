@@ -6,8 +6,8 @@
 package cleanup
 
 import (
+	"github.com/k0sproject/k0s/internal/constant"
 	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
-	"github.com/k0sproject/k0s/pkg/constant"
 )
 
 func defaultPauseImage() *k0sv1beta1.ImageSpec {

@@ -13,9 +13,9 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/k0sproject/k0s/internal/constant"
 	"github.com/k0sproject/k0s/internal/pkg/iface"
 	"github.com/k0sproject/k0s/pkg/config/kine"
-	"github.com/k0sproject/k0s/pkg/constant"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
 

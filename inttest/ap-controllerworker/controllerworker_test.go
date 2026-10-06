@@ -17,6 +17,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/k0sproject/k0s/internal/constant"
 	aptest "github.com/k0sproject/k0s/inttest/common/autopilot"
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
@@ -24,7 +25,6 @@ import (
 	apsigcomm "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/common"
 	apsigk0s "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/k0s"
 	apsigv2 "github.com/k0sproject/k0s/pkg/autopilot/signaling/v2"
-	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
 
 	appsv1 "k8s.io/api/apps/v1"
