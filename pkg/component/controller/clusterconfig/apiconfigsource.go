@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/k0sproject/k0s/internal/sync/value"
+	"github.com/k0sproject/k0s/internal/constant"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	k0sclient "github.com/k0sproject/k0s/pkg/client/clientset/typed/k0s/v1beta1"
-	"github.com/k0sproject/k0s/pkg/constant"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
 	"github.com/k0sproject/k0s/pkg/leaderelection"

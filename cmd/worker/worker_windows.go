@@ -11,10 +11,10 @@ import (
 	"time"
 
 	"github.com/k0sproject/k0s/internal/k0scontext"
+	"github.com/k0sproject/k0s/internal/constant"
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/log"
 	"github.com/k0sproject/k0s/pkg/component/manager"
-	"github.com/k0sproject/k0s/pkg/constant"
 )
 
 func initLogging(ctx context.Context, logDir string) error {

@@ -3,7 +3,7 @@
 
 package v1beta1
 
-import "github.com/k0sproject/k0s/pkg/constant"
+import "github.com/k0sproject/k0s/internal/constant"
 
 // SystemUser defines the user to use for each component
 type SystemUser struct {
