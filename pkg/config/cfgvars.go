@@ -15,8 +15,8 @@ import (
 
 	"github.com/spf13/pflag"
 
+	"github.com/k0sproject/k0s/internal/constant"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
-	"github.com/k0sproject/k0s/pkg/constant"
 )
 
 // CfgVars is a struct that holds all the config variables required for K0s

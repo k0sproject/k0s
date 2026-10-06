@@ -7,13 +7,13 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/k0sproject/k0s/internal/constant"
 	"github.com/k0sproject/k0s/internal/testutil/fakeclient"
 	k0sclientset "github.com/k0sproject/k0s/pkg/client/clientset"
 	k0sfake "github.com/k0sproject/k0s/pkg/client/clientset/fake"
 	k0sscheme "github.com/k0sproject/k0s/pkg/client/clientset/scheme"
 	etcdv1beta1 "github.com/k0sproject/k0s/pkg/client/clientset/typed/etcd/v1beta1"
 	k0sv1beta1 "github.com/k0sproject/k0s/pkg/client/clientset/typed/k0s/v1beta1"
-	"github.com/k0sproject/k0s/pkg/constant"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 
 	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
