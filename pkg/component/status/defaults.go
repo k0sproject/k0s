@@ -3,7 +3,7 @@
 
 package status
 
-import "github.com/k0sproject/k0s/pkg/constant"
+import "github.com/k0sproject/k0s/internal/constant"
 
 // DefaultSocketPath is the platform-specific default socket path used by k0s
 // when no explicit status socket is provided.

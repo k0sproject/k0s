@@ -15,7 +15,7 @@ import (
 	"strings"
 
 	"github.com/k0sproject/k0s/internal/assets"
-	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/internal/constant"
 	"github.com/sirupsen/logrus"
 )
 
