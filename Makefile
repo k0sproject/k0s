@@ -92,14 +92,14 @@ SOURCE_DATE_EPOCH ?= $(shell git log -1 --pretty=%ct 2>/dev/null || date -u +%s)
 BUILD_DATE_FMT = %Y-%m-%dT%H:%M:%SZ
 BUILD_DATE ?= $(shell date -u -d "@$(SOURCE_DATE_EPOCH)" "+$(BUILD_DATE_FMT)" 2>/dev/null || date -u -r "$(SOURCE_DATE_EPOCH)" "+$(BUILD_DATE_FMT)" 2>/dev/null || date -u "+$(BUILD_DATE_FMT)")
 
-LD_FLAGS += -X github.com/k0sproject/k0s/pkg/build.Version=$(VERSION)
-LD_FLAGS += -X github.com/k0sproject/k0s/pkg/build.RuncVersion=$(runc_version)
-LD_FLAGS += -X github.com/k0sproject/k0s/pkg/build.ContainerdVersion=$(containerd_version)
-LD_FLAGS += -X github.com/k0sproject/k0s/pkg/build.KubernetesVersion=$(kubernetes_version)
-LD_FLAGS += -X github.com/k0sproject/k0s/pkg/build.KineVersion=$(kine_version)
-LD_FLAGS += -X github.com/k0sproject/k0s/pkg/build.EtcdVersion=$(etcd_version)
-LD_FLAGS += -X github.com/k0sproject/k0s/pkg/build.KonnectivityVersion=$(konnectivity_version)
-LD_FLAGS += -X "github.com/k0sproject/k0s/pkg/build.EulaNotice=$(EULA_NOTICE)"
+LD_FLAGS += -X github.com/k0sproject/k0s/internal/build.Version=$(VERSION)
+LD_FLAGS += -X github.com/k0sproject/k0s/internal/build.RuncVersion=$(runc_version)
+LD_FLAGS += -X github.com/k0sproject/k0s/internal/build.ContainerdVersion=$(containerd_version)
+LD_FLAGS += -X github.com/k0sproject/k0s/internal/build.KubernetesVersion=$(kubernetes_version)
+LD_FLAGS += -X github.com/k0sproject/k0s/internal/build.KineVersion=$(kine_version)
+LD_FLAGS += -X github.com/k0sproject/k0s/internal/build.EtcdVersion=$(etcd_version)
+LD_FLAGS += -X github.com/k0sproject/k0s/internal/build.KonnectivityVersion=$(konnectivity_version)
+LD_FLAGS += -X "github.com/k0sproject/k0s/internal/build.EulaNotice=$(EULA_NOTICE)"
 LD_FLAGS += -X github.com/k0sproject/k0s/pkg/telemetry.segmentToken=$(SEGMENT_TOKEN)
 LD_FLAGS += -X k8s.io/component-base/version.gitVersion=v$(kubernetes_version)
 LD_FLAGS += -X k8s.io/component-base/version.gitMajor=$(word 1,$(subst ., ,$(kubernetes_version)))
