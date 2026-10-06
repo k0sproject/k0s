@@ -12,10 +12,10 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/k0sproject/k0s/internal/build"
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
-	"github.com/k0sproject/k0s/pkg/build"
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
 
 	"github.com/avast/retry-go"
