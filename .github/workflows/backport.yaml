@@ -3,11 +3,22 @@ on:
   pull_request_target:
     types: [closed, labeled]
     branches: [main, release-*]
+  workflow_dispatch:
+    inputs:
+      pull_number:
+        description: Number of the merged pull request to backport
+        type: number
+        required: true
+      target_branches:
+        description: Space-separated target branches (default is to use the backport/* labels)
+        type: string
 
-# WARNING:
-# When extending this action, be aware that $GITHUB_TOKEN allows write access to
-# the GitHub repository. This means that it should not evaluate user input in a
-# way that allows code injection.
+# This workflow runs with elevated trust on pull requests from forks. It must
+# never check out or execute pull request code, and it must not evaluate user
+# input in a way that allows code injection. All steps use the backport token
+# for repository access.
+
+permissions: {}
 
 jobs:
   backport:
@@ -16,26 +27,26 @@ jobs:
     # OR
     # when already merged PR is labeled with backport labels
     if: >
-      github.event.pull_request.merged
-      && (
-        github.event.action == 'closed'
-        || (
-          github.event.action == 'labeled'
-          && startsWith(github.event.label.name, 'backport/')
+      github.event_name == 'workflow_dispatch'
+      || (
+        github.event.pull_request.merged
+        && (
+          github.event.action == 'closed'
+          || (
+            github.event.action == 'labeled'
+            && startsWith(github.event.label.name, 'backport/')
+          )
         )
       )
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          # required to find all branches
-          fetch-depth: 0
           token: ${{ secrets.GH_BACKPORT_TOKEN }}
-          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Setup Mergiraf
         env:
-          MERGIRAF_VERSION: 0.19.1 # renovate: datasource=gitea-releases registryUrl=https://codeberg.org depName=mergiraf/mergiraf
+          MERGIRAF_VERSION: 0.20.0 # renovate: datasource=gitea-releases registryUrl=https://codeberg.org depName=mergiraf/mergiraf
         run: |
           mkdir .git/mergiraf
           curl --proto '=https' --tlsv1.2 --retry 5 --retry-all-errors -sSLfo .git/mergiraf/mergiraf.tar.gz "https://codeberg.org/mergiraf/mergiraf/releases/download/v$MERGIRAF_VERSION/mergiraf_x86_64-unknown-linux-musl.tar.gz"
@@ -47,11 +58,13 @@ jobs:
           git config merge.mergiraf.driver '${{ github.workspace }}/.git/mergiraf/mergiraf merge --git %O %A %B -s %S -x %X -y %Y -p %P -l %L'
 
       - name: Create backport PRs
-        uses: korthout/backport-action@3c06f323a58619da1e8522229ebc8d5de2633e46 # v4.3.0
+        uses: korthout/backport-action@8560fb503c275d433c56f05a2f64850093baa9f7 # v4.7.0
         with:
           # Inputs documented here: https://github.com/korthout/backport-action?tab=readme-ov-file#inputs
           github_token: ${{ secrets.GH_BACKPORT_TOKEN }}
           github_workspace: ${{ github.workspace }}
+          source_pr_number: ${{ inputs.pull_number }}
+          target_branches: ${{ inputs.target_branches }}
 
           auto_merge_enabled: true
 
@@ -61,5 +74,5 @@ jobs:
           label_pattern: ^backport\/([^ ]+)$
 
           pull_description: |-
-            Automated backport to `${target_branch}`, triggered by a label in #${pull_number}.
+            ${{ inputs.target_branches != '' && format('Automated backport to `${target_branch}`, manually triggered by @{0} for #${pull_number}.', github.actor) || 'Automated backport to `${target_branch}`, triggered by a label in #${pull_number}.' }}
             See ${issue_refs}.

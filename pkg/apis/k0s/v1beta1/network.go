@@ -117,7 +117,7 @@ func (n *Network) Validate() []error {
 		}
 
 		// Validate IPv6 ServiceCIDR prefix length per Kubernetes requirements (<= /108).
-		// https://github.com/kubernetes/kubernetes/blob/v1.37.0/cmd/kube-apiserver/app/options/validation.go#L52-L58
+		// https://github.com/kubernetes/kubernetes/blob/v1.37.1/cmd/kube-apiserver/app/options/validation.go#L52-L58
 		if serviceNetIP.To4() == nil {
 			ones, bits := serviceNet.Mask.Size()
 			if bits == 128 && ones > 108 {
@@ -154,7 +154,7 @@ func (n *Network) Validate() []error {
 		} else {
 			ones, bits := ipv6SvcNet.Mask.Size()
 
-			// https://github.com/kubernetes/kubernetes/blob/v1.37.0/cmd/kube-apiserver/app/options/validation.go#L39
+			// https://github.com/kubernetes/kubernetes/blob/v1.37.1/cmd/kube-apiserver/app/options/validation.go#L39
 			maxCIDRBits := 20
 			if bits-ones > maxCIDRBits {
 				errors = append(errors, field.Invalid(field.NewPath("dualStack", "IPv6serviceCIDR"), n.DualStack.IPv6ServiceCIDR, "IPv6 service CIDR prefix must be <= 108"))
@@ -181,6 +181,9 @@ func (n *Network) Validate() []error {
 	errors = append(errors, n.Calico.Validate(field.NewPath("calico"))...)
 	errors = append(errors, n.CoreDNS.Validate(field.NewPath("coreDNS"))...)
 	for _, err := range n.NodeLocalLoadBalancing.Validate(field.NewPath("nodeLocalLoadBalancing")) {
+		errors = append(errors, err)
+	}
+	for _, err := range n.ControlPlaneLoadBalancing.Validate(field.NewPath("controlPlaneLoadBalancing")) {
 		errors = append(errors, err)
 	}
 
@@ -308,9 +311,9 @@ func (n *Network) BuildPodCIDR(primaryAddressFamily PrimaryAddressFamilyType) st
 	}
 }
 
-// IsSingleStackIPv6 returns true if the ServiceCIDR is IPv6.
-// This function relies on being called after Validate() and it
-// assumes that n.PodCIDR has a legal value.
+// Returns true if it's a single-stack cluster and the PodCIDR is not IPv4.
+//
+// Deprecated: New code should rely on the primary address family.
 func (n *Network) IsSingleStackIPv6() bool {
 	if n.DualStack.Enabled {
 		return false

@@ -17,10 +17,11 @@ import (
 )
 
 func TestCalicoManifests(t *testing.T) {
+	nodeConfig := v1beta1.DefaultClusterConfig()
 	newTestInstance := func(t *testing.T) *Calico {
 		manifestsDir := t.TempDir()
 		ctx := t.Context()
-		calico, err := NewCalico(v1beta1.DefaultClusterConfig(), manifestsDir, func() (*bool, <-chan struct{}) { return new(true), nil })
+		calico, err := NewCalico(nodeConfig, manifestsDir, func() (*bool, <-chan struct{}) { return new(true), nil })
 		require.NoError(t, err)
 		require.NoError(t, calico.Init(ctx))
 		require.NoError(t, calico.Start(ctx))
@@ -28,7 +29,7 @@ func TestCalicoManifests(t *testing.T) {
 		return calico
 	}
 
-	clusterConfig := v1beta1.DefaultClusterConfig()
+	clusterConfig := nodeConfig.DeepCopy()
 	clusterConfig.Spec.Network.Calico = v1beta1.DefaultCalico()
 	clusterConfig.Spec.Network.Provider = "calico"
 	clusterConfig.Spec.Network.KubeRouter = nil
@@ -119,6 +120,27 @@ func TestCalicoManifests(t *testing.T) {
 			spec.RequireContainerHasEnvVariable(t, "calico-node", "IP_AUTODETECTION_METHOD", templateContext.IPAutodetectionMethod)
 		})
 	})
+
+	t.Run("pod CIDR comes from node config", func(t *testing.T) {
+		clusterConfig := clusterConfig.DeepCopy()
+		clusterConfig.Spec.Network.PodCIDR = "10.245.0.0/16"
+		require.NotEqual(t,
+			clusterConfig.Spec.Network.PodCIDR,
+			nodeConfig.Spec.Network.PodCIDR,
+			"This test needs different PodCIDRs in node and cluster configs",
+		)
+
+		calico := newTestInstance(t)
+		cfg, err := calico.getConfig(clusterConfig)
+		require.NoError(t, err)
+		require.NoError(t, calico.processConfigChanges(&calicoConfig{&calico.nodeConfig, cfg, false}, nil))
+
+		daemonSetManifestRaw, err := os.ReadFile(filepath.Join(calico.manifestsDir, "calico", "calico-DaemonSet-calico-node.yaml"))
+		require.NoError(t, err, "must have daemon set for calico")
+		spec := daemonSetContainersEnv{}
+		require.NoError(t, yaml.Unmarshal(daemonSetManifestRaw, &spec))
+		spec.RequireContainerHasEnvVariable(t, "calico-node", "CALICO_IPV4POOL_CIDR", "10.244.0.0/16")
+	})
 }
 
 // this structure is needed only for unit tests and basically it describes some fields that are needed to be parsed out of the daemon set manifest
@@ -155,7 +177,7 @@ func (ds daemonSetContainersEnv) RequireContainerHasEnvVariable(t *testing.T, co
 		for _, envSpec := range container.Env {
 			if envSpec.Name == varName {
 				found = true
-				require.Equal(t, envSpec.Value, varValue)
+				require.Equal(t, varValue, envSpec.Value)
 			}
 		}
 		require.Truef(t, found, "Variable %s not found", varName)

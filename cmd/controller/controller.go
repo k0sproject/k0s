@@ -43,7 +43,6 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/component/prober"
 	"github.com/k0sproject/k0s/pkg/component/status"
-	"github.com/k0sproject/k0s/pkg/component/worker"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
@@ -427,12 +426,14 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 		Socket: c.K0sVars.StatusSocketPath,
 	}
 	if controllerMode.WorkloadsEnabled() {
-		// The status component must use the same Kubernetes client configuration as
-		// the embedded kubelet, otherwise the API connectivity check would be
-		// inaccurate. For embedded workers, this is always the "direct"
-		// configuration.
+		// The worker installs the real factory once it starts.
+		workerInterface.workerClientFactory.Store(new(kubernetes.ClientFactoryInterface(&kubernetes.ClientFactory{
+			LoadRESTConfig: func() (*rest.Config, error) { return nil, errors.New("worker not started yet") },
+		})))
 		statusComponent.StatusInformation.Workloads = true
-		statusComponent.CertManager = worker.NewCertificateManager(worker.DirectKubeletKubeconfigPath(c.K0sVars))
+		statusComponent.GetWorkerClientFactory = func() kubernetes.ClientFactoryInterface {
+			return *workerInterface.workerClientFactory.Load()
+		}
 	}
 	nodeComponents.Add(ctx, &statusComponent)
 
@@ -545,7 +546,13 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 			return fmt.Errorf("failed to create Calico component: %w", err)
 		}
 		clusterComponents.Add(ctx, calico)
-		clusterComponents.Add(ctx, controller.NewKubeRouter(c.K0sVars, nodeConfig.Spec.PrimaryAddressFamily(), nodeConfig.Spec.Network.BuildServiceCIDR(nodeConfig.Spec.PrimaryAddressFamily())))
+		primaryAddressFamily := nodeConfig.Spec.PrimaryAddressFamily()
+		clusterComponents.Add(ctx, controller.NewKubeRouter(
+			c.K0sVars,
+			primaryAddressFamily,
+			nodeConfig.Spec.Network.BuildServiceCIDR(primaryAddressFamily),
+			nodeConfig.Spec.Network.IsSingleStackIPv6(),
+		))
 	}
 
 	if !slices.Contains(flags.DisableComponents, constant.MetricsServerComponentName) {
@@ -613,7 +620,8 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 			K0sVars:               c.K0sVars,
 			DisableLeaderElection: singleController,
 			ServiceClusterIPRange: nodeConfig.Spec.Network.BuildServiceCIDR(nodeConfig.Spec.PrimaryAddressFamily()),
-			PrimaryAddressFamily:  nodeConfig.Spec.PrimaryAddressFamily(),
+			ClusterCIDR:           nodeConfig.Spec.Network.BuildPodCIDR(nodeConfig.Spec.PrimaryAddressFamily()),
+			SingleStackIPv6:       nodeConfig.Spec.Network.IsSingleStackIPv6(),
 			ExtraArgs:             flags.KubeControllerManagerExtraArgs,
 		})
 	}
@@ -735,8 +743,9 @@ func (c *command) startWorker(ctx context.Context, nodeName apitypes.NodeName, k
 }
 
 type embeddingController struct {
-	opts         *config.ControllerOptions
-	usesIPTables bool
+	opts                *config.ControllerOptions
+	usesIPTables        bool
+	workerClientFactory atomic.Pointer[kubernetes.ClientFactoryInterface]
 }
 
 // IsSingleNode implements [workercmd.EmbeddingController].
@@ -747,6 +756,14 @@ func (c *embeddingController) IsSingleNode() bool {
 // UsesIPTables implements [worker.EmbeddingController].
 func (c *embeddingController) UsesIPTables() bool {
 	return c.usesIPTables
+}
+
+// SetWorkerClientFactory implements [worker.EmbeddingController].
+func (c *embeddingController) SetWorkerClientFactory(cf kubernetes.ClientFactoryInterface) {
+	if cf == nil {
+		panic("can't set a nil worker client factory")
+	}
+	c.workerClientFactory.Store(&cf)
 }
 
 // If we've got an etcd data directory in place for embedded etcd, or a ca for

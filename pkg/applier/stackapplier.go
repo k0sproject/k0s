@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/avast/retry-go"
-	"github.com/k0sproject/k0s/pkg/kubernetes"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/sirupsen/logrus"
@@ -27,9 +26,9 @@ type StackApplier struct {
 }
 
 // NewStackApplier crates new stack applier to manage a stack
-func NewStackApplier(path string, kubeClientFactory kubernetes.ClientFactoryInterface) *StackApplier {
+func NewStackApplier(path string, clients Clients) *StackApplier {
 	var mu sync.Mutex
-	applier := NewApplier(path, kubeClientFactory)
+	applier := NewApplier(path, clients)
 
 	return &StackApplier{
 		log:  logrus.WithField("component", "applier-"+applier.Name),

@@ -56,7 +56,7 @@ jobs:
         || 'ubuntu-24.04'
       }}
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
@@ -72,7 +72,7 @@ jobs:
 
       - name: Cache golangci-lint cache
         id: cache-golangci
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           key: "lint-${{ matrix.target-os }}-amd64-golangci-${{ env.GOLANGCI_LINT_VERSION }}-go-${{ env.GO_VERSION }}-${{ github.sha }}"
           restore-keys: |
@@ -106,7 +106,7 @@ jobs:
     name: Lint generated code
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           preserve-credentials: false
@@ -115,7 +115,7 @@ jobs:
         run: .github/workflows/prepare-build-env.sh
 
       - name: Restore Go cache
-        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           key: "build-k0s-linux-amd64-gocache-go${{ env.GO_VERSION }}-${{ github.sha }}"
           restore-keys: |
@@ -143,7 +143,7 @@ jobs:
         working-directory: hack/ostests
 
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           sparse-checkout: hack/ostests
           persist-credentials: false
