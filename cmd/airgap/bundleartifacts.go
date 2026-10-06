@@ -11,8 +11,8 @@ import (
 	"strconv"
 
 	"github.com/k0sproject/k0s/cmd/internal"
+	"github.com/k0sproject/k0s/internal/airgap"
 	"github.com/k0sproject/k0s/internal/pkg/file"
-	"github.com/k0sproject/k0s/pkg/airgap"
 
 	"k8s.io/kubectl/pkg/util/term"
 
