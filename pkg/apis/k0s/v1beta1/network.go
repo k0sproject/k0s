@@ -9,7 +9,7 @@ import (
 	"net"
 	"slices"
 
-	"github.com/k0sproject/k0s/pkg/featuregate"
+	"github.com/k0sproject/k0s/internal/featuregate"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	utilnet "k8s.io/utils/net"
 
