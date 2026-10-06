@@ -22,7 +22,7 @@ bin/sonobuoy: | bin
 
 bootloose_alpine_build_cmdline := \
 	--build-arg GOLANG_IMAGE=$(golang_buildimage) \
-	--build-arg ALPINE_VERSION=$(alpine_patch_version) \
+	--build-arg ALPINE_IMAGE=$(alpine_image) \
 	--build-arg ETCD_VERSION=$(etcd_version) \
 	--build-arg HELM_VERSION=$(helm_version) \
 	-t bootloose-alpine \
@@ -55,12 +55,14 @@ check-network: bin/sonobuoy
 	$(realpath bin/sonobuoy) run --wait=1200 --plugin=e2e --plugin-env=e2e.E2E_USE_GO_RUNNER=true \
 		--e2e-focus='\[sig-network\].*\[Conformance\]' \
 		--e2e-skip='\[Serial\]' --e2e-parallel=y \
+		--sonobuoy-image=$(sonobuoy_image) \
 		--kubernetes-version=v$(kubernetes_version)
 
 check-conformance: bin/sonobuoy
 	$(realpath bin/sonobuoy) run --wait=1200 \
 		--mode=certified-conformance \
 		--plugin-env=e2e.E2E_EXTRA_ARGS="--ginkgo.v" \
+		--sonobuoy-image=$(sonobuoy_image) \
 		--kubernetes-version=v$(kubernetes_version)
 
 get-conformance-results: bin/sonobuoy

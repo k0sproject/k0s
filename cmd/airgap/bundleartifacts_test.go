@@ -4,10 +4,13 @@
 package airgap
 
 import (
+	"archive/tar"
+	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -26,6 +29,7 @@ import (
 	imagespecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/sirupsen/logrus"
 
+	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -104,6 +108,157 @@ func TestBundleArtifactsCmd_WithPlatforms(t *testing.T) {
 	}
 }
 
+func TestBundleArtifactsCmd_TagHandling(t *testing.T) {
+	registry := startFakeRegistry(t, true)
+
+	// The tag hello:1980 resolves to a multi-platform image index on the
+	// registry, but the reference pins the linux/amd64 image manifest below it.
+	const pinned digest.Digest = "sha256:c259653916b1fea8bd000584e1f47499512acffd0c0db6e208bdaf4b644b33d6"
+	ref := registry + "/hello:1980@" + pinned.String()
+
+	assertSingleWarning := func(t *testing.T, logs *test.Hook, ref, message string) {
+		var seen bool
+		for _, entry := range logs.AllEntries() {
+			if entry.Level < logrus.InfoLevel {
+				if assert.False(t, seen, "More than one error message below info") {
+					seen = true
+					assert.Equal(t, logrus.WarnLevel, entry.Level)
+					if name := entry.Data["name"]; assert.NotEmpty(t, name) {
+						assert.Equal(t, ref, fmt.Sprint(name))
+					}
+					assert.Equal(t, message, entry.Message)
+				}
+			}
+		}
+		assert.True(t, seen, "No warning log detected")
+	}
+
+	assertBundled := func(t *testing.T, bundle io.Reader, dgst digest.Digest, names ...string) {
+		var index imagespecv1.Index
+		tarReader := tar.NewReader(bundle)
+		for {
+			header, err := tarReader.Next()
+			require.NoError(t, err, "Bundle doesn't contain an image index")
+			if header.Name == imagespecv1.ImageIndexFile {
+				require.NoError(t, json.NewDecoder(tarReader).Decode(&index))
+				break
+			}
+		}
+
+		var bundled []string
+		for _, manifest := range index.Manifests {
+			assert.Equal(t, dgst, manifest.Digest, "Bundled something else than the expected digest")
+			bundled = append(bundled, manifest.Annotations[imagespecv1.AnnotationRefName])
+		}
+		assert.Equal(t, names, bundled)
+	}
+
+	t.Run("bundles the digest and warns about a mismatch", func(t *testing.T) {
+		log, logs := test.NewNullLogger()
+		var bundle bytes.Buffer
+		underTest := newAirgapBundleArtifactsCmd(log, nil)
+		underTest.SetArgs([]string{
+			"--insecure-registries", "plain-http",
+			"--platform", "linux/amd64",
+			ref,
+		})
+		underTest.SetIn(iotest.ErrReader(errors.New("unexpected read from standard input")))
+		underTest.SetOut(&bundle)
+		underTest.SetErr(internalio.WriterFunc(func(d []byte) (int, error) {
+			assert.Fail(t, "Expected no writes to standard error", "Written: %s", d)
+			return 0, assert.AnError
+		}))
+
+		require.NoError(t, underTest.Execute())
+
+		assertSingleWarning(t, logs, ref, "Tag resolves to a different digest"+
+			": sha256:9a280cc46a419001ca991d52ba03c12683d5997fbcda0fd6aa6dda4a21a87884")
+		assertBundled(t, &bundle, pinned,
+			registry+"/hello:1980@"+pinned.String(),
+			registry+"/hello:1980",
+			registry+"/hello@"+pinned.String(),
+		)
+	})
+
+	t.Run("fails if matching tags are required but tag resolves differently", func(t *testing.T) {
+		log, _ := test.NewNullLogger()
+		var stderr strings.Builder
+		underTest := newAirgapBundleArtifactsCmd(log, nil)
+		underTest.SetArgs([]string{
+			"--insecure-registries", "plain-http",
+			"--platform", "linux/amd64",
+			"--require-matching-tags",
+			ref,
+		})
+		underTest.SetIn(iotest.ErrReader(errors.New("unexpected read from standard input")))
+		underTest.SetOut(internalio.WriterFunc(func(d []byte) (int, error) {
+			assert.Fail(t, "Expected no writes to standard output", "Written: %s", d)
+			return 0, assert.AnError
+		}))
+		underTest.SetErr(&stderr)
+
+		err := underTest.Execute()
+
+		expected := "failed to bundle " + ref + ": mismatched digest for tag" +
+			": sha256:9a280cc46a419001ca991d52ba03c12683d5997fbcda0fd6aa6dda4a21a87884"
+		assert.EqualError(t, err, expected)
+		assert.Equal(t, "Error: "+expected+"\n", stderr.String())
+	})
+
+	// The reference pins a digest that exists on the registry, but the tag doesn't.
+	ref = registry + "/hello:nonexistent@" + pinned.String()
+
+	t.Run("bundles the digest and warns about a missing tag", func(t *testing.T) {
+		log, logs := test.NewNullLogger()
+		var bundle bytes.Buffer
+		underTest := newAirgapBundleArtifactsCmd(log, nil)
+		underTest.SetArgs([]string{
+			"--insecure-registries", "plain-http",
+			"--platform", "linux/amd64",
+			ref,
+		})
+		underTest.SetIn(iotest.ErrReader(errors.New("unexpected read from standard input")))
+		underTest.SetOut(&bundle)
+		underTest.SetErr(internalio.WriterFunc(func(d []byte) (int, error) {
+			assert.Fail(t, "Expected no writes to standard error", "Written: %s", d)
+			return 0, assert.AnError
+		}))
+
+		require.NoError(t, underTest.Execute())
+
+		assertSingleWarning(t, logs, ref, "Tag not found")
+		assertBundled(t, &bundle, pinned,
+			registry+"/hello:nonexistent@"+pinned.String(),
+			registry+"/hello:nonexistent",
+			registry+"/hello@"+pinned.String(),
+		)
+	})
+
+	t.Run("fails if matching tags are required and tag is missing", func(t *testing.T) {
+		log, _ := test.NewNullLogger()
+		var stderr strings.Builder
+		underTest := newAirgapBundleArtifactsCmd(log, nil)
+		underTest.SetArgs([]string{
+			"--insecure-registries", "plain-http",
+			"--platform", "linux/amd64",
+			"--require-matching-tags",
+			ref,
+		})
+		underTest.SetIn(iotest.ErrReader(errors.New("unexpected read from standard input")))
+		underTest.SetOut(internalio.WriterFunc(func(d []byte) (int, error) {
+			assert.Fail(t, "Expected no writes to standard output", "Written: %s", d)
+			return 0, assert.AnError
+		}))
+		underTest.SetErr(&stderr)
+
+		err := underTest.Execute()
+
+		expected := "failed to bundle " + ref + ": tag not found"
+		assert.EqualError(t, err, expected)
+		assert.Equal(t, "Error: "+expected+"\n", stderr.String())
+	})
+}
+
 func startFakeRegistry(t *testing.T, plainHTTP bool) string {
 	manifests := make(map[string]digest.Digest)
 	var contentTypes map[digest.Digest]string
@@ -144,6 +299,7 @@ func startFakeRegistry(t *testing.T, plainHTTP bool) string {
 		}
 
 		w.Header().Set("Content-Type", contentTypes[dgst])
+		w.Header().Set("Docker-Content-Digest", dgst.String())
 		path := filepath.Join("testdata", "oci-layout", "blobs", dgst.Algorithm().String(), dgst.Hex())
 		data, err := os.ReadFile(path)
 		if err != nil {

@@ -6,13 +6,13 @@ package containerdimports
 import (
 	"testing"
 
-	"github.com/k0sproject/k0s/inttest/common"
-
-	"github.com/stretchr/testify/suite"
-
 	corev1 "k8s.io/api/core/v1"
 	nodesv1 "k8s.io/api/node/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/k0sproject/k0s/inttest/common"
+	"github.com/k0sproject/k0s/inttest/common/ociimages"
+	"github.com/stretchr/testify/suite"
 )
 
 type ContainerdImportsSuite struct {
@@ -64,7 +64,7 @@ func (s *ContainerdImportsSuite) TestK0sGetsUp() {
 			Containers: []corev1.Container{
 				{
 					Name:  "foo",
-					Image: "docker.io/library/nginx:1.31.6-alpine",
+					Image: ociimages.Nginx,
 				},
 			},
 		},
@@ -82,7 +82,7 @@ func (s *ContainerdImportsSuite) TestK0sGetsUp() {
 			Containers: []corev1.Container{
 				{
 					Name:  "nginx",
-					Image: "docker.io/library/nginx:1.31.6-alpine",
+					Image: ociimages.Nginx,
 				},
 			},
 		},
