@@ -26,8 +26,8 @@ import (
 func TestKubeProxyConfig_FeatureGates(t *testing.T) {
 	cfg := v1beta1.DefaultClusterConfig()
 	cfg.Spec.FeatureGates = v1beta1.FeatureGates{
-		{Name: "Feature0", Enabled: true, Components: []string{"kube-proxy"}},
-		{Name: "Feature1", Enabled: false, Components: []string{"kube-proxy"}},
+		{Name: "Feature0", Enabled: true, Components: []v1beta1.FeatureComponent{v1beta1.FeatureComponentKubeProxy}},
+		{Name: "Feature1", Enabled: false, Components: []v1beta1.FeatureComponent{v1beta1.FeatureComponentKubeProxy}},
 	}
 
 	synctest.Test(t, func(t *testing.T) {
@@ -58,7 +58,7 @@ func TestKubeProxyConfig_HashChangesWhenConfigMapChanges(t *testing.T) {
 		stat, initialDaemonSet, _ := awaitUpdate(t, manifestsDir, nil)
 
 		cfg.Spec.FeatureGates = v1beta1.FeatureGates{
-			{Name: "Feature0", Enabled: true, Components: []string{"kube-proxy"}},
+			{Name: "Feature0", Enabled: true, Components: []v1beta1.FeatureComponent{v1beta1.FeatureComponentKubeProxy}},
 		}
 		require.NoError(t, underTest.Reconcile(t.Context(), cfg))
 

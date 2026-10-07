@@ -463,6 +463,10 @@ func (s *ClusterSpec) Validate() (errs []error) {
 		errs = append(errs, err)
 	}
 
+	for err := range s.FeatureGates.Validate(field.NewPath("featureGates")) {
+		errs = append(errs, err)
+	}
+
 	errs = append(errs, s.MetricsServer.Validate(field.NewPath("metricsServer"))...)
 
 	return
