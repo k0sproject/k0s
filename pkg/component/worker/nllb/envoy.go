@@ -157,7 +157,7 @@ func (e *envoyProxy) start(ctx context.Context, profile workerconfig.Profile, ap
 		return err
 	}
 
-	err = e.provision()
+	err = e.provision(ctx)
 	if err != nil {
 		return err
 	}
@@ -242,9 +242,9 @@ func writeEnvoyConfigFiles(params *envoyParams, filesParams *envoyFilesParams) e
 	return errors.Join(errs...)
 }
 
-func (e *envoyProxy) provision() error {
+func (e *envoyProxy) provision(ctx context.Context) error {
 	manifest := makePodManifest(&e.config.envoyParams, &e.config.envoyPodParams)
-	manifest = e.patchPod(manifest, e.config.patches)
+	manifest = e.patchPod(ctx, manifest, e.config.patches)
 	if err := e.pod.SetManifest(manifest); err != nil {
 		return err
 	}

@@ -142,7 +142,7 @@ func (t *traefik) start(ctx context.Context, profile workerconfig.Profile, apiSe
 		return err
 	}
 
-	return t.provision()
+	return t.provision(ctx)
 }
 
 func (t *traefik) getAPIServerAddress() (*k0snet.HostPort, error) {
@@ -206,9 +206,9 @@ func (t *traefik) writeConfigFile(name string, content []byte) error {
 		Write(content)
 }
 
-func (t *traefik) provision() error {
+func (t *traefik) provision(ctx context.Context) error {
 	manifest := makeTraefikPodManifest(&t.config.traefikPodParams, &t.config.traefikInstallConfig)
-	manifest = t.patchPod(manifest, t.config.patches)
+	manifest = t.patchPod(ctx, manifest, t.config.patches)
 	if err := t.pod.SetManifest(manifest); err != nil {
 		return err
 	}

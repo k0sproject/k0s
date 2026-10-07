@@ -24,6 +24,10 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8sruntime "k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/fake"
+	k8stesting "k8s.io/client-go/testing"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
@@ -62,6 +66,7 @@ func TestReconciler_Lifecycle(t *testing.T) {
 					AgentPort: 1337,
 				},
 			},
+			"test-node",
 		)
 		require.NoError(t, err)
 		reconciler.log = newTestLogger(t)
@@ -313,6 +318,7 @@ func TestReconciler_ConfigMgmt(t *testing.T) {
 					AgentPort: 1337,
 				},
 			},
+			"test-node",
 		)
 		require.NoError(t, err)
 		reconciler.log = newTestLogger(t)
@@ -450,6 +456,7 @@ func TestReconciler_APIServerAddressFromKubeconfig(t *testing.T) {
 				AgentPort: 1337,
 			},
 		},
+		"test-node",
 	)
 	require.NoError(t, err)
 	underTest.log = newTestLogger(t)
@@ -462,11 +469,16 @@ func TestReconciler_APIServerAddressFromKubeconfig(t *testing.T) {
 }
 
 func TestReconciler_Patches(t *testing.T) {
+	origDelay := eventRetryDelay
+	t.Cleanup(func() { eventRetryDelay = origDelay })
+	eventRetryDelay = time.Millisecond
+
 	const annotation = "test.k0sproject.io/patched"
 
 	// Starts a reconciler with the Envoy backend and the given patches, and
-	// returns the manifest that has been provisioned.
-	startWithPatches := func(t *testing.T, patches v1beta1.Patches) (*Reconciler, *corev1.Pod) {
+	// returns the manifest that has been provisioned. Any reactors are
+	// prepended to the fake client's event creation.
+	startWithPatches := func(t *testing.T, patches v1beta1.Patches, eventReactors ...k8stesting.ReactionFunc) (*Reconciler, *fake.Clientset, *corev1.Pod) {
 		t.Setenv("XDG_RUNTIME_DIR", t.TempDir())
 
 		var manifest *corev1.Pod
@@ -497,9 +509,15 @@ func TestReconciler_Patches(t *testing.T) {
 					AgentPort: 1337,
 				},
 			},
+			"test-node",
 		)
 		require.NoError(t, err)
 		underTest.log = newTestLogger(t)
+		client := fake.NewClientset()
+		for _, reactor := range eventReactors {
+			client.PrependReactor("create", "events", reactor)
+		}
+		underTest.newEventClient = func() (kubernetes.Interface, error) { return client, nil }
 
 		require.NoError(t, underTest.Init(testContext(t)))
 		require.NoError(t, underTest.Start(testContext(t)))
@@ -509,7 +527,24 @@ func TestReconciler_Patches(t *testing.T) {
 		})
 
 		require.NotNil(t, manifest, "no manifest provisioned")
-		return underTest, manifest
+		return underTest, client, manifest
+	}
+
+	brokenPatches := v1beta1.Patches{
+		{
+			Target: v1beta1.PatchTarget{Kind: "Pod", Name: "nllb"},
+			Patch: v1beta1.PatchSpec{
+				Type:    v1beta1.MergePatchType,
+				Content: `{"metadata": {"annotations": {"` + annotation + `": "true"}}}`,
+			},
+		},
+		{
+			Target: v1beta1.PatchTarget{Kind: "Pod", Name: "nllb"},
+			Patch: v1beta1.PatchSpec{
+				Type:    v1beta1.JSONPatchType,
+				Content: `[{"op": "replace", "path": "/spec/doesNotExist", "value": "foo"}]`,
+			},
+		},
 	}
 
 	// The kubelet's kubeconfig points to the load balancer in any case.
@@ -522,7 +557,7 @@ func TestReconciler_Patches(t *testing.T) {
 	}
 
 	t.Run("applied", func(t *testing.T) {
-		underTest, manifest := startWithPatches(t, v1beta1.Patches{{
+		underTest, client, manifest := startWithPatches(t, v1beta1.Patches{{
 			Target: v1beta1.PatchTarget{Kind: "Pod", Name: "nllb"},
 			Patch: v1beta1.PatchSpec{
 				Type:    v1beta1.MergePatchType,
@@ -532,25 +567,11 @@ func TestReconciler_Patches(t *testing.T) {
 
 		assert.Equal(t, "true", manifest.Annotations[annotation])
 		assertLoadBalancedKubeconfig(t, underTest)
+		assert.Empty(t, client.Actions(), "no events expected")
 	})
 
 	t.Run("failed_falls_back_to_unpatched", func(t *testing.T) {
-		underTest, manifest := startWithPatches(t, v1beta1.Patches{
-			{
-				Target: v1beta1.PatchTarget{Kind: "Pod", Name: "nllb"},
-				Patch: v1beta1.PatchSpec{
-					Type:    v1beta1.MergePatchType,
-					Content: `{"metadata": {"annotations": {"` + annotation + `": "true"}}}`,
-				},
-			},
-			{
-				Target: v1beta1.PatchTarget{Kind: "Pod", Name: "nllb"},
-				Patch: v1beta1.PatchSpec{
-					Type:    v1beta1.JSONPatchType,
-					Content: `[{"op": "replace", "path": "/spec/doesNotExist", "value": "foo"}]`,
-				},
-			},
-		})
+		underTest, client, manifest := startWithPatches(t, brokenPatches)
 
 		// None of the patches got applied, not even the valid one.
 		assert.NotContains(t, manifest.Annotations, annotation)
@@ -559,7 +580,50 @@ func TestReconciler_Patches(t *testing.T) {
 			assert.Equal(t, "nllb", manifest.Spec.Containers[0].Name)
 		}
 		assertLoadBalancedKubeconfig(t, underTest)
+
+		event := getEvent(t, client)
+		assert.Equal(t, corev1.ObjectReference{
+			APIVersion: "v1",
+			Kind:       "Node",
+			Name:       "test-node",
+			UID:        "test-node",
+		}, event.InvolvedObject)
+		assert.Equal(t, corev1.EventTypeWarning, event.Type)
+		assert.Equal(t, "NodeLocalLoadBalancingPatchFailed", event.Reason)
+		assert.Equal(t, corev1.EventSource{Component: "nllb", Host: "test-node"}, event.Source)
+		assert.Equal(t,
+			"Failed to apply patches to the node-local load balancer, running it without patches. "+
+				"Fix the patches in the cluster configuration and restart the worker. "+
+				"Error: error patching resource (Pod/nllb): replace operation does not apply: "+
+				"doc is missing key: /spec/doesNotExist: missing value",
+			event.Message,
+		)
 	})
+
+	t.Run("event_creation_is_retried", func(t *testing.T) {
+		attempts := 0
+		_, client, _ := startWithPatches(t, brokenPatches, func(k8stesting.Action) (bool, k8sruntime.Object, error) {
+			attempts++
+			if attempts == 1 {
+				return true, nil, assert.AnError
+			}
+			return false, nil, nil
+		})
+
+		assert.Equal(t, 2, attempts)
+		getEvent(t, client)
+	})
+
+}
+
+// getEvent returns the single event that has been recorded in the default
+// namespace.
+func getEvent(t *testing.T, client kubernetes.Interface) corev1.Event {
+	t.Helper()
+	events, err := client.CoreV1().Events(metav1.NamespaceDefault).List(t.Context(), metav1.ListOptions{})
+	require.NoError(t, err)
+	require.Len(t, events.Items, 1)
+	return events.Items[0]
 }
 
 func TestPatchPod(t *testing.T) {
