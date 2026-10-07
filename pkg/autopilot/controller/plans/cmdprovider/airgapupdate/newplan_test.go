@@ -19,6 +19,7 @@ import (
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	crcli "sigs.k8s.io/controller-runtime/pkg/client"
 	crfake "sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -60,6 +61,54 @@ func TestNewPlan(t *testing.T) {
 						Discovery: apv1beta2.PlanCommandTargetDiscovery{
 							Static: &apv1beta2.PlanCommandTargetDiscoveryStatic{
 								Nodes: []string{"worker0"},
+							},
+						},
+					},
+				},
+			},
+			appc.PlanSchedulableWait,
+			[]apv1beta2.PlanCommandTargetStatus{
+				apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalPending),
+			},
+			[]string{},
+		},
+
+		// Selectors match nodes without k0s, too. They have no autopilot, so they're ignored.
+		{
+			"NodeWithoutK0sIgnored",
+			[]crcli.Object{
+				&corev1.Node{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Node",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:   "worker0",
+						Labels: map[string]string{corev1.LabelOSStable: "theOS", corev1.LabelArchStable: "theArch"},
+					},
+					Status: corev1.NodeStatus{NodeInfo: corev1.NodeSystemInfo{KubeletVersion: "v1.36.4+k0s"}},
+				},
+				&corev1.Node{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Node",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:   "other0",
+						Labels: map[string]string{corev1.LabelOSStable: "theOS", corev1.LabelArchStable: "theArch", "node.k0sproject.io/k0s": "false"},
+					},
+					Status: corev1.NodeStatus{NodeInfo: corev1.NodeSystemInfo{KubeletVersion: "v1.36.4"}},
+				},
+			},
+			apv1beta2.PlanCommand{
+				AirgapUpdate: &apv1beta2.PlanCommandAirgapUpdate{
+					Platforms: apv1beta2.PlanPlatformResourceURLMap{
+						"theOS-theArch": {},
+					},
+					Workers: apv1beta2.PlanCommandTarget{
+						Discovery: apv1beta2.PlanCommandTargetDiscovery{
+							Selector: &apv1beta2.PlanCommandTargetDiscoverySelector{
+								Labels: fields.OneTermEqualSelector(corev1.LabelOSStable, "theOS").String(),
 							},
 						},
 					},

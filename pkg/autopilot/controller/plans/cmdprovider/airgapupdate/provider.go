@@ -55,11 +55,16 @@ func (aup *airgapupdate) CommandID() string {
 // with `v1.Node` signal node objects.
 func populateWorkerStatus(ctx context.Context, client crcli.Client, update apv1beta2.PlanCommandAirgapUpdate, dm apdel.ControllerDelegateMap) ([]apv1beta2.PlanCommandTargetStatus, bool) {
 	return appkd.DiscoverNodes(ctx, client, &update.Workers, dm["worker"], func(name string) (appkd.SignalObjectFilterResult, *apv1beta2.PlanCommandTargetStateType) {
-		exists, state := appku.ObjectExistsWithPlatform(ctx, client, name, &v1.Node{}, update.Platforms)
-		if exists {
-			return appkd.SignalObjectFilterResultFound, state
-		} else {
+		node := &v1.Node{}
+		exists, state := appku.ObjectExistsWithPlatform(ctx, client, name, node, update.Platforms)
+		switch {
+		case !exists:
 			return appkd.SignalObjectFilterResultMissing, state
+		case appku.IsNodeWithoutK0s(node):
+			// Nodes without k0s have no autopilot to update them.
+			return appkd.SignalObjectFilterResultIgnore, state
+		default:
+			return appkd.SignalObjectFilterResultFound, state
 		}
 	})
 }
