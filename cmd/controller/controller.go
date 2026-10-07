@@ -599,6 +599,11 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 		clusterComponents.Add(ctx, controller.NewNodeRole(c.K0sVars, adminClientFactory))
 	}
 
+	clusterComponents.Add(ctx, &controller.K0sNodeLabeler{
+		Clients:       adminClientFactory,
+		LeaderElector: leaderElector,
+	})
+
 	if enableKonnectivity {
 		clusterComponents.Add(ctx, &controller.KonnectivityAgent{
 			ManifestsDir:           c.K0sVars.ManifestsDir,
