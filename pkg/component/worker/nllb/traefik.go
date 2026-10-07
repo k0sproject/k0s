@@ -37,6 +37,7 @@ type traefik struct {
 
 	dir        string
 	staticPods worker.StaticPods
+	patchPod   podPatcher
 
 	pod    worker.StaticPod
 	config *traefikConfig
@@ -206,10 +207,8 @@ func (t *traefik) writeConfigFile(name string, content []byte) error {
 }
 
 func (t *traefik) provision() error {
-	manifest, err := makeTraefikPodManifest(&t.config.traefikPodParams, &t.config.traefikInstallConfig)
-	if err != nil {
-		return fmt.Errorf("failed to generate Traefik pod manifest: %w", err)
-	}
+	manifest := makeTraefikPodManifest(&t.config.traefikPodParams, &t.config.traefikInstallConfig)
+	manifest = t.patchPod(manifest, t.config.patches)
 	if err := t.pod.SetManifest(manifest); err != nil {
 		return err
 	}
@@ -222,7 +221,7 @@ func traefikContainerConfigDir() string {
 	return filepath.Join(string(filepath.Separator), "etc", "traefik")
 }
 
-func makeTraefikPodManifest(podParams *traefikPodParams, installConfig *traefikInstallConfig) (*corev1.Pod, error) {
+func makeTraefikPodManifest(podParams *traefikPodParams, installConfig *traefikInstallConfig) *corev1.Pod {
 	ports := []corev1.ContainerPort{
 		{Name: "api-server", ContainerPort: int32(installConfig.apiServerBindPort), Protocol: corev1.ProtocolTCP},
 	}
@@ -308,12 +307,7 @@ func makeTraefikPodManifest(podParams *traefikPodParams, installConfig *traefikI
 		},
 	}
 
-	patchedPod, err := patchPod(pod, podParams.patches)
-	if err != nil {
-		return pod, fmt.Errorf("failed to apply patches to pod manifest: %w", err)
-	}
-
-	return patchedPod, nil
+	return pod
 }
 
 func (i *traefikInstallConfig) toFileContent() ([]byte, error) {

@@ -36,6 +36,7 @@ type envoyProxy struct {
 
 	dir        string
 	staticPods worker.StaticPods
+	patchPod   podPatcher
 
 	pod    worker.StaticPod
 	config *envoyConfig
@@ -242,10 +243,8 @@ func writeEnvoyConfigFiles(params *envoyParams, filesParams *envoyFilesParams) e
 }
 
 func (e *envoyProxy) provision() error {
-	manifest, err := makePodManifest(&e.config.envoyParams, &e.config.envoyPodParams)
-	if err != nil {
-		return fmt.Errorf("failed to create pod manifest for EnvoyProxy: %w", err)
-	}
+	manifest := makePodManifest(&e.config.envoyParams, &e.config.envoyPodParams)
+	manifest = e.patchPod(manifest, e.config.patches)
 	if err := e.pod.SetManifest(manifest); err != nil {
 		return err
 	}
@@ -254,7 +253,7 @@ func (e *envoyProxy) provision() error {
 	return nil
 }
 
-func makePodManifest(params *envoyParams, podParams *envoyPodParams) (*corev1.Pod, error) {
+func makePodManifest(params *envoyParams, podParams *envoyPodParams) *corev1.Pod {
 	ports := []corev1.ContainerPort{
 		{Name: "api-server", ContainerPort: int32(params.apiServerBindPort), Protocol: corev1.ProtocolTCP},
 	}
@@ -332,12 +331,7 @@ func makePodManifest(params *envoyParams, podParams *envoyPodParams) (*corev1.Po
 		},
 	}
 
-	patchedPod, err := patchPod(pod, podParams.patches)
-	if err != nil {
-		return pod, fmt.Errorf("failed to apply patches to pod manifest: %w", err)
-	}
-
-	return patchedPod, nil
+	return pod
 }
 
 var envoyBootstrapConfig = template.Must(template.New("Bootstrap").Parse(`

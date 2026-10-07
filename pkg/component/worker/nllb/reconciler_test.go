@@ -22,6 +22,8 @@ import (
 	workerconfig "github.com/k0sproject/k0s/pkg/component/worker/config"
 	"github.com/k0sproject/k0s/pkg/config"
 
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
@@ -457,6 +459,145 @@ func TestReconciler_APIServerAddressFromKubeconfig(t *testing.T) {
 	assert.NoError(t, underTest.Stop())
 
 	loadBalancer.AssertExpectations(t)
+}
+
+func TestReconciler_Patches(t *testing.T) {
+	const annotation = "test.k0sproject.io/patched"
+
+	// Starts a reconciler with the Envoy backend and the given patches, and
+	// returns the manifest that has been provisioned.
+	startWithPatches := func(t *testing.T, patches v1beta1.Patches) (*Reconciler, *corev1.Pod) {
+		t.Setenv("XDG_RUNTIME_DIR", t.TempDir())
+
+		var manifest *corev1.Pod
+		staticPod := new(staticPodMock)
+		staticPod.On("SetManifest", mock.AnythingOfType("*v1.Pod")).Return(nil).Run(func(args mock.Arguments) {
+			manifest = args.Get(0).(*corev1.Pod)
+		})
+		staticPod.On("Drop").Return()
+		staticPods := new(staticPodsMock)
+		staticPods.On("ClaimStaticPod", mock.Anything, mock.Anything).Return(staticPod, nil)
+
+		envoyProxy := v1beta1.DefaultEnvoyProxy()
+		envoyProxy.Patches = patches
+		underTest, err := NewReconciler(
+			&config.CfgVars{
+				DataDir:               t.TempDir(),
+				KubeletAuthConfigPath: writeKubeconfig(t),
+			},
+			staticPods,
+			t.Name(),
+			workerconfig.Profile{
+				NodeLocalLoadBalancing: &v1beta1.NodeLocalLoadBalancing{
+					Enabled:    true,
+					Type:       v1beta1.NllbTypeEnvoyProxy,
+					EnvoyProxy: envoyProxy,
+				},
+				Konnectivity: workerconfig.Konnectivity{
+					AgentPort: 1337,
+				},
+			},
+		)
+		require.NoError(t, err)
+		underTest.log = newTestLogger(t)
+
+		require.NoError(t, underTest.Init(testContext(t)))
+		require.NoError(t, underTest.Start(testContext(t)))
+		t.Cleanup(func() {
+			assert.NoError(t, underTest.Stop())
+			staticPod.AssertExpectations(t)
+		})
+
+		require.NotNil(t, manifest, "no manifest provisioned")
+		return underTest, manifest
+	}
+
+	// The kubelet's kubeconfig points to the load balancer in any case.
+	assertLoadBalancedKubeconfig := func(t *testing.T, underTest *Reconciler) {
+		kubeconfig, err := clientcmd.LoadFromFile(underTest.GetKubeletKubeconfigPath())
+		if assert.NoError(t, err) {
+			cluster := kubeconfig.Clusters[kubeconfig.Contexts[kubeconfig.CurrentContext].Cluster]
+			assert.Contains(t, cluster.Server, ":7443")
+		}
+	}
+
+	t.Run("applied", func(t *testing.T) {
+		underTest, manifest := startWithPatches(t, v1beta1.Patches{{
+			Target: v1beta1.PatchTarget{Kind: "Pod", Name: "nllb"},
+			Patch: v1beta1.PatchSpec{
+				Type:    v1beta1.MergePatchType,
+				Content: `{"metadata": {"annotations": {"` + annotation + `": "true"}}}`,
+			},
+		}})
+
+		assert.Equal(t, "true", manifest.Annotations[annotation])
+		assertLoadBalancedKubeconfig(t, underTest)
+	})
+
+	t.Run("failed_falls_back_to_unpatched", func(t *testing.T) {
+		underTest, manifest := startWithPatches(t, v1beta1.Patches{
+			{
+				Target: v1beta1.PatchTarget{Kind: "Pod", Name: "nllb"},
+				Patch: v1beta1.PatchSpec{
+					Type:    v1beta1.MergePatchType,
+					Content: `{"metadata": {"annotations": {"` + annotation + `": "true"}}}`,
+				},
+			},
+			{
+				Target: v1beta1.PatchTarget{Kind: "Pod", Name: "nllb"},
+				Patch: v1beta1.PatchSpec{
+					Type:    v1beta1.JSONPatchType,
+					Content: `[{"op": "replace", "path": "/spec/doesNotExist", "value": "foo"}]`,
+				},
+			},
+		})
+
+		// None of the patches got applied, not even the valid one.
+		assert.NotContains(t, manifest.Annotations, annotation)
+		assert.Equal(t, "nllb", manifest.Name)
+		if assert.Len(t, manifest.Spec.Containers, 1) {
+			assert.Equal(t, "nllb", manifest.Spec.Containers[0].Name)
+		}
+		assertLoadBalancedKubeconfig(t, underTest)
+	})
+}
+
+func TestPatchPod(t *testing.T) {
+	pod := &corev1.Pod{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "v1", Kind: "Pod"},
+		ObjectMeta: metav1.ObjectMeta{Name: "nllb", Namespace: metav1.NamespaceSystem},
+	}
+	patch := func(patchType v1beta1.PatchType, content string) v1beta1.Patches {
+		return v1beta1.Patches{{
+			Target: v1beta1.PatchTarget{Kind: "Pod", Name: "nllb"},
+			Patch:  v1beta1.PatchSpec{Type: patchType, Content: content},
+		}}
+	}
+
+	t.Run("no_patches", func(t *testing.T) {
+		patched, err := patchPod(pod, nil)
+		require.NoError(t, err)
+		assert.Same(t, pod, patched)
+	})
+
+	t.Run("succeeds", func(t *testing.T) {
+		patched, err := patchPod(pod, patch(v1beta1.MergePatchType, `{"metadata": {"labels": {"foo": "bar"}}}`))
+		require.NoError(t, err)
+		assert.Equal(t, map[string]string{"foo": "bar"}, patched.Labels)
+		assert.Empty(t, pod.Labels, "original pod must not be modified")
+	})
+
+	t.Run("patch_fails", func(t *testing.T) {
+		patched, err := patchPod(pod, patch(v1beta1.JSONPatchType, `[{"op": "replace", "path": "/spec/doesNotExist", "value": "foo"}]`))
+		assert.ErrorContains(t, err, "doc is missing key: /spec/doesNotExist")
+		assert.Nil(t, patched)
+	})
+
+	t.Run("invalid_result_fails", func(t *testing.T) {
+		patched, err := patchPod(pod, patch(v1beta1.MergePatchType, `{"spec": {"containers": "not-a-list"}}`))
+		assert.ErrorContains(t, err, "cannot unmarshal string into Go struct field")
+		assert.Nil(t, patched)
+	})
 }
 
 func writeKubeconfig(t *testing.T) string {

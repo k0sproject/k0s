@@ -112,24 +112,6 @@ func NewReconciler(
 	}
 	runtimeDir = filepath.Join(runtimeDir, "nllb")
 
-	var loadBalancer backend
-	switch workerProfile.NodeLocalLoadBalancing.Type {
-	case v1beta1.NllbTypeEnvoyProxy:
-		loadBalancer = &envoyProxy{
-			log:        logrus.WithFields(logrus.Fields{"component": "nllb.envoyProxy"}),
-			dir:        filepath.Join(runtimeDir, "envoy"),
-			staticPods: staticPods,
-		}
-	case v1beta1.NllbTypeTraefik:
-		loadBalancer = &traefik{
-			log:        logrus.WithFields(logrus.Fields{"component": "nllb.traefik"}),
-			dir:        filepath.Join(runtimeDir, "traefik"),
-			staticPods: staticPods,
-		}
-	default:
-		return nil, fmt.Errorf("unsupported node-local load balancing type: %q", workerProfile.NodeLocalLoadBalancing.Type)
-	}
-
 	r := &Reconciler{
 		log:                        logrus.WithFields(logrus.Fields{"component": "nllb.Reconciler"}),
 		dataDir:                    k0sVars.DataDir,
@@ -138,9 +120,27 @@ func NewReconciler(
 		workerProfile:              workerProfile,
 		regularKubeconfigPath:      k0sVars.KubeletAuthConfigPath,
 		loadBalancedKubeconfigPath: filepath.Join(runtimeDir, "kubeconfig.yaml"),
-		loadBalancer:               loadBalancer,
 
 		state: reconcilerCreated,
+	}
+
+	switch workerProfile.NodeLocalLoadBalancing.Type {
+	case v1beta1.NllbTypeEnvoyProxy:
+		r.loadBalancer = &envoyProxy{
+			log:        logrus.WithFields(logrus.Fields{"component": "nllb.envoyProxy"}),
+			dir:        filepath.Join(runtimeDir, "envoy"),
+			staticPods: staticPods,
+			patchPod:   r.patchPod,
+		}
+	case v1beta1.NllbTypeTraefik:
+		r.loadBalancer = &traefik{
+			log:        logrus.WithFields(logrus.Fields{"component": "nllb.traefik"}),
+			dir:        filepath.Join(runtimeDir, "traefik"),
+			staticPods: staticPods,
+			patchPod:   r.patchPod,
+		}
+	default:
+		return nil, fmt.Errorf("unsupported node-local load balancing type: %q", workerProfile.NodeLocalLoadBalancing.Type)
 	}
 
 	return r, nil
@@ -443,21 +443,43 @@ func getLoopbackIP(ctx context.Context) (net.IP, error) {
 	return net.IP{127, 0, 0, 1}, err
 }
 
+// podPatcher applies the user-supplied patches to a load balancer's pod
+// manifest. It always returns a pod that can be provisioned.
+type podPatcher func(pod *corev1.Pod, patches v1beta1.Patches) *corev1.Pod
+
+// patchPod is the [podPatcher] that's used by the load balancers. If the
+// patches can't be applied, the load balancer is provisioned without them, so
+// that the worker and everything that depends on the load balancer keeps on
+// working.
+func (r *Reconciler) patchPod(pod *corev1.Pod, patches v1beta1.Patches) *corev1.Pod {
+	patchedPod, err := patchPod(pod, patches)
+	if err != nil {
+		r.log.WithError(err).Error("Failed to apply patches to the node-local load balancer, running it without patches")
+		return pod
+	}
+
+	return patchedPod
+}
+
 func patchPod(pod *corev1.Pod, patches v1beta1.Patches) (*corev1.Pod, error) {
+	if len(patches) == 0 {
+		return pod, nil
+	}
+
 	// patches work via marshaled data, so convert to pod to yaml and back to apply the patches
 	podBytes, err := yaml.Marshal(pod)
 	if err != nil {
-		return pod, fmt.Errorf("failed to marshal pod manifest for patching: %w", err)
+		return nil, err
 	}
 
 	patchedBytes, err := k0spatches.Apply(podBytes, patches)
 	if err != nil {
-		return pod, fmt.Errorf("failed to apply patches to pod manifest: %w", err)
+		return nil, err
 	}
 
 	var patchedPod corev1.Pod
 	if err := yaml.Unmarshal(patchedBytes, &patchedPod); err != nil {
-		return pod, fmt.Errorf("failed to unmarshal patched pod manifest: %w", err)
+		return nil, err
 	}
 
 	return &patchedPod, nil
