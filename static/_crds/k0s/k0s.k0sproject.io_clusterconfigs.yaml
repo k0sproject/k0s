@@ -57,6 +57,11 @@ spec:
                         description: The expiration duration of the CA certificate
                         type: string
                     type: object
+                  clusterInfoDiscovery:
+                    description: |-
+                      Lets anonymous users read the cluster-info ConfigMap in kube-public, as bootstrap token discovery does.
+                      It has no effect if authentication-config, anonymous-auth or OIDC flags are set via extraArgs or rawArgs.
+                    type: boolean
                   externalAddress:
                     description: The loadbalancer address (for k0s controllers running
                       behind a loadbalancer)
