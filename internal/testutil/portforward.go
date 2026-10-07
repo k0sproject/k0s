@@ -169,7 +169,7 @@ func (d *PodDialer) dialPod(ctx context.Context, pod types.NamespacedName) (*Pod
 	if err != nil {
 		var statusErr *apierrors.StatusError
 		if !errors.As(err, &statusErr) {
-			// https://github.com/kubernetes-sigs/apiserver-network-proxy/blob/v0.36.0/pkg/server/backend_manager.go#L351
+			// https://github.com/kubernetes-sigs/apiserver-network-proxy/blob/v0.37.0/pkg/server/backend_manager.go#L351
 			if strings.HasSuffix(err.Error(), ": No agent available") {
 				return nil, &APIServerEgressProxyError{Type: ErrNoKonnectivityAgent, Err: err}
 			}
