@@ -149,7 +149,7 @@ func (k *Konnectivity) serverArgs(count uint) []string {
 		"--admin-port":                strconv.FormatInt(int64(k.Spec.AdminPort), 10),
 		"--health-bind-address":       "localhost",
 		"--health-port":               "8092",
-		"--graceful-shutdown-timeout": "1ns", // Mitigation for kubernetes-sigs/apiserver-network-proxy#866.
+		"--graceful-shutdown-timeout": "1ns", // Don't let lingering frontend connections block shutdown indefinitely.
 		"--agent-namespace":           metav1.NamespaceSystem,
 		"--agent-service-account":     "konnectivity-agent",
 		"--authentication-audience":   "system:konnectivity-server",
