@@ -18,8 +18,13 @@ TARGET_VERSION ?= latest
 # mkdocs.yml refuses to live in the docs-directory, this is why "cd .." is needed
 # gives: "Error: The 'docs_dir' should not be the parent directory of the config file."
 # even if docs_dir is "."
-docs: .require-mkdocs cli
+ifeq ($(detected_OS),linux)
+docs: .require-mkdocs cli schemas
 	cd .. && PYTHONPATH=$(CURDIR)/mkdocs_modules K0S_VERSION=$$('$(k0s_binary_path)/$(k0s_binary)' version) mkdocs build --strict
+else
+docs: .require-mkdocs cli schemas
+	cd .. && PYTHONPATH=$(CURDIR)/mkdocs_modules K0S_VERSION=$$(go run . version) mkdocs build --strict
+endif
 
 .PHONY: .require-mkdocs
 .require-mkdocs:
@@ -42,9 +47,11 @@ endif
 
 .PHONY: k0s k0s.exe
 ifeq ($(TARGET_VERSION),local)
-docs cli: k0s_binary_path := $(abspath ..)
+docs cli schemas: k0s_binary_path := $(abspath ..)
+k0s:
+	$(MAKE) -C .. DOCKER= EMBEDDED_BINS_BUILDMODE=none k0s
 else
-docs cli: k0s_binary_path := $(abspath .)
+docs cli schemas: k0s_binary_path := $(abspath .)
 k0s k0s.exe::
 	[ ! -f '$@.etag' ] || { if [ ! -f '$@' ] || [ '$@.etag' -ot '$@' ]; then rm -- '$@.etag'; fi }
 	touch -- '$@.etag'
@@ -63,11 +70,12 @@ endif
 .PHONY: cli
 ifeq ($(detected_OS),windows)
 cli: k0s.exe
-docs cli: k0s_binary = k0s.exe
+docs cli schemas: k0s_binary = k0s.exe
 else
 cli: k0s
-docs cli: k0s_binary = k0s
+docs cli schemas: k0s_binary = k0s
 endif
+ifeq ($(detected_OS),linux)
 cli:
 	rm -rf cli
 	mkdir cli
@@ -75,6 +83,28 @@ cli:
 	rm cli/k0s_kubectl_*
 	sed $(sedopt) '/\[k0s kubectl /d' cli/k0s_kubectl.md
 	ln -s k0s.md cli/README.md
+else
+cli:
+	rm -rf cli
+	mkdir cli
+	cd .. && go run . docs markdown
+	rm cli/k0s_kubectl_*
+	sed $(sedopt) '/\[k0s kubectl /d' cli/k0s_kubectl.md
+	ln -s k0s.md cli/README.md
+endif
+
+.PHONY: schemas
+ifeq ($(detected_OS),linux)
+schemas: k0s
+	rm -rf schemas
+	mkdir schemas
+	cd .. && '$(k0s_binary_path)/$(k0s_binary)' docs json-schema gen --all -o docs/schemas
+else
+schemas:
+	rm -rf schemas
+	mkdir schemas
+	cd .. && go run . docs json-schema gen --all -o docs/schemas
+endif
 
 .docker-image.serve-dev.stamp: Dockerfile.serve-dev requirements_pip.txt requirements.txt Makefile.variables ../embedded-bins/Makefile.variables
 	$(DOCKER) build --progress=plain \
@@ -88,6 +118,7 @@ clean-k0s:
 .PHONY: clean
 clean: clean-k0s
 	rm -rf cli
+	rm -rf schemas
 	rm -rf ../site
 	for i in .docker-image.*.stamp; do \
 	  if [ -f "$$i" ]; then \

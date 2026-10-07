@@ -64,6 +64,9 @@ func TestRootCmd_Flags(t *testing.T) {
 func TestUnknownSubCommandsAreRejected(t *testing.T) {
 	commandsWithArguments := []string{
 		"airgap bundle-artifacts",
+		"docs",
+		"docs json-schema",
+		"docs json-schema gen",
 		"kubeconfig create",
 		"token invalidate",
 		"worker",

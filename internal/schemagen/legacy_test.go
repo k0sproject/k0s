@@ -1,23 +1,18 @@
 // SPDX-FileCopyrightText: 2026 k0s authors
 // SPDX-License-Identifier: Apache-2.0
 
-package main
+package schemagen
 
 import (
 	"encoding/json"
-	"os"
 	"testing"
 
 	"github.com/santhosh-tekuri/jsonschema/v6"
 	"github.com/stretchr/testify/require"
 )
 
-const crdPath = "../../static/_crds/k0s/k0s.k0sproject.io_clusterconfigs.yaml"
-
 func TestConfigSchema(t *testing.T) {
-	crd, err := os.ReadFile(crdPath)
-	require.NoError(t, err)
-	generated, err := generate(crd)
+	generated, err := Generate("k0s.k0sproject.io/v1beta1", "ClusterConfig")
 	require.NoError(t, err)
 
 	var document any
@@ -43,14 +38,14 @@ func TestConfigSchema(t *testing.T) {
 		{"helm duration", `{"spec":{"extensions":{"helm":{"charts":[{"chartname":"example/app","name":"app","namespace":"default","timeout":"5m","values":"replicas: 2"}]}}}}`, true},
 		{"legacy helm duration", `{"spec":{"extensions":{"helm":{"charts":[{"chartname":"example/app","name":"app","namespace":"default","timeout":60000000000}]}}}}`, true},
 		{"wrong helm duration type", `{"spec":{"extensions":{"helm":{"charts":[{"chartname":"example/app","name":"app","namespace":"default","timeout":true}]}}}}`, false},
-		{"unknown section", `{"spec":{"networks":{}}}`, true},
-		{"unknown field", `{"spec":{"api":{"prot":6443}}}`, true},
+		{"unknown section", `{"spec":{"networks":{}}}`, false},
+		{"unknown field", `{"spec":{"api":{"prot":6443}}}`, false},
 		{"wrong port type", `{"spec":{"api":{"port":"6443"}}}`, false},
 		{"wrong boolean type", `{"spec":{"telemetry":{"enabled":"true"}}}`, false},
 		{"wrong map value type", `{"spec":{"api":{"extraArgs":{"flag":[]}}}}`, false},
 		{"wrong list item type", `{"spec":{"api":{"sans":[42]}}}`, false},
 		{"wrong worker values type", `{"spec":{"workerProfiles":[{"name":"custom","values":"text"}]}}`, false},
-		{"unknown worker field", `{"spec":{"workerProfiles":[{"name":"custom","vaues":{}}]}}`, true},
+		{"unknown worker field", `{"spec":{"workerProfiles":[{"name":"custom","vaues":{}}]}}`, false},
 		{"wrong root type", `[]`, false},
 		{"image override", `{"spec":{"images":{"coredns":{"image":"example.com/coredns","version":"v1.0"}}}}`, true},
 		{"image digest", `{"spec":{"images":{"coredns":{"image":"example.com/coredns","version":"v1@sha256:0123456789abcdefABCDEF0123456789abcdefABCDEF0123456789abcdefABCDEF01"}}}}`, true},
@@ -111,7 +106,7 @@ func TestStructuralSchema(t *testing.T) {
 		valid   []string
 		invalid []string
 	}{
-		{"optional is not nullable", `{"type":"object","properties":{"value":{"type":"string"}}}`, []string{`{}`, `{"value":"ok"}`, `{"other":1}`}, []string{`{"value":null}`}},
+		{"optional is not nullable", `{"type":"object","properties":{"value":{"type":"string"}}}`, []string{`{}`, `{"value":"ok"}`}, []string{`{"value":null}`, `{"other":1}`}},
 		{"integer or string", `{"x-kubernetes-int-or-string":true}`, []string{`42`, `"42"`}, []string{`true`, `1.5`, `null`}},
 		{"int32 bounds", `{"type":"integer","format":"int32"}`, []string{`-2147483648`, `2147483647`}, []string{`-2147483649`, `2147483648`}},
 		{"tighter int32 bounds", `{"type":"integer","format":"int32","minimum":1,"maximum":65535}`, []string{`1`, `65535`}, []string{`0`, `65536`}},
@@ -119,12 +114,12 @@ func TestStructuralSchema(t *testing.T) {
 		{"preserved unknown fields", `{"type":"object","x-kubernetes-preserve-unknown-fields":true,"properties":{"known":{"type":"integer"}}}`, []string{`{"known":1,"arbitrary":{"nested":[null,true]}}`}, []string{`{"known":"bad"}`}},
 		{"explicit additional properties", `{"type":"object","properties":{"known":{"type":"integer"}},"additionalProperties":true}`, []string{`{"other":true}`}, []string{`{"known":false}`}},
 		{"explicitly closed object", `{"type":"object","properties":{"known":{"type":"integer"}},"additionalProperties":false}`, []string{`{"known":1}`}, []string{`{"other":true}`}},
-		{"nested arrays and maps", `{"type":"object","additionalProperties":{"type":"array","items":{"type":"object","properties":{"value":{"type":"string","x-kubernetes-int-or-string":true}}}}}`, []string{`{"key":[{"value":1}]}`, `{"key":[{"value":"text"}]}`, `{"key":[{"other":1}]}`}, []string{`{"key":[{"value":true}]}`}},
+		{"nested arrays and maps", `{"type":"object","additionalProperties":{"type":"array","items":{"type":"object","properties":{"value":{"type":"string","x-kubernetes-int-or-string":true}}}}}`, []string{`{"key":[{"value":1}]}`, `{"key":[{"value":"text"}]}`}, []string{`{"key":[{"value":true}]}`, `{"key":[{"other":1}]}`}},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			var source map[string]any
 			require.NoError(t, json.Unmarshal([]byte(test.schema), &source))
-			converted, err := structuralSchema(source)
+			converted, err := structuralSchema(source, false)
 			require.NoError(t, err)
 			converted["$schema"] = "http://json-schema.org/draft-07/schema#"
 			compiler := jsonschema.NewCompiler()
@@ -157,38 +152,23 @@ func TestGenerateRejectsUnsupportedFeatures(t *testing.T) {
 		{`{"type":"number","exclusiveMinimum":true}`, `unsupported schema keyword "exclusiveMinimum"`},
 		{`{"allOf":[{"type":"string"}]}`, `unsupported schema keyword "allOf"`},
 		{`{"x-kubernetes-validations":[{"rule":"self > 0"}]}`, `unsupported schema keyword "x-kubernetes-validations"`},
-		{`{"type":"integer","format":"int64"}`, `unsupported format int64 for type integer`},
 		{`{"type":"string","format":"int32"}`, `unsupported format int32 for type string`},
 		{`{"properties":{"value":{"nullable":true}}}`, `property "value": unsupported schema keyword "nullable"`},
 		{`{"items":{"nullable":true}}`, `items: unsupported schema keyword "nullable"`},
 		{`{"additionalProperties":{"nullable":true}}`, `additionalProperties: unsupported schema keyword "nullable"`},
 	} {
 		t.Run(test.schema, func(t *testing.T) {
-			input := `{"spec":{"versions":[{"name":"v1beta1","schema":{"openAPIV3Schema":` + test.schema + `}}]}}`
-			_, err := generate([]byte(input))
+			var input map[string]any
+			require.NoError(t, json.Unmarshal([]byte(test.schema), &input))
+			_, err := structuralSchema(input, false)
 			require.EqualError(t, err, test.error)
 		})
 	}
 }
 
-func TestGenerateRequiresVersionedSchema(t *testing.T) {
-	for _, input := range []string{
-		"[invalid yaml",
-		"{}",
-		`{"spec":{"versions":[{"name":"v1beta1"}]}}`,
-		`{"spec":{"versions":[{"name":"v2","schema":{"openAPIV3Schema":{"type":"object"}}}]}}`,
-	} {
-		_, err := generate([]byte(input))
-		require.Error(t, err)
-	}
-}
-
-func TestCheckedInSchema(t *testing.T) {
-	crd, err := os.ReadFile(crdPath)
-	require.NoError(t, err)
-	generated, err := generate(crd)
-	require.NoError(t, err)
-	checkedIn, err := os.ReadFile("../../schemas/k0s.json")
-	require.NoError(t, err)
-	require.Equal(t, string(generated), string(checkedIn), "run make config-schema")
+func TestGenerateRequiresKnownSchema(t *testing.T) {
+	_, err := Generate("k0s.k0sproject.io/v2", "ClusterConfig")
+	require.Error(t, err)
+	_, err = Generate("k0s.k0sproject.io/v1beta1", "Missing")
+	require.Error(t, err)
 }

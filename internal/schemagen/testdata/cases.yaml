@@ -1,0 +1,54 @@
+validation:
+  - name: partial config
+    input: '{"spec":{"api":{"port":6443}}}'
+    valid: true
+  - name: metadata remains open
+    input: '{"metadata":{"name":"k0s","labels":{"example.com/team":"ops"}}}'
+    valid: true
+  - name: preserved worker values remain open
+    input: '{"spec":{"workerProfiles":[{"name":"custom","values":{"arbitrary":null}}]}}'
+    valid: true
+  - name: unknown root field
+    input: '{"other":true}'
+    valid: false
+  - name: unknown section
+    input: '{"spec":{"networks":{}}}'
+    valid: false
+  - name: unknown field
+    input: '{"spec":{"api":{"prot":6443}}}'
+    valid: false
+  - name: unknown worker field
+    input: '{"spec":{"workerProfiles":[{"name":"custom","vaues":{}}]}}'
+    valid: false
+  - name: wrong port type
+    input: '{"spec":{"api":{"port":"6443"}}}'
+    valid: false
+  - name: zero API port
+    input: '{"spec":{"api":{"port":0}}}'
+    valid: false
+  - name: image override
+    input: '{"spec":{"images":{"coredns":{"image":"example.com/coredns","version":"v1.0"}}}}'
+    valid: true
+  - name: partial image override
+    input: '{"spec":{"images":{"coredns":{"version":"custom"}}}}'
+    valid: false
+
+structural:
+  - name: ordinary object is closed
+    schema: '{"type":"object","properties":{"known":{"type":"integer"}}}'
+    valid:
+      - '{"known":1}'
+    invalid:
+      - '{"other":true}'
+  - name: preserved object is open
+    schema: '{"type":"object","x-kubernetes-preserve-unknown-fields":true,"properties":{"known":{"type":"integer"}}}'
+    valid:
+      - '{"known":1,"arbitrary":{"nested":[null,true]}}'
+    invalid:
+      - '{"known":"bad"}'
+  - name: explicit additional properties are preserved
+    schema: '{"type":"object","additionalProperties":{"type":"string"}}'
+    valid:
+      - '{"key":"value"}'
+    invalid:
+      - '{"key":false}'

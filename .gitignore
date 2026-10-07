@@ -30,5 +30,6 @@ aws_private.pem
 .vscode
 .k0sbuild.docker-image.*
 docs/cli
+docs/schemas
 site
 k0sctl.yaml
