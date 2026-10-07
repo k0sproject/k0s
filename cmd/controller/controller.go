@@ -35,6 +35,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/certificate"
 	"github.com/k0sproject/k0s/pkg/component/controller"
 	"github.com/k0sproject/k0s/pkg/component/controller/clusterconfig"
+	"github.com/k0sproject/k0s/pkg/component/controller/clusterinfo"
 	"github.com/k0sproject/k0s/pkg/component/controller/cplb"
 	"github.com/k0sproject/k0s/pkg/component/controller/externalnodes"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
@@ -606,6 +607,12 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 	})
 
 	clusterComponents.Add(ctx, &externalnodes.Component{
+		K0sVars:    c.K0sVars,
+		NodeConfig: nodeConfig,
+		Clients:    adminClientFactory,
+	})
+
+	clusterComponents.Add(ctx, &clusterinfo.Publisher{
 		K0sVars:    c.K0sVars,
 		NodeConfig: nodeConfig,
 		Clients:    adminClientFactory,
