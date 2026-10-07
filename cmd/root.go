@@ -85,10 +85,10 @@ func newDocsCmd() *cobra.Command {
 		Args:  cobra.NoArgs,
 	}
 	cmd.AddCommand(
-		&cobra.Command{Use: "markdown", Args: cobra.NoArgs, RunE: func(*cobra.Command, []string) error {
+		&cobra.Command{Use: "markdown", Short: "Generate Markdown documentation", Args: cobra.NoArgs, RunE: func(*cobra.Command, []string) error {
 			return doc.GenMarkdownTree(NewRootCmd(), "./docs/cli")
 		}},
-		&cobra.Command{Use: "man", Args: cobra.NoArgs, RunE: func(*cobra.Command, []string) error {
+		&cobra.Command{Use: "man", Short: "Generate man pages", Args: cobra.NoArgs, RunE: func(*cobra.Command, []string) error {
 			return doc.GenManTree(NewRootCmd(), &doc.GenManHeader{Title: "k0s", Section: "1"}, "./man")
 		}},
 		newJSONSchemaDocsCmd(),

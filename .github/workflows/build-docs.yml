@@ -6,11 +6,17 @@ on:
       - main
       - release-*
     paths:
+      - .github/workflows/build-docs.yml
       - "**.md"
+      - cmd/root.go
       - docs/**
       - embedded-bins/Makefile.variables
+      - go.mod
+      - go.sum
+      - internal/schemagen/**
       - pkg/constant/constant.go
       - mkdocs.yml
+      - static/_crds/**
       - vars.sh
 
   pull_request:
@@ -18,11 +24,17 @@ on:
       - main
       - release-*
     paths:
+      - .github/workflows/build-docs.yml
       - "**.md"
+      - cmd/root.go
       - docs/**
       - embedded-bins/Makefile.variables
+      - go.mod
+      - go.sum
+      - internal/schemagen/**
       - pkg/constant/constant.go
       - mkdocs.yml
+      - static/_crds/**
       - vars.sh
 
 env:
