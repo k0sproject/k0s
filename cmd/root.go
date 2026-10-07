@@ -4,6 +4,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -129,12 +130,12 @@ func newJSONSchemaGenerateCmd() *cobra.Command {
 		Args: func(cmd *cobra.Command, args []string) error {
 			if all {
 				if output == "" {
-					return fmt.Errorf("required flag(s) \"output\" not set")
+					return errors.New("required flag(s) \"output\" not set")
 				}
 				return cobra.NoArgs(cmd, args)
 			}
 			if output != "" {
-				return fmt.Errorf("--output requires --all")
+				return errors.New("--output requires --all")
 			}
 			return cobra.ExactArgs(2)(cmd, args)
 		},

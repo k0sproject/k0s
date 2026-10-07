@@ -14,7 +14,9 @@ sedopt := -i -e
 endif
 
 DOCKER ?= docker
-TARGET_VERSION ?= latest
+# Schemas must match the checked-out CRDs, so build documentation from the
+# checked-out k0s by default.
+TARGET_VERSION ?= local
 # mkdocs.yml refuses to live in the docs-directory, this is why "cd .." is needed
 # gives: "Error: The 'docs_dir' should not be the parent directory of the config file."
 # even if docs_dir is "."
@@ -22,6 +24,9 @@ ifeq ($(detected_OS),linux)
 docs: .require-mkdocs cli schemas
 	cd .. && PYTHONPATH=$(CURDIR)/mkdocs_modules K0S_VERSION=$$('$(k0s_binary_path)/$(k0s_binary)' version) mkdocs build --strict
 else
+ifneq ($(TARGET_VERSION),local)
+$(error TARGET_VERSION=$(TARGET_VERSION) is only supported on Linux)
+endif
 docs: .require-mkdocs cli schemas
 	cd .. && PYTHONPATH=$(CURDIR)/mkdocs_modules K0S_VERSION=$$(go run . version) mkdocs build --strict
 endif
@@ -67,15 +72,10 @@ k0s::
 	chmod +x -- '$@'
 endif
 
-.PHONY: cli
-ifeq ($(detected_OS),windows)
-cli: k0s.exe
-docs cli schemas: k0s_binary = k0s.exe
-else
+.PHONY: cli schemas
+ifeq ($(detected_OS),linux)
 cli: k0s
 docs cli schemas: k0s_binary = k0s
-endif
-ifeq ($(detected_OS),linux)
 cli:
 	rm -rf cli
 	mkdir cli
@@ -83,6 +83,10 @@ cli:
 	rm cli/k0s_kubectl_*
 	sed $(sedopt) '/\[k0s kubectl /d' cli/k0s_kubectl.md
 	ln -s k0s.md cli/README.md
+schemas: k0s
+	rm -rf schemas
+	mkdir schemas
+	cd .. && '$(k0s_binary_path)/$(k0s_binary)' docs json-schema gen --all -o docs/schemas
 else
 cli:
 	rm -rf cli
@@ -91,15 +95,6 @@ cli:
 	rm cli/k0s_kubectl_*
 	sed $(sedopt) '/\[k0s kubectl /d' cli/k0s_kubectl.md
 	ln -s k0s.md cli/README.md
-endif
-
-.PHONY: schemas
-ifeq ($(detected_OS),linux)
-schemas: k0s
-	rm -rf schemas
-	mkdir schemas
-	cd .. && '$(k0s_binary_path)/$(k0s_binary)' docs json-schema gen --all -o docs/schemas
-else
 schemas:
 	rm -rf schemas
 	mkdir schemas

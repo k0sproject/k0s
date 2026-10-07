@@ -35,10 +35,8 @@ k0s supports providing only partial configurations. In case of partial configura
 
 ## Editor completion and validation
 
-The versioned documentation site publishes JSON Schemas for field completion,
-descriptions, and structural validation of `k0s.yaml`.[^schema-catalog] You can
-also generate a schema from the installed k0s executable, which guarantees a
-matching version:
+Get the schema for your k0s version from the documentation site,[^schema-catalog]
+or generate it from the installed executable:
 
 ```shell
 k0s docs json-schema gen k0s.k0sproject.io/v1beta1 ClusterConfig > k0s.json
@@ -50,22 +48,10 @@ Add this comment at the top of your `k0s.yaml`:
 # yaml-language-server: $schema=./k0s.json
 ```
 
-The schema path is relative to the YAML file. See the YAML language server's schema
-association documentation for editor-specific setup.[^schema-association]
-
-The schema checks types, required fields, allowed values, bounds, and patterns
-declared in the CRD. It provides guidance for authoring configurations
-and can be stricter than the config-file parser. For example, omit an API port to
-use its default instead of setting it to zero. Omit optional fields instead of
+The schema is deliberately stricter than the configuration parser. Omit a port to
+use its default instead of setting it to zero, and omit optional fields instead of
 setting them to null. Image overrides must include both `image` and `version`.
-Worker profile `values` and Kubernetes `metadata` are open objects. Other object
-fields reject unknown properties, so editors can report misspelled field names.
-
-Defaults in the schema are CRD annotations for editor suggestions; they do not
-apply config-file defaults and may differ from them. Continue to use
-`k0s config validate --config k0s.yaml` for cross-field and other semantic
-validation. This schema is for the k0s configuration, not the surrounding k0sctl
-configuration file.
+Use `k0s config validate --config k0s.yaml` for cross-field and semantic validation.
 
 ## Configuring k0s via k0sctl
 
@@ -77,7 +63,6 @@ k0sctl][k0sctl-install] and the [k0sctl README] for more information.
 [k0sctl-install]: k0sctl-install.md
 [k0sctl README]: https://github.com/k0sproject/k0sctl/blob/main/README.md
 [^schema-catalog]: [k0s ClusterConfig schema](https://docs.k0sproject.io/stable/schemas/k0s.k0sproject.io/ClusterConfig_v1beta1.json)
-[^schema-association]: [Associating schemas](https://github.com/redhat-developer/yaml-language-server#associating-schemas)
 
 ## Configuration file reference
 

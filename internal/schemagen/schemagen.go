@@ -104,7 +104,7 @@ func generate(apiVersion, kind string, source *apiextensionsv1.JSONSchemaProps) 
 	if err := json.Unmarshal(data, &openAPI); err != nil {
 		return nil, err
 	}
-	schema, err := structuralSchema(openAPI, false)
+	schema, err := structuralSchema(openAPI, false, true)
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +122,7 @@ func generate(apiVersion, kind string, source *apiextensionsv1.JSONSchemaProps) 
 // Schema draft-07. Reject unsupported features rather than silently changing
 // validation semantics when a CRD evolves. Patterns must use the portable
 // regular-expression subset described by JSON Schema draft-07 section 4.3.
-func structuralSchema(source map[string]any, openObject bool) (map[string]any, error) {
+func structuralSchema(source map[string]any, openObject, root bool) (map[string]any, error) {
 	schema := maps.Clone(source)
 	preserveUnknown, _ := source["x-kubernetes-preserve-unknown-fields"].(bool)
 	if source["type"] == "object" && !openObject && !preserveUnknown {
@@ -174,7 +174,7 @@ func structuralSchema(source map[string]any, openObject bool) (map[string]any, e
 			properties := source[key].(map[string]any)
 			converted := make(map[string]any, len(properties))
 			for name, property := range properties {
-				child, err := structuralSchema(property.(map[string]any), openObject || name == "metadata")
+				child, err := structuralSchema(property.(map[string]any), openObject || (root && name == "metadata"), false)
 				if err != nil {
 					return nil, fmt.Errorf("property %q: %w", name, err)
 				}
@@ -183,7 +183,7 @@ func structuralSchema(source map[string]any, openObject bool) (map[string]any, e
 			schema[key] = converted
 		case "items", "additionalProperties":
 			if child, ok := source[key].(map[string]any); ok {
-				converted, err := structuralSchema(child, false)
+				converted, err := structuralSchema(child, false, false)
 				if err != nil {
 					return nil, fmt.Errorf("%s: %w", key, err)
 				}
