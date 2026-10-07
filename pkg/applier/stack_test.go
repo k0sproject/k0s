@@ -90,3 +90,32 @@ func TestStack_StackNameChangeTriggersUpdateWithoutChecksumChange(t *testing.T) 
 	assert.Equal(t, "new", applied.Labels[applier.NameLabel])
 	assert.Equal(t, checksumBefore, applied.Annotations[applier.ChecksumAnnotation])
 }
+
+func TestStack_RecreatesResourceBeingDeleted(t *testing.T) {
+	cm := &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "being-deleted"}}
+	fakes := testutil.NewFakeClientFactory()
+	apply := func() error {
+		resource, err := applier.ToUnstructured(nil, cm)
+		require.NoError(t, err)
+		s := applier.Stack{Name: "stack", Resources: []*unstructured.Unstructured{resource}, Clients: fakes}
+		return s.Apply(t.Context(), true)
+	}
+	configMaps := fakes.Client.CoreV1().ConfigMaps("default")
+	require.NoError(t, apply())
+
+	// A pruned resource lingers while its dependents are deleted. Applying it again must not count as done.
+	applied, err := configMaps.Get(t.Context(), "being-deleted", metav1.GetOptions{})
+	require.NoError(t, err)
+	applied.DeletionTimestamp = new(metav1.Now())
+	applied.Finalizers = []string{metav1.FinalizerDeleteDependents}
+	_, err = configMaps.Update(t.Context(), applied, metav1.UpdateOptions{})
+	require.NoError(t, err)
+	assert.ErrorContains(t, apply(), "resource being-deleted is being deleted")
+
+	// Once it's gone, the next attempt creates it again.
+	require.NoError(t, configMaps.Delete(t.Context(), "being-deleted", metav1.DeleteOptions{}))
+	require.NoError(t, apply())
+	applied, err = configMaps.Get(t.Context(), "being-deleted", metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Nil(t, applied.DeletionTimestamp)
+}
