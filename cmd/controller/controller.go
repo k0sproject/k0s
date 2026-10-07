@@ -36,6 +36,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/controller"
 	"github.com/k0sproject/k0s/pkg/component/controller/clusterconfig"
 	"github.com/k0sproject/k0s/pkg/component/controller/cplb"
+	"github.com/k0sproject/k0s/pkg/component/controller/externalnodes"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	"github.com/k0sproject/k0s/pkg/component/controller/leasecounter"
 	"github.com/k0sproject/k0s/pkg/component/controller/workerconfig"
@@ -602,6 +603,12 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 	clusterComponents.Add(ctx, &controller.K0sNodeLabeler{
 		Clients:       adminClientFactory,
 		LeaderElector: leaderElector,
+	})
+
+	clusterComponents.Add(ctx, &externalnodes.Component{
+		K0sVars:    c.K0sVars,
+		NodeConfig: nodeConfig,
+		Clients:    adminClientFactory,
 	})
 
 	if enableKonnectivity {
