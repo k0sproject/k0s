@@ -186,6 +186,24 @@ func TestSetRoutes(t *testing.T) {
 	}
 }
 
+func TestRoundRobinPerAddress(t *testing.T) {
+	var p Proxy
+	p.setRoutes(":6443", stringsToTargets([]string{"10.0.0.1:6443", "10.0.0.2:6443"}))
+	p.setRoutes(":8132", stringsToTargets([]string{"10.0.0.1:8132", "10.0.0.2:8132"}))
+	api, konnectivity := p.configFor(":6443"), p.configFor(":8132")
+
+	// Connections to other addresses don't skew the round robin of an address.
+	got := make([]string, 0, 4)
+	for range 4 {
+		got = append(got, p.nextRoute(konnectivity).Addr)
+		p.nextRoute(api)
+	}
+	want := []string{"10.0.0.2:8132", "10.0.0.1:8132", "10.0.0.2:8132", "10.0.0.1:8132"}
+	if fmt.Sprint(got) != fmt.Sprint(want) {
+		t.Fatalf("got %v; want %v", got, want)
+	}
+}
+
 func stringsToTargets(s []string) []Route {
 	targets := make([]Route, len(s))
 	for i, v := range s {
