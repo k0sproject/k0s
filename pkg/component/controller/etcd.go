@@ -307,9 +307,18 @@ func (e *Etcd) Start(ctx context.Context) (err error) {
 func (e *Etcd) maintainSocketMode(ctx context.Context) {
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
+	// A missing socket is normal until etcd creates it. A chmod failure is not,
+	// so warn on the first one and then at most every 10 seconds.
+	var nextWarn time.Time
 	for {
 		if err := chmodEtcdSocket(e.K0sVars.EtcdSocketPath); err != nil {
-			logrus.WithError(err).Warn("Failed to adjust etcd socket permissions")
+			level := logrus.DebugLevel
+			if now := time.Now(); !now.Before(nextWarn) {
+				level, nextWarn = logrus.WarnLevel, now.Add(10*time.Second)
+			}
+			logrus.WithError(err).Log(level, "Failed to adjust etcd socket permissions")
+		} else {
+			nextWarn = time.Time{}
 		}
 		select {
 		case <-ctx.Done():

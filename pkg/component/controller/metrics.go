@@ -41,6 +41,7 @@ type Metrics struct {
 	K0sVars     *config.CfgVars
 	restClient  rest.Interface
 	storageType v1beta1.StorageType
+	etcd        *v1beta1.EtcdConfig
 
 	clusterConfig *v1beta1.ClusterConfig
 	tickerDone    context.CancelFunc
@@ -51,7 +52,7 @@ var _ manager.Component = (*Metrics)(nil)
 var _ manager.Reconciler = (*Metrics)(nil)
 
 // NewMetrics creates new Metrics reconciler
-func NewMetrics(k0sVars *config.CfgVars, clientCF kubeutil.ClientFactoryInterface, storageType v1beta1.StorageType) (*Metrics, error) {
+func NewMetrics(k0sVars *config.CfgVars, clientCF kubeutil.ClientFactoryInterface, storageType v1beta1.StorageType, etcd *v1beta1.EtcdConfig) (*Metrics, error) {
 	hostname, err := os.Hostname()
 	if err != nil {
 		return nil, err
@@ -70,6 +71,7 @@ func NewMetrics(k0sVars *config.CfgVars, clientCF kubeutil.ClientFactoryInterfac
 	return &Metrics{
 		log:         logrus.WithFields(logrus.Fields{"component": "metrics"}),
 		storageType: storageType,
+		etcd:        etcd,
 		hostname:    hostname,
 		K0sVars:     k0sVars,
 		restClient:  restClient,
@@ -189,20 +191,25 @@ func (m *Metrics) newEtcdJob() (*job, error) {
 	if err != nil {
 		return nil, err
 	}
-	transport, ok := httpClient.Transport.(*http.Transport)
-	if !ok {
-		return nil, fmt.Errorf("etcd metrics transport is %T", httpClient.Transport)
-	}
-	socketPath := m.K0sVars.EtcdSocketPath
-	transport.Proxy = nil
-	transport.DialContext = func(ctx context.Context, _, _ string) (net.Conn, error) {
-		var dialer net.Dialer
-		return dialer.DialContext(ctx, "unix", socketPath)
+
+	scrapeURL := "https://localhost:2379/metrics"
+	if m.etcd == nil || !m.etcd.IsExternalClusterUsed() {
+		transport, ok := httpClient.Transport.(*http.Transport)
+		if !ok {
+			return nil, fmt.Errorf("etcd metrics transport is %T", httpClient.Transport)
+		}
+		socketPath := m.K0sVars.EtcdSocketPath
+		transport.Proxy = nil
+		transport.DialContext = func(ctx context.Context, _, _ string) (net.Conn, error) {
+			var dialer net.Dialer
+			return dialer.DialContext(ctx, "unix", socketPath)
+		}
+		scrapeURL = "https://localhost/metrics"
 	}
 
 	return &job{
 		log:          m.log.WithField("metrics_job", "etcd"),
-		scrapeURL:    "https://localhost/metrics",
+		scrapeURL:    scrapeURL,
 		name:         "etcd",
 		hostname:     m.hostname,
 		scrapeClient: httpClient,
