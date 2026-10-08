@@ -3345,12 +3345,16 @@ deprecation policy.</p>
   cgroup v1 and v2.</li>
 </ul>
 <h3 id="no-integration-with-name-service-switch-nss-apis">No integration with Name Service Switch (NSS) APIs<a class="headerlink" href="#no-integration-with-name-service-switch-nss-apis" title="Permanent link">#</a></h3>
-<p>The k0s Linux binaries are by default statically linked against <a href="https://musl.libc.org/">musl libc</a>.
-This includes the binaries distributed on the GitHub releases pages. Static
-linking ensures that k0s can run seamlessly across a wide range of Linux
-environments by not requiring a specific standard C library to be installed on
-the host system. However, this design choice means that k0s cannot use <a href="https://www.gnu.org/software/libc/manual/html_node/Name-Service-Switch.html">glibc's
-NSS APIs</a>, which require dynamic linking.</p>
+<p>The k0s Linux binaries, including the ones distributed on the GitHub releases
+pages, are by default statically linked and do not depend on the host's
+C&nbsp;library. This ensures that k0s can run seamlessly across a wide range of
+Linux environments. The <code>k0s</code> executable and most of the embedded binaries are
+built without <a href="https://pkg.go.dev/cmd/cgo">cgo</a> and use the <a href="https://pkg.go.dev/net#hdr-Name_Resolution">pure Go resolver</a>, which only
+consults the <code>files</code> and <code>dns</code> sources of <code>/etc/nsswitch.conf</code>. The Go
+executables that do require cgo, such as <code>containerd</code> and <code>runc</code>, as well as all
+non-Go executables, are statically linked against <a href="https://musl.libc.org/">musl libc</a>, which doesn't
+implement NSS at all. In all cases, k0s cannot use <a href="https://www.gnu.org/software/libc/manual/html_node/Name-Service-Switch.html">glibc's NSS APIs</a>, which
+require dynamic linking.</p>
 <p>This limitation is particularly relevant when a system uses NSS plugins, such as
 <a href="https://www.freedesktop.org/software/systemd/man/latest/nss-myhostname.html">nss-myhostname</a>, for resolving network names like <code>localhost</code>. Systems lacking
 a dedicated stub resolver capable of handling <code>localhost</code> DNS queries
