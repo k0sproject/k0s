@@ -9,16 +9,8 @@ Maintainers are responsible for guiding the technical direction, reviewing contr
 
 ## Current Maintainers
 
-This is the list of current maintainers of k0s:
-
-| Maintainer         | GitHub ID                                                  | Affiliation |
-|--------------------|------------------------------------------------------------|-------------|
-| Jussi Nummelin     | [@jnummelin](https://github.com/jnummelin)                 | Mirantis    |
-| Tom Wieczorek      | [@twz123](https://github.com/twz123)                       | Mirantis    |
-| Natanael Copa      | [@ncopa](https://github.com/ncopa)                         | Mirantis    |
-| Aleksey Makhov     | [@makhov](https://github.com/makhov)                       | Mirantis    |
-| Kimmo Lehto        | [@kke](https://github.com/kke)                             | Mirantis    |
-| Ethan Mosbaugh     | [@emosbaugh](https://github.com/emosbaugh)                 | Replicated  |
+The list of current maintainers of k0s is at https://github.com/k0sproject/.project/blob/main/maintainers.yaml. That file
+is a central roster for all maintainers, reviewers and contributors of the k0s project.
 
 ## Emeritus Maintainers
 
