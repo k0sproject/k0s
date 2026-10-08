@@ -1,4 +1,4 @@
-sonobuoy_image = docker.io/sonobuoy/sonobuoy:v0.57.3@sha256:69d1ddf7bf84deb02807a415c0ff469358046aaf9c69409ef4c4a943d663201f
+sonobuoy_image = docker.io/sonobuoy/sonobuoy:v0.57.5@sha256:7a65a613a53017dfbe674f61890f8f5b16b4a8085286f625eeb42b6ae64c48b8
 sonobuoy_version = $(patsubst v%,%,$(lastword $(subst :, ,$(firstword $(subst @, ,$(sonobuoy_image))))))
 
 # renovate: datasource=github-releases depName=helm/helm
