@@ -100,6 +100,7 @@ anonymous: null
 func (a *apiServerSuite) TestAddEtcdArgs() {
 	k0sVars := &config.CfgVars{
 		KineSocketPath: "/run/k0s/kine/kine.sock:2379",
+		EtcdSocketPath: "/run/k0s/etcd/etcd.sock",
 		CertRootDir:    "/var/lib/k0s/pki",
 		EtcdCertDir:    "/var/lib/k0s/pki/etcd",
 	}
@@ -128,7 +129,7 @@ func (a *apiServerSuite) TestAddEtcdArgs() {
 				},
 			},
 			stringmap.StringMap{
-				"etcd-servers":  "https://127.0.0.1:2379",
+				"etcd-servers":  "unixs:///run/k0s/etcd/etcd.sock",
 				"etcd-cafile":   filepath.FromSlash("/var/lib/k0s/pki/etcd/ca.crt"),
 				"etcd-certfile": filepath.FromSlash("/var/lib/k0s/pki/apiserver-etcd-client.crt"),
 				"etcd-keyfile":  filepath.FromSlash("/var/lib/k0s/pki/apiserver-etcd-client.key"),

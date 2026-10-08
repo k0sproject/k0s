@@ -248,22 +248,17 @@ func (k *KineConfig) IsJoinable() bool {
 	}
 }
 
-// GetEndpointsAsString returns comma-separated list of external cluster endpoints if exist
-// or internal etcd address which is https://127.0.0.1:2379
-func (e *EtcdConfig) GetEndpointsAsString() string {
-	if e != nil && e.IsExternalClusterUsed() {
-		return strings.Join(e.ExternalCluster.Endpoints, ",")
-	}
-	return "https://127.0.0.1:2379"
+// GetEndpointsAsString returns external cluster endpoints, or the managed etcd socket.
+func (e *EtcdConfig) GetEndpointsAsString(etcdSocketPath string) string {
+	return strings.Join(e.GetEndpoints(etcdSocketPath), ",")
 }
 
-// GetEndpointsAsString returns external cluster endpoints if exist
-// or internal etcd address which is https://127.0.0.1:2379
-func (e *EtcdConfig) GetEndpoints() []string {
+// GetEndpoints returns external cluster endpoints, or the managed etcd socket.
+func (e *EtcdConfig) GetEndpoints(etcdSocketPath string) []string {
 	if e != nil && e.IsExternalClusterUsed() {
 		return e.ExternalCluster.Endpoints
 	}
-	return []string{"https://127.0.0.1:2379"}
+	return []string{(&url.URL{Scheme: "unixs", Path: filepath.ToSlash(etcdSocketPath)}).String()}
 }
 
 // IsExternalClusterUsed returns true if `spec.storage.etcd.externalCluster` is defined, otherwise returns false.

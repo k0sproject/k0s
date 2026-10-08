@@ -13,6 +13,21 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
+func TestEtcdEndpoints(t *testing.T) {
+	socket := "/run/k0s/etcd/etcd.sock"
+	want := "unixs:///run/k0s/etcd/etcd.sock"
+	for _, cfg := range []*EtcdConfig{nil, {}} {
+		assert.Equal(t, []string{want}, cfg.GetEndpoints(socket))
+		assert.Equal(t, want, cfg.GetEndpointsAsString(socket))
+		assert.True(t, cfg.IsTLSEnabled())
+	}
+
+	endpoints := []string{"https://etcd-a:2379", "https://etcd-b:2379"}
+	cfg := &EtcdConfig{ExternalCluster: &ExternalCluster{Endpoints: endpoints}}
+	assert.Equal(t, endpoints, cfg.GetEndpoints(socket))
+	assert.Equal(t, "https://etcd-a:2379,https://etcd-b:2379", cfg.GetEndpointsAsString(socket))
+}
+
 func TestStorageSpec_IsJoinable(t *testing.T) {
 	tests := []struct {
 		name    string

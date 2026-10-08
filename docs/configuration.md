@@ -142,6 +142,15 @@ spec:
 
 ### `spec.storage`
 
+Managed etcd accepts local clients on the TLS socket `unixs:///run/k0s/etcd/etcd.sock`. The API server, `k0s etcd` commands, health checks, metrics, and backups use that socket. Without root, the socket is `<data-dir>/run/etcd/etcd.sock`. Etcd peer traffic stays on HTTPS port 2380.
+
+```shell
+sudo etcdctl --endpoints=unixs:///run/k0s/etcd/etcd.sock \
+  --cacert=/var/lib/k0s/pki/etcd/ca.crt \
+  --cert=/var/lib/k0s/pki/apiserver-etcd-client.crt \
+  --key=/var/lib/k0s/pki/apiserver-etcd-client.key endpoint health
+```
+
 | Element                           | Description                                                                                                                                                                                                                                        |
 | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `type`                            | Type of the data store (valid values:`etcd` or `kine`). **Note**: Type `etcd` will cause k0s to create and manage an elastic etcd cluster within the controller nodes.                                                                             |
