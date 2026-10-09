@@ -18,6 +18,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 
@@ -181,6 +183,40 @@ func (s *ConfigSuite) TestK0sGetsUp() {
 		}
 
 	})
+
+	s.Run("losing the manifests dir on restart should not re-create coredns and metrics-server", func() {
+		ctx := s.Context()
+		s.Require().NoError(common.WaitForCoreDNSReady(ctx, kc))
+		s.Require().NoError(common.WaitForDeployment(ctx, kc, "metrics-server", metav1.NamespaceSystem))
+		coreDNSUID := s.deploymentUID(kc, "coredns")
+		metricsServerUID := s.deploymentUID(kc, "metrics-server")
+
+		s.Require().NoError(s.StopController(s.ControllerNode(0)))
+		ssh, err := s.SSH(ctx, s.ControllerNode(0))
+		s.Require().NoError(err)
+		defer ssh.Disconnect()
+		_, err = ssh.ExecWithOutput(ctx, "rm -rf /var/lib/k0s/manifests")
+		s.Require().NoError(err)
+		s.Require().NoError(s.StartController(s.ControllerNode(0)))
+		s.Require().NoError(s.WaitForKubeAPI(s.ControllerNode(0)))
+
+		// Any pruning would happen before the manifests are written again.
+		s.Require().NoError(wait.PollUntilContextTimeout(ctx, 1*time.Second, 2*time.Minute, true, func(ctx context.Context) (bool, error) {
+			_, err := ssh.ExecWithOutput(ctx, "test -f /var/lib/k0s/manifests/coredns/coredns.yaml && test -f /var/lib/k0s/manifests/metricserver/metric_server.yaml")
+			return err == nil, nil
+		}))
+
+		s.Require().NoError(common.WaitForCoreDNSReady(ctx, kc))
+		s.Require().NoError(common.WaitForDeployment(ctx, kc, "metrics-server", metav1.NamespaceSystem))
+		s.Equal(coreDNSUID, s.deploymentUID(kc, "coredns"), "coredns was re-created")
+		s.Equal(metricsServerUID, s.deploymentUID(kc, "metrics-server"), "metrics-server was re-created")
+	})
+}
+
+func (s *ConfigSuite) deploymentUID(kc kubernetes.Interface, name string) types.UID {
+	d, err := kc.AppsV1().Deployments(metav1.NamespaceSystem).Get(s.Context(), name, metav1.GetOptions{})
+	s.Require().NoError(err)
+	return d.UID
 }
 
 func (s *ConfigSuite) waitForReconcileEvent(eventWatch watch.Interface) (*corev1.Event, error) {
