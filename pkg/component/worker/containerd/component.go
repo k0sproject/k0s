@@ -14,20 +14,20 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/fsnotify/fsnotify"
-	"github.com/sirupsen/logrus"
-	"golang.org/x/sync/errgroup"
-
+	fswatch "github.com/k0sproject/k0s/internal/os/fs/watch"
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
+	"github.com/k0sproject/k0s/internal/sync/activity"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	workerconfig "github.com/k0sproject/k0s/pkg/component/worker/config"
 	"github.com/k0sproject/k0s/pkg/config"
 	containerruntime "github.com/k0sproject/k0s/pkg/container/runtime"
-	"github.com/k0sproject/k0s/pkg/debounce"
 	"github.com/k0sproject/k0s/pkg/supervisor"
 
 	"k8s.io/apimachinery/pkg/util/wait"
+
+	"github.com/sirupsen/logrus"
+	"golang.org/x/sync/errgroup"
 )
 
 const containerdTomlHeader = `# k0s_managed=true
@@ -114,25 +114,23 @@ func (c *Component) Start(ctx context.Context) (err error) {
 
 	cctx, cancel := context.WithCancelCause(context.Background())
 	var wg sync.WaitGroup
-	stop := func() error {
-		cancel(errors.New("containerd component is stopping"))
-		err := c.supervisor.Stop()
-		wg.Wait()
-		return err
-	}
 
 	defer func() {
 		if err == nil {
-			c.stop = stop
+			c.stop = func() error {
+				cancel(errors.New("containerd component is stopping"))
+				err := c.supervisor.Stop()
+				wg.Wait()
+				return err
+			}
 		} else {
-			err = errors.Join(err, stop())
+			cancel(err)
+			err = errors.Join(err, c.supervisor.Stop())
+			wg.Wait()
 		}
 	}()
 
-	wg.Go(func() {
-		wait.UntilWithContext(cctx, c.watchDropinConfigs, 30*time.Second)
-		log.Info("Stopped to watch for drop-ins")
-	})
+	wg.Go(func() { c.watchDropinConfigs(cctx) })
 
 	log.Debug("Waiting for containerd")
 	var lastErr error
@@ -204,49 +202,46 @@ func (c *Component) setupConfig() error {
 
 func (c *Component) watchDropinConfigs(ctx context.Context) {
 	log := logrus.WithField("component", "containerd")
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		log.WithError(err).Error("failed to create watcher for drop-ins")
-		return
-	}
-	defer watcher.Close()
 
-	err = watcher.Add(c.importsPath)
-	if err != nil {
-		log.WithError(err).Error("failed to watch for drop-ins")
-		return
-	}
+	var wg sync.WaitGroup
+	defer wg.Wait()
 
-	debouncer := debounce.Debouncer[fsnotify.Event]{
-		Input:   watcher.Events,
-		Timeout: 3 * time.Second,
-		Filter: func(item fsnotify.Event) bool {
-			switch item.Op {
-			case fsnotify.Create, fsnotify.Remove, fsnotify.Write, fsnotify.Rename:
-				return true
-			default:
-				return false
-			}
-		},
-		Callback: func(fsnotify.Event) { c.restart(ctx) },
-	}
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
-	// Consume and log any errors from watcher
-	go func() {
-		for {
-			err, ok := <-watcher.Errors
-			if !ok {
+	dropInsChanged, lastDropInChange := activity.Tracker(time.Time{})
+	wg.Go(func() {
+		activity.Debounce(ctx.Done(), 3*time.Second, lastDropInChange, func(activity time.Time) {
+			c.restart(ctx)
+		})
+	})
+
+	var established bool
+	for {
+		log.Info("Starting to watch for drop-ins")
+		if err := fswatch.Dir(ctx, c.importsPath, fswatch.HandlerFunc(func(e fswatch.Event) {
+			// Skip the first establishment, as containerd just read the
+			// drop-ins itself on startup. Note that there _is_ a race window
+			// between that read and the watch becoming active, which we
+			// currently accept. Later establishments always fire, to catch up
+			// on changes made while no watch was active.
+			if _, ok := e.(*fswatch.Established); ok && !established {
+				established = true
 				return
 			}
-			log.WithError(err).Error("error while watching drop-ins")
+
+			dropInsChanged(time.Now())
+		})); err != nil {
+			log.WithError(err).Error("Failed to watch for drop-ins, retrying after backoff")
+			select {
+			case <-time.After(wait.Jitter(25*time.Second, 0.4)):
+				continue
+			case <-ctx.Done():
+			}
 		}
-	}()
 
-	log.Infof("started to watch events on %s", c.importsPath)
-
-	err = debouncer.Run(ctx)
-	if err != nil {
-		log.WithError(err).Warn("dropin watch bouncer exited with error")
+		log.Infof("Stopped to watch for drop-ins (%v)", context.Cause(ctx))
+		return
 	}
 }
 
