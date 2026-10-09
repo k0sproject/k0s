@@ -136,7 +136,7 @@ jobs:
           echo TF_VAR_k0s_version="$K0S_VERSION" >>"$GITHUB_ENV"
 
       - name: "Tofu :: Setup"
-        uses: opentofu/setup-opentofu@fc711fa910b93cba0f3fbecaafc9f42fd0c411cb # v2.0.0
+        uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2
         with:
           tofu_version: ${{ inputs.tofu-version }}
           tofu_wrapper: false

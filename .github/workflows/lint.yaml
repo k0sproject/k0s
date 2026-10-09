@@ -148,7 +148,7 @@ jobs:
           sparse-checkout: hack/ostests
           persist-credentials: false
 
-      - uses: opentofu/setup-opentofu@fc711fa910b93cba0f3fbecaafc9f42fd0c411cb # v2.0.0
+      - uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2
         with:
           tofu_version: ${{ env.TOFU_VERSION }}
           tofu_wrapper: false
