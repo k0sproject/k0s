@@ -83,9 +83,6 @@ validation:
   - name: feature with enabled
     input: '{"spec":{"featureGates":[{"name":"ExampleFeature","enabled":false}]}}'
     valid: true
-  - name: empty feature components
-    input: '{"spec":{"featureGates":[{"name":"ExampleFeature","enabled":false,"components":[]}]}}'
-    valid: false
   - name: negative API port
     input: '{"spec":{"api":{"port":-1}}}'
     valid: false
@@ -199,6 +196,12 @@ structural:
     invalid:
       - '0'
       - '65536'
+  - name: minimum array items
+    schema: '{"type":"array","items":{"type":"string"},"minItems":1}'
+    valid:
+      - '["value"]'
+    invalid:
+      - '[]'
   - name: wider int32 bounds
     schema: '{"type":"integer","format":"int32","minimum":-3000000000,"maximum":3000000000}'
     valid:
