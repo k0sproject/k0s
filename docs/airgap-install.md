@@ -10,8 +10,10 @@ installations require an image bundle that contains all the container images
 that would normally be pulled over the network. K0s uses so-called OCI archives
 for this: Tarball representations of an [OCI Image Layout]. They allow for
 multiple images to be packed into a single file. K0s will watch for image
-bundles in the `<data-dir>/images` folder will automatically import them into
-the container runtime.
+bundles in the `<data-dir>/images` folder and will automatically import them
+into the container runtime. Bundles may also be
+[embedded into the k0s executable](#by-embedding-them-into-the-k0s-executable)
+itself.
 
 There are several ways to obtain an image bundle:
 
@@ -157,6 +159,58 @@ spec:
           dstDir: /var/lib/k0s/images
           perm: 0755
 ```
+
+### By embedding them into the k0s executable
+
+Image bundles can also be embedded into the k0s executable itself, so that a
+single file carries both k0s and the images it needs. This is an alternative to
+placing bundles into the `images` directory on each worker node, and can be
+useful if you're distributing your own k0s executable anyways.
+
+K0s executables have a ZIP archive appended to them, which k0s reads at runtime.
+It holds the embedded binaries, such as containerd and kubelet, in a `bin`
+directory. Image bundles go into an `images` directory. Everything else is
+reserved for k0s.
+
+The archive can be modified with any ZIP tool. Using [Info-ZIP]'s `zip`:
+
+```console
+$ cp k0s k0s.zip
+$ zip -A k0s.zip
+Zip entry offsets appear off by 102564002 bytes - correcting...
+$ mkdir images && cp image-bundle.tar images/
+$ zip -0 k0s.zip images/image-bundle.tar
+  adding: images/image-bundle.tar (stored 0%)
+$ mv k0s.zip k0s && chmod +x k0s
+$ unzip -l k0s
+```
+
+Some things to be aware of:
+
+- The intermediate `.zip` file name is not optional. When adding files, `zip`
+  appends `.zip` to archive names that have no extension, so `zip k0s ...` would
+  silently create a new `k0s.zip` archive instead of modifying the executable.
+- Don't use `zip`'s `-j` flag. Bundles have to end up in the `images` directory,
+  and `-j` would store them in the archive's root, where k0s won't look for
+  them.
+- The `-0` flag stores the bundle without compressing it. Image layers are
+  already compressed, so compressing them again mainly costs CPU time when
+  building and when importing.
+- Bundles have to be uncompressed tarballs, just like the ones in the `images`
+  directory: k0s won't decompress them before importing. Note that this doesn't
+  apply to the ZIP compression itself, which is transparent to k0s. So storing
+  an uncompressed tarball with compression is a way to get smaller executables.
+- Bundles in a node's `images` directory are imported after the embedded ones, so
+  they can be used to override images that are embedded in the executable.
+- Modifying the executable invalidates any checksums and signatures that have
+  been published for it. Remember to distribute your own, if you rely on them.
+  This is also relevant when using [Autopilot](autopilot.md), which distributes
+  k0s executables to nodes.
+- Downgrading to a k0s version that doesn't support embedded image bundles will
+  unpin the images that have been imported from them, making them eligible for
+  garbage collection by the kubelet.
+
+[Info-ZIP]: https://infozip.sourceforge.net/
 
 ## Disable image pulling (optional)
 

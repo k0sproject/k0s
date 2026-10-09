@@ -2,3 +2,5 @@
 bin/
 .*.stamp
 **/*.tfvars
+/embedded-test-images.tar
+/k0s-embedded-images
