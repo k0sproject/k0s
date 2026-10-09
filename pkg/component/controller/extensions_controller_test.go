@@ -4,9 +4,10 @@
 package controller
 
 import (
+	"context"
 	"io"
+	"net"
 	"net/http"
-	"net/http/httptest"
 	"path/filepath"
 	"sync"
 	"sync/atomic"
@@ -298,52 +299,55 @@ status: {}
 }
 
 func TestExtensionsController_runsNewManagerWhenLeadIsRetaken(t *testing.T) {
-	var chartWatches atomic.Int32
-	apiServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		switch r.URL.Path {
-		case "/api":
-			_, _ = io.WriteString(w, `{"versions":["v1"]}`)
-		case "/apis":
-			_, _ = io.WriteString(w, `{"groups":[{"name":"helm.k0sproject.io","versions":[{"groupVersion":"helm.k0sproject.io/v1beta1","version":"v1beta1"}]}]}`)
-		case "/apis/helm.k0sproject.io/v1beta1":
-			_, _ = io.WriteString(w, `{"groupVersion":"helm.k0sproject.io/v1beta1","resources":[{"name":"charts","namespaced":true,"kind":"Chart","verbs":["list","watch"]}]}`)
-		case "/apis/helm.k0sproject.io/v1beta1/charts":
-			if r.URL.Query().Get("watch") != "true" {
-				_, _ = io.WriteString(w, `{"apiVersion":"helm.k0sproject.io/v1beta1","kind":"ChartList","metadata":{"resourceVersion":"1"}}`)
-				return
+	synctest.Test(t, func(t *testing.T) {
+		var chartWatches atomic.Int32
+		transport := startHTTPPipeServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			switch r.URL.Path {
+			case "/api":
+				_, _ = io.WriteString(w, `{"versions":["v1"]}`)
+			case "/apis":
+				_, _ = io.WriteString(w, `{"groups":[{"name":"helm.k0sproject.io","versions":[{"groupVersion":"helm.k0sproject.io/v1beta1","version":"v1beta1"}]}]}`)
+			case "/apis/helm.k0sproject.io/v1beta1":
+				_, _ = io.WriteString(w, `{"groupVersion":"helm.k0sproject.io/v1beta1","resources":[{"name":"charts","namespaced":true,"kind":"Chart","verbs":["list","watch"]}]}`)
+			case "/apis/helm.k0sproject.io/v1beta1/charts":
+				if r.URL.Query().Get("watch") != "true" {
+					_, _ = io.WriteString(w, `{"apiVersion":"helm.k0sproject.io/v1beta1","kind":"ChartList","metadata":{"resourceVersion":"1"}}`)
+					return
+				}
+				chartWatches.Add(1)
+				defer chartWatches.Add(-1)
+				_, _ = io.WriteString(w, `{"type":"BOOKMARK","object":{"apiVersion":"helm.k0sproject.io/v1beta1","kind":"Chart","metadata":{"resourceVersion":"1","annotations":{"k8s.io/initial-events-end":"true"}}}}`)
+				w.(http.Flusher).Flush()
+				<-r.Context().Done()
+			default:
+				http.NotFound(w, r)
 			}
-			chartWatches.Add(1)
-			defer chartWatches.Add(-1)
-			_, _ = io.WriteString(w, `{"type":"BOOKMARK","object":{"apiVersion":"helm.k0sproject.io/v1beta1","kind":"Chart","metadata":{"resourceVersion":"1","annotations":{"k8s.io/initial-events-end":"true"}}}}`)
-			w.(http.Flusher).Flush()
-			<-r.Context().Done()
-		default:
-			http.NotFound(w, r)
-		}
-	}))
-	t.Cleanup(apiServer.Close)
+		}))
 
-	clients := &restConfigClientFactory{testutil.NewFakeClientFactory(), &rest.Config{Host: apiServer.URL}}
-	establishCRDsOnCreate(t, clients.FakeClientFactory)
-	leaderElector := &fakeLeaderElector{}
-	leaderElector.status.Set(leaderelection.StatusLeading)
+		clients := &restConfigClientFactory{testutil.NewFakeClientFactory(), &rest.Config{Host: "http://pipe", Transport: transport}}
+		establishCRDsOnCreate(t, clients.FakeClientFactory)
+		leaderElector := &fakeLeaderElector{}
+		leaderElector.status.Set(leaderelection.StatusLeading)
 
-	underTest := NewExtensionsController(clients, leaderElector)
-	require.NoError(t, underTest.Reconcile(t.Context(), &k0sv1beta1.ClusterConfig{
-		Spec: &k0sv1beta1.ClusterSpec{Extensions: &k0sv1beta1.ClusterExtensions{}},
-	}))
-	require.NoError(t, underTest.Start(t.Context()))
-	t.Cleanup(func() { assert.NoError(t, underTest.Stop()) })
+		underTest := NewExtensionsController(clients, leaderElector)
+		require.NoError(t, underTest.Reconcile(t.Context(), &k0sv1beta1.ClusterConfig{
+			Spec: &k0sv1beta1.ClusterSpec{Extensions: &k0sv1beta1.ClusterExtensions{}},
+		}))
+		require.NoError(t, underTest.Start(t.Context()))
+		t.Cleanup(func() { assert.NoError(t, underTest.Stop()) })
 
-	watchingCharts := func() bool { return chartWatches.Load() > 0 }
-	require.Eventually(t, watchingCharts, 10*time.Second, 10*time.Millisecond, "Charts should be watched once the lead is taken")
+		synctest.Wait()
+		require.Equal(t, int32(1), chartWatches.Load(), "Charts should be watched once the lead is taken")
 
-	leaderElector.status.Set(leaderelection.StatusPending)
-	require.Eventually(t, func() bool { return !watchingCharts() }, 10*time.Second, 10*time.Millisecond, "Charts should no longer be watched once the lead is lost")
+		leaderElector.status.Set(leaderelection.StatusPending)
+		synctest.Wait()
+		require.Zero(t, chartWatches.Load(), "Charts should no longer be watched once the lead is lost")
 
-	leaderElector.status.Set(leaderelection.StatusLeading)
-	require.Eventually(t, watchingCharts, 10*time.Second, 10*time.Millisecond, "Charts should be watched again once the lead is retaken")
+		leaderElector.status.Set(leaderelection.StatusLeading)
+		synctest.Wait()
+		require.Equal(t, int32(1), chartWatches.Load(), "Charts should be watched again once the lead is retaken")
+	})
 }
 
 // Automatically marks all CRDs created via the fake clients as established.
@@ -379,6 +383,65 @@ type fakeLeaderElector struct {
 
 func (e *fakeLeaderElector) CurrentStatus() (leaderelection.Status, <-chan struct{}) {
 	return e.status.Peek()
+}
+
+// Serves handler over in-memory pipes, so that it can be used in synctest
+// bubbles. The returned transport connects to it, regardless of the address.
+func startHTTPPipeServer(t *testing.T, handler http.Handler) *http.Transport {
+	// Draining closed HTTP/1 response bodies (Go 1.27+) can stall the bubble.
+	var protocols http.Protocols
+	protocols.SetUnencryptedHTTP2(true)
+
+	listener := pipeListener{conns: make(chan net.Conn), done: make(chan struct{})}
+	server := http.Server{Handler: handler, Protocols: &protocols}
+
+	serverDone := make(chan error, 1)
+	go func() { serverDone <- server.Serve(&listener) }()
+	t.Cleanup(func() {
+		assert.NoError(t, server.Close())
+		assert.ErrorIs(t, <-serverDone, http.ErrServerClosed)
+	})
+
+	return &http.Transport{
+		Protocols: &protocols,
+		DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
+			client, server := net.Pipe()
+			select {
+			case listener.conns <- server:
+				return client, nil
+			case <-listener.done:
+				return nil, net.ErrClosed
+			case <-ctx.Done():
+				return nil, context.Cause(ctx)
+			}
+		},
+	}
+}
+
+type pipeListener struct {
+	conns chan net.Conn
+	done  chan struct{}
+}
+
+// Accept implements [net.Listener].
+func (l *pipeListener) Accept() (net.Conn, error) {
+	select {
+	case conn := <-l.conns:
+		return conn, nil
+	case <-l.done:
+		return nil, net.ErrClosed
+	}
+}
+
+// Addr implements [net.Listener].
+func (l *pipeListener) Addr() net.Addr {
+	panic("unimplemented")
+}
+
+// Close implements [net.Listener].
+func (l *pipeListener) Close() error {
+	close(l.done)
+	return nil
 }
 
 func TestExtractRepositoryIdentifier(t *testing.T) {
