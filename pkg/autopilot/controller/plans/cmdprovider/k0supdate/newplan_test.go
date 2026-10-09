@@ -166,6 +166,76 @@ func TestNewPlan(t *testing.T) {
 			[]string{},
 		},
 
+		// Selectors match nodes without k0s, too. They have no autopilot, so they're ignored.
+		{
+			"NodeWithoutK0sIgnored",
+			[]crcli.Object{
+				&apv1beta2.ControlNode{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ControlNode",
+						APIVersion: apv1beta2.GroupVersion.String(),
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:   "controller0",
+						Labels: map[string]string{corev1.LabelOSStable: "theOS", corev1.LabelArchStable: "theArch"},
+					},
+				},
+				&corev1.Node{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Node",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:   "worker0",
+						Labels: map[string]string{corev1.LabelOSStable: "theOS", corev1.LabelArchStable: "theArch"},
+					},
+					Status: corev1.NodeStatus{NodeInfo: corev1.NodeSystemInfo{KubeletVersion: "v1.36.4+k0s"}},
+				},
+				&corev1.Node{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Node",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:   "other0",
+						Labels: map[string]string{corev1.LabelOSStable: "theOS", corev1.LabelArchStable: "theArch", "node.k0sproject.io/k0s": "false"},
+					},
+					Status: corev1.NodeStatus{NodeInfo: corev1.NodeSystemInfo{KubeletVersion: "v1.36.4"}},
+				},
+			},
+			apv1beta2.PlanCommand{
+				K0sUpdate: &apv1beta2.PlanCommandK0sUpdate{
+					Platforms: apv1beta2.PlanPlatformResourceURLMap{
+						"theOS-theArch": {},
+					},
+					Targets: apv1beta2.PlanCommandTargets{
+						Controllers: apv1beta2.PlanCommandTarget{
+							Discovery: apv1beta2.PlanCommandTargetDiscovery{
+								Static: &apv1beta2.PlanCommandTargetDiscoveryStatic{
+									Nodes: []string{"controller0"},
+								},
+							},
+						},
+						Workers: apv1beta2.PlanCommandTarget{
+							Discovery: apv1beta2.PlanCommandTargetDiscovery{
+								Selector: &apv1beta2.PlanCommandTargetDiscoverySelector{
+									Labels: fields.OneTermEqualSelector(corev1.LabelOSStable, "theOS").String(),
+								},
+							},
+						},
+					},
+				},
+			},
+			appc.PlanSchedulableWait,
+			[]apv1beta2.PlanCommandTargetStatus{
+				apv1beta2.NewPlanCommandTargetStatus("controller0", appc.SignalPending),
+			},
+			[]apv1beta2.PlanCommandTargetStatus{
+				apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalPending),
+			},
+			[]string{},
+		},
+
 		// A scenario where a plan indicates that both a controller and worker node are present,
 		// however on discovery its determined that the controller is missing.
 		{

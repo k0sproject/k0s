@@ -276,6 +276,7 @@ func (k *KubeProxy) getConfig(clusterConfig *v1beta1.ClusterConfig) *proxyConfig
 			WindowsImage: clusterConfig.Spec.Images.Windows.KubeProxy.URI(),
 			PullPolicy:   clusterConfig.Spec.Images.DefaultPullPolicy,
 			Args:         append(args.ToDashedArgs(), clusterConfig.Spec.Network.KubeProxy.RawArgs...),
+			K0sNodesOnly: clusterConfig.Spec.Network.NodeLocalLoadBalancing.IsEnabled(),
 		},
 		ConfigMapData: kubeProxyConfigData{
 			apiServerEndpoint: controlPlaneEndpoint,
@@ -333,6 +334,8 @@ type kubeProxyTemplateData struct {
 	WindowsImage string
 	PullPolicy   string
 	Args         []string
+	// Keeps the pods off nodes without k0s, which don't run the node-local load balancer.
+	K0sNodesOnly bool
 }
 
 type kubeProxyConfigData struct {
@@ -508,4 +511,15 @@ spec:
         effect: NoSchedule
       nodeSelector:
         kubernetes.io/os: linux
+      {{- if .K0sNodesOnly }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: ` + constant.K0sNodeLabel + `
+                operator: NotIn
+                values:
+                - "false"
+      {{- end }}
 `

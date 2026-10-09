@@ -58,6 +58,11 @@ type APISpec struct {
 
 	// Custom config for CA certificates.
 	CA *CA `json:"ca,omitempty"`
+
+	// Lets anonymous users read the cluster-info ConfigMap in kube-public, as bootstrap token discovery does.
+	// It has no effect if authentication-config, anonymous-auth or OIDC flags are set via extraArgs or rawArgs.
+	// +optional
+	ClusterInfoDiscovery bool `json:"clusterInfoDiscovery,omitempty"`
 }
 
 // DefaultAPISpec default settings for api

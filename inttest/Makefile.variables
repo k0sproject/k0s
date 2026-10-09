@@ -28,6 +28,7 @@ smoketests := \
 	check-calico-ipv6 \
 	check-capitalhostnames \
 	check-cli \
+	check-clusterinfodiscovery \
 	check-clusterreboot \
 	check-cnichange \
 	check-configchange \
