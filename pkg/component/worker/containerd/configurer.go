@@ -14,7 +14,7 @@ import (
 
 // marshalContainerdConfig returns the TOML bytes for the k0s-managed containerd
 // configuration, with CRI plugin defaults inline and a glob import for user drop-ins.
-func marshalContainerdConfig(importsPath, sandboxImage string) ([]byte, error) {
+func marshalContainerdConfig(importsPath, sandboxImage, runDir string) ([]byte, error) {
 	imagesConf := map[string]any{
 		"pinned_images": map[string]any{
 			"sandbox": sandboxImage,
@@ -27,6 +27,23 @@ func marshalContainerdConfig(importsPath, sandboxImage string) ([]byte, error) {
 		runtimeConf["cni"] = map[string]any{
 			"conf_dir": `c:\etc\cni\net.d`,
 			"bin_dirs": []any{`c:\opt\cni\bin`},
+		}
+	} else {
+		// containerd-shim-runc-v2 does not derive runc's own state root from
+		// containerd's --state flag: it falls back to a hardcoded
+		// /run/containerd/runc whenever this option is left unset, which is a
+		// path k0s does not own and `k0s reset` never cleans. Point it at
+		// k0s's own run dir instead, mirroring the <state>/runc relationship
+		// of that hardcoded default, so a reset's existing run-dir cleanup
+		// (which already covers <runDir>/containerd) removes it too.
+		runtimeConf["containerd"] = map[string]any{
+			"runtimes": map[string]any{
+				"runc": map[string]any{
+					"options": map[string]any{
+						"Root": filepath.Join(runDir, "containerd", "runc"),
+					},
+				},
+			},
 		}
 	}
 
