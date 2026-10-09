@@ -37,6 +37,7 @@ type traefik struct {
 
 	dir        string
 	staticPods worker.StaticPods
+	patchPod   podPatcher
 
 	pod    worker.StaticPod
 	config *traefikConfig
@@ -48,6 +49,7 @@ type traefikPodParams struct {
 	image         v1beta1.ImageSpec
 	pullPolicy    corev1.PullPolicy
 	hostConfigDir string
+	patches       v1beta1.Patches
 }
 
 type traefikInstallConfig struct {
@@ -120,6 +122,7 @@ func (t *traefik) start(ctx context.Context, profile workerconfig.Profile, apiSe
 			image:         *nllb.Traefik.Image,
 			pullPolicy:    nllb.Traefik.ImagePullPolicy,
 			hostConfigDir: t.dir,
+			patches:       nllb.Traefik.Patches,
 		},
 		traefikInstallConfig: traefikInstallConfig{
 			bindIP:                     loopbackIP,
@@ -139,7 +142,7 @@ func (t *traefik) start(ctx context.Context, profile workerconfig.Profile, apiSe
 		return err
 	}
 
-	return t.provision()
+	return t.provision(ctx)
 }
 
 func (t *traefik) getAPIServerAddress() (*k0snet.HostPort, error) {
@@ -203,8 +206,9 @@ func (t *traefik) writeConfigFile(name string, content []byte) error {
 		Write(content)
 }
 
-func (t *traefik) provision() error {
+func (t *traefik) provision(ctx context.Context) error {
 	manifest := makeTraefikPodManifest(&t.config.traefikPodParams, &t.config.traefikInstallConfig)
+	manifest = t.patchPod(ctx, manifest, t.config.patches)
 	if err := t.pod.SetManifest(manifest); err != nil {
 		return err
 	}
@@ -227,7 +231,7 @@ func makeTraefikPodManifest(podParams *traefikPodParams, installConfig *traefikI
 
 	configDir := traefikContainerConfigDir()
 
-	return &corev1.Pod{
+	pod := &corev1.Pod{
 		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Pod"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "nllb",
@@ -302,6 +306,8 @@ func makeTraefikPodManifest(podParams *traefikPodParams, installConfig *traefikI
 			EnableServiceLinks: new(false),
 		},
 	}
+
+	return pod
 }
 
 func (i *traefikInstallConfig) toFileContent() ([]byte, error) {

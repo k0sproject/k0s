@@ -36,6 +36,7 @@ type envoyProxy struct {
 
 	dir        string
 	staticPods worker.StaticPods
+	patchPod   podPatcher
 
 	pod    worker.StaticPod
 	config *envoyConfig
@@ -65,6 +66,8 @@ type envoyPodParams struct {
 
 	// The pull policy to use for the Envoy container.
 	pullPolicy corev1.PullPolicy
+
+	patches v1beta1.Patches
 }
 
 // envoyFilesParams holds the parameters for the Envoy config files.
@@ -141,6 +144,7 @@ func (e *envoyProxy) start(ctx context.Context, profile workerconfig.Profile, ap
 		envoyPodParams{
 			*nllb.EnvoyProxy.Image,
 			nllb.EnvoyProxy.ImagePullPolicy,
+			nllb.EnvoyProxy.Patches,
 		},
 		envoyFilesParams{
 			konnectivityServerPort: profile.Konnectivity.AgentPort,
@@ -153,7 +157,7 @@ func (e *envoyProxy) start(ctx context.Context, profile workerconfig.Profile, ap
 		return err
 	}
 
-	err = e.provision()
+	err = e.provision(ctx)
 	if err != nil {
 		return err
 	}
@@ -238,8 +242,9 @@ func writeEnvoyConfigFiles(params *envoyParams, filesParams *envoyFilesParams) e
 	return errors.Join(errs...)
 }
 
-func (e *envoyProxy) provision() error {
+func (e *envoyProxy) provision(ctx context.Context) error {
 	manifest := makePodManifest(&e.config.envoyParams, &e.config.envoyPodParams)
+	manifest = e.patchPod(ctx, manifest, e.config.patches)
 	if err := e.pod.SetManifest(manifest); err != nil {
 		return err
 	}
@@ -248,14 +253,14 @@ func (e *envoyProxy) provision() error {
 	return nil
 }
 
-func makePodManifest(params *envoyParams, podParams *envoyPodParams) corev1.Pod {
+func makePodManifest(params *envoyParams, podParams *envoyPodParams) *corev1.Pod {
 	ports := []corev1.ContainerPort{
 		{Name: "api-server", ContainerPort: int32(params.apiServerBindPort), Protocol: corev1.ProtocolTCP},
 	}
 	if params.konnectivityServerBindPort != 0 {
 		ports = append(ports, corev1.ContainerPort{Name: "konnectivity", ContainerPort: int32(params.konnectivityServerBindPort), Protocol: corev1.ProtocolTCP})
 	}
-	return corev1.Pod{
+	pod := &corev1.Pod{
 		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Pod"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "nllb",
@@ -325,6 +330,8 @@ func makePodManifest(params *envoyParams, podParams *envoyPodParams) corev1.Pod 
 			}},
 		},
 	}
+
+	return pod
 }
 
 var envoyBootstrapConfig = template.Must(template.New("Bootstrap").Parse(`
