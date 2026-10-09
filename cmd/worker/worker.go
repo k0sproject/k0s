@@ -308,6 +308,7 @@ func (c *Command) Start(ctx context.Context, nodeName apitypes.NodeName, kubelet
 
 	(&platformSpecificComponents{
 		k0sVars:       c.K0sVars,
+		nodeName:      nodeName,
 		workerConfig:  workerConfig,
 		controller:    controller,
 		clientFactory: clientFactory,
@@ -370,6 +371,7 @@ func (c *Command) Start(ctx context.Context, nodeName apitypes.NodeName, kubelet
 
 type platformSpecificComponents struct {
 	k0sVars       *config.CfgVars
+	nodeName      apitypes.NodeName
 	workerConfig  *workerconfig.Profile
 	controller    EmbeddingController
 	clientFactory kubernetes.ClientFactoryInterface

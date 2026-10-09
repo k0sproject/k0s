@@ -5,6 +5,8 @@ package root
 
 import (
 	"context"
+
+	apitypes "k8s.io/apimachinery/pkg/types"
 )
 
 type RootConfig struct { //nolint:revive // TODO rename to Config
@@ -18,6 +20,7 @@ type RootConfig struct { //nolint:revive // TODO rename to Config
 	MetricsBindAddr     string
 	HealthProbeBindAddr string
 	ExcludeFromPlans    []string
+	NodeName            apitypes.NodeName
 }
 
 // Root is the 'root' of all controllers
