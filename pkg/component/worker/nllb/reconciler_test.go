@@ -94,7 +94,7 @@ func TestReconciler_Lifecycle(t *testing.T) {
 		t.Run("ready_fails", func(t *testing.T) {
 			underTest := createdReconciler(t)
 
-			err := underTest.Ready()
+			err := underTest.Ready(t.Context())
 
 			require.Error(t, err)
 			assert.Equal(t, "cannot check for readiness, not started: created", err.Error())
@@ -164,7 +164,7 @@ func TestReconciler_Lifecycle(t *testing.T) {
 		t.Run("ready_fails", func(t *testing.T) {
 			underTest := initializedReconciler(t)
 
-			err := underTest.Ready()
+			err := underTest.Ready(t.Context())
 
 			require.Error(t, err)
 			assert.Equal(t, "cannot check for readiness, not started: initialized", err.Error())
@@ -233,7 +233,7 @@ func TestReconciler_Lifecycle(t *testing.T) {
 		t.Run("ready_succeeds", func(t *testing.T) {
 			underTest, _ := startedReconciler(t)
 
-			err := underTest.Ready()
+			err := underTest.Ready(t.Context())
 
 			assert.NoError(t, err)
 		})
