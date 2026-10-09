@@ -372,7 +372,7 @@ func addEtcdArgs(args stringmap.StringMap, storage *v1beta1.StorageSpec, k0sVars
 		} // kine endpoint
 		args["etcd-servers"] = sockURL.String()
 	case v1beta1.EtcdStorageType:
-		args["etcd-servers"] = storage.Etcd.GetEndpointsAsString()
+		args["etcd-servers"] = storage.Etcd.GetEndpointsAsString(k0sVars.EtcdSocketPath)
 		if storage.Etcd.IsTLSEnabled() {
 			args["etcd-cafile"] = storage.Etcd.GetCaFilePath(k0sVars.EtcdCertDir)
 			args["etcd-certfile"] = storage.Etcd.GetCertFilePath(k0sVars.CertRootDir)
