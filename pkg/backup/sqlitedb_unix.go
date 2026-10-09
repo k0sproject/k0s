@@ -15,9 +15,9 @@ import (
 	"github.com/sirupsen/logrus"
 	_ "modernc.org/sqlite" // registers the sqlite database/sql driver
 
+	"github.com/k0sproject/k0s/internal/constant"
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
-	"github.com/k0sproject/k0s/pkg/constant"
 )
 
 const kineBackup = "kine-state-backup.db"
