@@ -12,8 +12,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/k0sproject/k0s/internal/build"
 	internalio "github.com/k0sproject/k0s/internal/io"
-	"github.com/k0sproject/k0s/pkg/build"
 	"github.com/k0sproject/k0s/pkg/k0scontext"
 )
 
