@@ -13,11 +13,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/k0sproject/k0s/internal/cri"
 	"github.com/k0sproject/k0s/pkg/component/worker"
 	workerconfig "github.com/k0sproject/k0s/pkg/component/worker/config"
 	"github.com/k0sproject/k0s/pkg/component/worker/containerd"
 	"github.com/k0sproject/k0s/pkg/config"
-	"github.com/k0sproject/k0s/pkg/container/runtime"
 
 	"github.com/avast/retry-go"
 	"github.com/sirupsen/logrus"
