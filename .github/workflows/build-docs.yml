@@ -6,11 +6,17 @@ on:
       - main
       - release-*
     paths:
+      - .github/workflows/build-docs.yml
       - "**.md"
+      - cmd/root.go
       - docs/**
       - embedded-bins/Makefile.variables
+      - go.mod
+      - go.sum
+      - internal/schemagen/**
       - pkg/constant/constant.go
       - mkdocs.yml
+      - static/_crds/**
       - vars.sh
 
   pull_request:
@@ -18,11 +24,17 @@ on:
       - main
       - release-*
     paths:
+      - .github/workflows/build-docs.yml
       - "**.md"
+      - cmd/root.go
       - docs/**
       - embedded-bins/Makefile.variables
+      - go.mod
+      - go.sum
+      - internal/schemagen/**
       - pkg/constant/constant.go
       - mkdocs.yml
+      - static/_crds/**
       - vars.sh
 
 env:
@@ -38,6 +50,12 @@ jobs:
 
       - name: Prepare build environment
         run: .github/workflows/prepare-build-env.sh
+
+      - name: Set up Go
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: false
 
       - name: Set up Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
@@ -57,7 +75,7 @@ jobs:
       - name: Generate docs
         env:
           GH_TOKEN: ${{ github.token }}
-        run: make -C docs docs
+        run: make -C docs TARGET_VERSION=local docs
 
       - name: Upload site/
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

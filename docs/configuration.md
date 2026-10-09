@@ -33,6 +33,26 @@ k0s supports providing only partial configurations. In case of partial configura
    sudo k0s start
    ```
 
+## Editor completion and validation
+
+Get the schema for your k0s version from the documentation site,[^schema-catalog]
+or generate it from the installed executable:
+
+```shell
+k0s docs json-schema gen k0s.k0sproject.io/v1beta1 ClusterConfig > k0s.json
+```
+
+Add this comment at the top of your `k0s.yaml`:
+
+```yaml
+# yaml-language-server: $schema=./k0s.json
+```
+
+The schema is deliberately stricter than the configuration parser. Omit a port to
+use its default instead of setting it to zero, and omit optional fields instead of
+setting them to null. Image overrides must include both `image` and `version`.
+Use `k0s config validate --config k0s.yaml` for cross-field and semantic validation.
+
 ## Configuring k0s via k0sctl
 
 k0sctl can deploy your configuration options at cluster creation time. Your
@@ -42,6 +62,7 @@ k0sctl][k0sctl-install] and the [k0sctl README] for more information.
 
 [k0sctl-install]: k0sctl-install.md
 [k0sctl README]: https://github.com/k0sproject/k0sctl/blob/main/README.md
+[^schema-catalog]: [k0s ClusterConfig schema](https://docs.k0sproject.io/stable/schemas/k0s.k0sproject.io/ClusterConfig_v1beta1.json)
 
 ## Configuration file reference
 

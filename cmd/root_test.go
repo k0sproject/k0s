@@ -5,9 +5,12 @@ package cmd_test
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
 	"runtime"
 	"slices"
 	"strings"
@@ -64,6 +67,9 @@ func TestRootCmd_Flags(t *testing.T) {
 func TestUnknownSubCommandsAreRejected(t *testing.T) {
 	commandsWithArguments := []string{
 		"airgap bundle-artifacts",
+		"docs",
+		"docs json-schema",
+		"docs json-schema gen",
 		"kubeconfig create",
 		"token invalidate",
 		"worker",
@@ -142,4 +148,19 @@ func TestUnknownSubCommandsAreRejected(t *testing.T) {
 			t.Run(name, testCommand(cmd, []string{name}))
 		}
 	}
+}
+
+func TestJSONSchemaGenerateAll(t *testing.T) {
+	output := t.TempDir()
+	underTest := cmd.NewRootCmd()
+	underTest.SetArgs([]string{"docs", "json-schema", "gen", "--all", "--output", output})
+	underTest.SetOut(io.Discard)
+	underTest.SetErr(io.Discard)
+	require.NoError(t, underTest.Execute())
+
+	data, err := os.ReadFile(filepath.Join(output, "k0s.k0sproject.io", "ClusterConfig_v1beta1.json"))
+	require.NoError(t, err)
+	var schema map[string]any
+	require.NoError(t, json.Unmarshal(data, &schema))
+	assert.Equal(t, "http://json-schema.org/draft-07/schema#", schema["$schema"])
 }

@@ -1,0 +1,269 @@
+validation:
+  - name: empty config
+    input: '{}'
+    valid: true
+  - name: partial config
+    input: '{"spec":{"api":{"port":6443}}}'
+    valid: true
+  - name: null sections
+    input: '{"spec":{"api":null,"network":{},"storage":null}}'
+    valid: false
+  - name: null spec
+    input: '{"spec":null}'
+    valid: false
+  - name: partial image override
+    input: '{"spec":{"images":{"coredns":{"version":"custom"}}}}'
+    valid: false
+  - name: metadata
+    input: '{"apiVersion":"k0s.k0sproject.io/v1beta1","kind":"ClusterConfig","metadata":{"name":"k0s","labels":{"example.com/team":"ops"}}}'
+    valid: true
+  - name: extra arguments
+    input: '{"spec":{"api":{"extraArgs":{"audit-log-path":"/tmp/audit.log"}}}}'
+    valid: true
+  - name: worker values
+    input: '{"spec":{"workerProfiles":[{"name":"custom","values":{"featureGates":{"Example":true},"reservedMemory":[{"numaNode":0,"limits":{"memory":"1Gi"}}],"clusterDNS":["10.96.0.10"],"arbitrary":null}}]}}'
+    valid: true
+  - name: helm duration
+    input: '{"spec":{"extensions":{"helm":{"charts":[{"chartname":"example/app","name":"app","namespace":"default","timeout":"5m","values":"replicas: 2"}]}}}}'
+    valid: true
+  - name: legacy helm duration
+    input: '{"spec":{"extensions":{"helm":{"charts":[{"chartname":"example/app","name":"app","namespace":"default","timeout":60000000000}]}}}}'
+    valid: true
+  - name: wrong helm duration type
+    input: '{"spec":{"extensions":{"helm":{"charts":[{"chartname":"example/app","name":"app","namespace":"default","timeout":true}]}}}}'
+    valid: false
+  - name: unknown section
+    input: '{"spec":{"networks":{}}}'
+    valid: false
+  - name: unknown field
+    input: '{"spec":{"api":{"prot":6443}}}'
+    valid: false
+  - name: wrong port type
+    input: '{"spec":{"api":{"port":"6443"}}}'
+    valid: false
+  - name: wrong boolean type
+    input: '{"spec":{"telemetry":{"enabled":"true"}}}'
+    valid: false
+  - name: wrong map value type
+    input: '{"spec":{"api":{"extraArgs":{"flag":[]}}}}'
+    valid: false
+  - name: wrong list item type
+    input: '{"spec":{"api":{"sans":[42]}}}'
+    valid: false
+  - name: wrong worker values type
+    input: '{"spec":{"workerProfiles":[{"name":"custom","values":"text"}]}}'
+    valid: false
+  - name: unknown worker field
+    input: '{"spec":{"workerProfiles":[{"name":"custom","vaues":{}}]}}'
+    valid: false
+  - name: wrong root type
+    input: '[]'
+    valid: false
+  - name: image override
+    input: '{"spec":{"images":{"coredns":{"image":"example.com/coredns","version":"v1.0"}}}}'
+    valid: true
+  - name: image digest
+    input: '{"spec":{"images":{"coredns":{"image":"example.com/coredns","version":"v1@sha256:0123456789abcdefABCDEF0123456789abcdefABCDEF0123456789abcdefABCDEF01"}}}}'
+    valid: true
+  - name: invalid image version
+    input: '{"spec":{"images":{"coredns":{"image":"example.com/coredns","version":"bad tag"}}}}'
+    valid: false
+  - name: invalid image digest
+    input: '{"spec":{"images":{"coredns":{"image":"example.com/coredns","version":"v1@sha256:zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"}}}}'
+    valid: false
+  - name: zero API port
+    input: '{"spec":{"api":{"port":0}}}'
+    valid: false
+  - name: empty pull policy
+    input: '{"spec":{"images":{"default_pull_policy":""}}}'
+    valid: false
+  - name: feature without enabled
+    input: '{"spec":{"featureGates":[{"name":"ExampleFeature"}]}}'
+    valid: false
+  - name: feature with enabled
+    input: '{"spec":{"featureGates":[{"name":"ExampleFeature","enabled":false}]}}'
+    valid: true
+  - name: negative API port
+    input: '{"spec":{"api":{"port":-1}}}'
+    valid: false
+  - name: oversized API port
+    input: '{"spec":{"api":{"k0sApiPort":65536}}}'
+    valid: false
+  - name: zero konnectivity port
+    input: '{"spec":{"konnectivity":{"agentPort":0}}}'
+    valid: false
+  - name: invalid pull policy
+    input: '{"spec":{"images":{"default_pull_policy":"Alwayz"}}}'
+    valid: false
+  - name: invalid Calico mode
+    input: '{"spec":{"network":{"calico":{"mode":"invalid"}}}}'
+    valid: false
+  - name: invalid storage type
+    input: '{"spec":{"storage":{"type":"invalid"}}}'
+    valid: false
+  - name: empty chart
+    input: '{"spec":{"extensions":{"helm":{"charts":[{}]}}}}'
+    valid: false
+  - name: null chart
+    input: '{"spec":{"extensions":{"helm":{"charts":[null]}}}}'
+    valid: false
+  - name: empty repository
+    input: '{"spec":{"extensions":{"helm":{"repositories":[{}]}}}}'
+    valid: false
+  - name: empty repository name
+    input: '{"spec":{"extensions":{"helm":{"repositories":[{"name":"","url":"https://example.com"}]}}}}'
+    valid: false
+  - name: null repository name
+    input: '{"spec":{"extensions":{"helm":{"repositories":[{"name":null,"url":"https://example.com"}]}}}}'
+    valid: false
+  - name: empty patch
+    input: '{"spec":{"metricsServer":{"patches":[{}]}}}'
+    valid: false
+  - name: null patch target
+    input: '{"spec":{"metricsServer":{"patches":[{"target":null,"patch":{"type":"MergePatch","content":"{}"}}]}}}'
+    valid: false
+  - name: invalid patch type
+    input: '{"spec":{"metricsServer":{"patches":[{"target":{"kind":"Deployment","name":"metrics-server"},"patch":{"type":"invalid","content":"{}"}}]}}}'
+    valid: false
+  - name: missing feature name
+    input: '{"spec":{"featureGates":[{"enabled":false}]}}'
+    valid: false
+  - name: empty feature name
+    input: '{"spec":{"featureGates":[{"name":"","enabled":false}]}}'
+    valid: false
+  - name: missing worker name
+    input: '{"spec":{"workerProfiles":[{"values":{}}]}}'
+    valid: false
+  - name: missing etcd endpoints
+    input: '{"spec":{"storage":{"etcd":{"externalCluster":{}}}}}'
+    valid: false
+  - name: empty etcd endpoints
+    input: '{"spec":{"storage":{"etcd":{"externalCluster":{"endpoints":[]}}}}}'
+    valid: false
+  - name: oversized VRRP ID
+    input: '{"spec":{"network":{"controlPlaneLoadBalancing":{"keepalived":{"vrrpInstances":[{"authPass":"secret","virtualIPs":["192.0.2.1/24"],"virtualRouterID":256}]}}}}}'
+    valid: false
+  - name: long VRRP password
+    input: '{"spec":{"network":{"controlPlaneLoadBalancing":{"keepalived":{"vrrpInstances":[{"authPass":"too-long-password","virtualIPs":["192.0.2.1/24"]}]}}}}}'
+    valid: false
+  - name: zero proxy konnectivity port
+    input: '{"spec":{"network":{"nodeLocalLoadBalancing":{"envoyProxy":{"konnectivityServerBindPort":0}}}}}'
+    valid: false
+structural:
+  - name: root metadata is open
+    schema: '{"type":"object","properties":{"metadata":{"type":"object","properties":{"known":{"type":"string"}}}}}'
+    root: true
+    valid:
+      - '{"metadata":{"unknown":true}}'
+    invalid:
+      - '{"metadata":{"known":false}}'
+  - name: nested metadata is closed
+    schema: '{"type":"object","properties":{"spec":{"type":"object","properties":{"metadata":{"type":"object","properties":{"known":{"type":"string"}}}}}}}'
+    valid:
+      - '{"spec":{"metadata":{"known":"value"}}}'
+    invalid:
+      - '{"spec":{"metadata":{"unknown":true}}}'
+  - name: optional is not nullable
+    schema: '{"type":"object","properties":{"value":{"type":"string"}}}'
+    valid:
+      - '{}'
+      - '{"value":"ok"}'
+    invalid:
+      - '{"value":null}'
+      - '{"other":1}'
+  - name: integer or string
+    schema: '{"x-kubernetes-int-or-string":true}'
+    valid:
+      - '42'
+      - '"42"'
+    invalid:
+      - 'true'
+      - '1.5'
+      - 'null'
+  - name: int32 bounds
+    schema: '{"type":"integer","format":"int32"}'
+    valid:
+      - '-2147483648'
+      - '2147483647'
+    invalid:
+      - '-2147483649'
+      - '2147483648'
+  - name: tighter int32 bounds
+    schema: '{"type":"integer","format":"int32","minimum":1,"maximum":65535}'
+    valid:
+      - '1'
+      - '65535'
+    invalid:
+      - '0'
+      - '65536'
+  - name: minimum array items
+    schema: '{"type":"array","items":{"type":"string"},"minItems":1}'
+    valid:
+      - '["value"]'
+    invalid:
+      - '[]'
+  - name: wider int32 bounds
+    schema: '{"type":"integer","format":"int32","minimum":-3000000000,"maximum":3000000000}'
+    valid:
+      - '-2147483648'
+      - '2147483647'
+    invalid:
+      - '-2147483649'
+      - '2147483648'
+  - name: preserved unknown fields
+    schema: '{"type":"object","x-kubernetes-preserve-unknown-fields":true,"properties":{"known":{"type":"integer"}}}'
+    valid:
+      - '{"known":1,"arbitrary":{"nested":[null,true]}}'
+    invalid:
+      - '{"known":"bad"}'
+  - name: explicit additional properties
+    schema: '{"type":"object","properties":{"known":{"type":"integer"}},"additionalProperties":true}'
+    valid:
+      - '{"other":true}'
+    invalid:
+      - '{"known":false}'
+  - name: explicitly closed object
+    schema: '{"type":"object","properties":{"known":{"type":"integer"}},"additionalProperties":false}'
+    valid:
+      - '{"known":1}'
+    invalid:
+      - '{"other":true}'
+  - name: nested arrays and maps
+    schema: '{"type":"object","additionalProperties":{"type":"array","items":{"type":"object","properties":{"value":{"type":"string","x-kubernetes-int-or-string":true}}}}}'
+    valid:
+      - '{"key":[{"value":1}]}'
+      - '{"key":[{"value":"text"}]}'
+    invalid:
+      - '{"key":[{"value":true}]}'
+      - '{"key":[{"other":1}]}'
+  - name: additional property schema
+    schema: '{"type":"object","additionalProperties":{"type":"string"}}'
+    valid:
+      - '{"key":"value"}'
+    invalid:
+      - '{"key":false}'
+unsupported:
+  - name: nullable
+    schema: '{"type":"string","nullable":true}'
+    error: 'unsupported schema keyword "nullable"'
+  - name: exclusive minimum
+    schema: '{"type":"number","exclusiveMinimum":true}'
+    error: 'unsupported schema keyword "exclusiveMinimum"'
+  - name: all of
+    schema: '{"allOf":[{"type":"string"}]}'
+    error: 'unsupported schema keyword "allOf"'
+  - name: kubernetes validations
+    schema: '{"x-kubernetes-validations":[{"rule":"self > 0"}]}'
+    error: 'unsupported schema keyword "x-kubernetes-validations"'
+  - name: int32 string format
+    schema: '{"type":"string","format":"int32"}'
+    error: 'unsupported format int32 for type string'
+  - name: nullable property
+    schema: '{"properties":{"value":{"nullable":true}}}'
+    error: 'property "value": unsupported schema keyword "nullable"'
+  - name: nullable item
+    schema: '{"items":{"nullable":true}}'
+    error: 'items: unsupported schema keyword "nullable"'
+  - name: nullable additional property
+    schema: '{"additionalProperties":{"nullable":true}}'
+    error: 'additionalProperties: unsupported schema keyword "nullable"'
