@@ -493,6 +493,26 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 		configSource,
 	))
 
+	if !slices.Contains(flags.DisableComponents, constant.KubeSchedulerComponentName) {
+		clusterComponents.Add(ctx, &controller.Scheduler{
+			LogLevel:              c.LogLevels.KubeScheduler,
+			K0sVars:               c.K0sVars,
+			DisableLeaderElection: singleController,
+		})
+	}
+
+	if !slices.Contains(flags.DisableComponents, constant.KubeControllerManagerComponentName) {
+		clusterComponents.Add(ctx, &controller.Manager{
+			LogLevel:              c.LogLevels.KubeControllerManager,
+			K0sVars:               c.K0sVars,
+			DisableLeaderElection: singleController,
+			ServiceClusterIPRange: nodeConfig.Spec.Network.BuildServiceCIDR(nodeConfig.Spec.PrimaryAddressFamily()),
+			ClusterCIDR:           nodeConfig.Spec.Network.BuildPodCIDR(nodeConfig.Spec.PrimaryAddressFamily()),
+			SingleStackIPv6:       nodeConfig.Spec.Network.IsSingleStackIPv6(),
+			ExtraArgs:             flags.KubeControllerManagerExtraArgs,
+		})
+	}
+
 	if !slices.Contains(flags.DisableComponents, constant.HelmComponentName) {
 		clusterComponents.Add(ctx, controller.NewExtensionsController(
 			adminClientFactory,
@@ -603,26 +623,6 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 			KonnectivityServerHost: cmp.Or(nodeConfig.Spec.API.ExternalHost(), nodeConfig.Spec.API.Address),
 			EventEmitter:           prober.NewEventEmitter(),
 			ServerCount:            numActiveControllers.Peek,
-		})
-	}
-
-	if !slices.Contains(flags.DisableComponents, constant.KubeSchedulerComponentName) {
-		clusterComponents.Add(ctx, &controller.Scheduler{
-			LogLevel:              c.LogLevels.KubeScheduler,
-			K0sVars:               c.K0sVars,
-			DisableLeaderElection: singleController,
-		})
-	}
-
-	if !slices.Contains(flags.DisableComponents, constant.KubeControllerManagerComponentName) {
-		clusterComponents.Add(ctx, &controller.Manager{
-			LogLevel:              c.LogLevels.KubeControllerManager,
-			K0sVars:               c.K0sVars,
-			DisableLeaderElection: singleController,
-			ServiceClusterIPRange: nodeConfig.Spec.Network.BuildServiceCIDR(nodeConfig.Spec.PrimaryAddressFamily()),
-			ClusterCIDR:           nodeConfig.Spec.Network.BuildPodCIDR(nodeConfig.Spec.PrimaryAddressFamily()),
-			SingleStackIPv6:       nodeConfig.Spec.Network.IsSingleStackIPv6(),
-			ExtraArgs:             flags.KubeControllerManagerExtraArgs,
 		})
 	}
 
