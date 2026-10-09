@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/k0sproject/k0s/internal/secret"
+
 	"sigs.k8s.io/yaml"
 )
 
@@ -22,10 +24,12 @@ type client struct {
 	httpClient      *http.Client
 	updateServer    string
 	updateServerURL *url.URL
-	authToken       string
+	authToken       secret.String
 }
 
-func NewClient(updateServer string, authToken string) (Client, error) {
+// NewClient creates a client for the given update server. The auth token is
+// sent as bearer token; the zero token leaves requests unauthenticated.
+func NewClient(updateServer string, authToken secret.String) (Client, error) {
 	url, err := url.Parse(updateServer)
 	if err != nil {
 		return nil, err
@@ -56,8 +60,8 @@ func (c *client) GetUpdate(channel, clusterID, lastUpdateStatus, currentVersion 
 		return nil, err
 	}
 
-	if c.authToken != "" {
-		req.Header.Set("Authorization", "Bearer "+c.authToken)
+	if token, err := c.authToken.Reveal(); err == nil {
+		req.Header.Set("Authorization", "Bearer "+token)
 	}
 
 	resp, err := c.httpClient.Do(req)

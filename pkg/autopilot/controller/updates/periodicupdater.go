@@ -15,9 +15,7 @@ import (
 	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
 	apcore "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
 
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/k0sproject/version"
@@ -98,13 +96,12 @@ func (u *periodicUpdater) checkForUpdate() {
 	ctx, cancel := context.WithTimeout(u.ctx, 2*time.Minute)
 	defer cancel()
 
-	// Check if there's a token configured
-	var token string
-	tokenSecret := &corev1.Secret{}
-	if err := u.k8sClient.Get(ctx, crcli.ObjectKey{Name: "update-server-token", Namespace: metav1.NamespaceSystem}, tokenSecret); err != nil {
-		u.log.Infof("unable to get update server token: %v", err)
-	} else {
-		token = string(tokenSecret.Data["token"])
+	// Get the token, if one is configured
+	token, err := getUpdateServerToken(ctx, u.apClientFactory)
+	if err != nil {
+		u.log.WithError(err).Error("Unable to get update server token")
+	} else if token.IsZero() {
+		u.log.Info("No update server token provided")
 	}
 
 	// Fetch the latest version from the update server

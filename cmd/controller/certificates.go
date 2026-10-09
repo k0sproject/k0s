@@ -15,6 +15,7 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/internal/pkg/stringslice"
 	"github.com/k0sproject/k0s/internal/pkg/users"
+	"github.com/k0sproject/k0s/internal/secret"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/certificate"
 	"github.com/k0sproject/k0s/pkg/config"
@@ -314,7 +315,7 @@ func detectLocalIPs(ctx context.Context) ([]string, error) {
 	return localIPs, nil
 }
 
-func kubeConfig(dest string, url *url.URL, caCert, clientCert, clientKey string, ownerID int, fileMode os.FileMode) error {
+func kubeConfig(dest string, url *url.URL, caCert, clientCert string, clientKey secret.Bytes, ownerID int, fileMode os.FileMode) error {
 	// We always overwrite the kubeconfigs as the certs might be regenerated at startup
 	const (
 		clusterName = "local"
@@ -322,24 +323,33 @@ func kubeConfig(dest string, url *url.URL, caCert, clientCert, clientKey string,
 		userName    = "user"
 	)
 
-	kubeconfig, err := clientcmd.Write(clientcmdapi.Config{
-		Clusters: map[string]*clientcmdapi.Cluster{clusterName: {
-			Server:                   url.String(),
-			CertificateAuthorityData: []byte(caCert),
-		}},
-		Contexts: map[string]*clientcmdapi.Context{contextName: {
-			Cluster:  clusterName,
-			AuthInfo: userName,
-		}},
-		CurrentContext: contextName,
-		AuthInfos: map[string]*clientcmdapi.AuthInfo{userName: {
-			ClientCertificateData: []byte(clientCert),
-			ClientKeyData:         []byte(clientKey),
-		}},
+	kubeconfig, err := clientKey.Use(func(key []byte) (secret.Bytes, error) {
+		out, err := clientcmd.Write(clientcmdapi.Config{
+			Clusters: map[string]*clientcmdapi.Cluster{clusterName: {
+				Server:                   url.String(),
+				CertificateAuthorityData: []byte(caCert),
+			}},
+			Contexts: map[string]*clientcmdapi.Context{contextName: {
+				Cluster:  clusterName,
+				AuthInfo: userName,
+			}},
+			CurrentContext: contextName,
+			AuthInfos: map[string]*clientcmdapi.AuthInfo{userName: {
+				ClientCertificateData: []byte(clientCert),
+				ClientKeyData:         key,
+			}},
+		})
+		return secret.FromBytes(out), err
 	})
 	if err != nil {
 		return err
 	}
 
-	return file.AtomicWithTarget(dest).WithPermissions(fileMode).WithOwner(ownerID).Write(kubeconfig)
+	return file.AtomicWithTarget(dest).
+		WithPermissions(fileMode).
+		WithOwner(ownerID).
+		Do(func(w file.AtomicWriter) error {
+			_, err := kubeconfig.Use(w.Write)
+			return err
+		})
 }
