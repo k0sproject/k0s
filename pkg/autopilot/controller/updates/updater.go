@@ -174,18 +174,11 @@ func (u *cronUpdater) toPlan(nextVersion *uc.Update) apv1beta2.Plan {
 	}
 
 	platforms := make(apv1beta2.PlanPlatformResourceURLMap)
-	for osArch, url := range nextVersion.DownloadURLs["k0s"] {
-		platforms[osArch] = apv1beta2.PlanResourceURL{
-			URL: url,
-			// TODO: Sha256 of file
-		}
-	}
 	airgapPlatforms := make(apv1beta2.PlanPlatformResourceURLMap)
-	for osArch, url := range nextVersion.DownloadURLs["airgap"] {
-		airgapPlatforms[osArch] = apv1beta2.PlanResourceURL{
-			URL: url,
-			// TODO: Sha256 of file
-		}
+	for _, dl := range nextVersion.DownloadURLs {
+		osArch := dl.OS + "-" + dl.Arch
+		platforms[osArch] = apv1beta2.PlanResourceURL{URL: dl.K0S, Sha256: dl.K0SSha256}
+		airgapPlatforms[osArch] = apv1beta2.PlanResourceURL{URL: dl.AirgapBundle, Sha256: dl.AirgapSha256}
 	}
 
 	p.Spec.ID = strconv.FormatInt(time.Now().Unix(), 10)
