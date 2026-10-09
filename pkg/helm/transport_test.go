@@ -16,7 +16,7 @@ import (
 	"testing"
 	"testing/iotest"
 
-	"github.com/k0sproject/k0s/pkg/k0scontext"
+	"github.com/k0sproject/k0s/internal/k0scontext"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

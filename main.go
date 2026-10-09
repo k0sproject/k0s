@@ -10,9 +10,9 @@ import (
 	"strings"
 
 	"github.com/k0sproject/k0s/cmd"
+	"github.com/k0sproject/k0s/internal/k0scontext"
 	internallog "github.com/k0sproject/k0s/internal/pkg/log"
 	"github.com/k0sproject/k0s/internal/supervised"
-	"github.com/k0sproject/k0s/pkg/k0scontext"
 	"github.com/k0sproject/k0s/pkg/supervisor"
 )
 

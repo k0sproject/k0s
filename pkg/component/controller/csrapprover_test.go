@@ -21,10 +21,10 @@ import (
 	"testing/synctest"
 	"time"
 
+	"github.com/k0sproject/k0s/internal/k0scontext"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/controller"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
-	"github.com/k0sproject/k0s/pkg/k0scontext"
 
 	authorizationv1 "k8s.io/api/authorization/v1"
 	certv1 "k8s.io/api/certificates/v1"

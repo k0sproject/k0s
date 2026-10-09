@@ -10,7 +10,7 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/k0sproject/k0s/pkg/k0scontext"
+	"github.com/k0sproject/k0s/internal/k0scontext"
 
 	apitypes "k8s.io/apimachinery/pkg/types"
 	nodeutil "k8s.io/component-helpers/node/util"
