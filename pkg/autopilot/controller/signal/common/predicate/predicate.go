@@ -6,6 +6,8 @@ package predicate
 import (
 	apsigv2 "github.com/k0sproject/k0s/pkg/autopilot/signaling/v2"
 
+	apitypes "k8s.io/apimachinery/pkg/types"
+
 	"github.com/sirupsen/logrus"
 	crcli "sigs.k8s.io/controller-runtime/pkg/client"
 	crpred "sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -22,10 +24,10 @@ func DefaultErrorHandler(logger *logrus.Entry, name string) ErrorHandler {
 
 // SignalNamePredicate creates a controller-runtime predicate that
 // ensures that the object in question is a signal node that has a name
-// that matches the provided hostname.
-func SignalNamePredicate(hostname string) crpred.Predicate {
+// that matches the provided node name.
+func SignalNamePredicate(nodeName apitypes.NodeName) crpred.Predicate {
 	return crpred.NewPredicateFuncs(func(obj crcli.Object) bool {
-		return obj.GetName() == hostname
+		return obj.GetName() == string(nodeName)
 	})
 }
 
