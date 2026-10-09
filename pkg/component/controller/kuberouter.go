@@ -28,6 +28,7 @@ type KubeRouter struct {
 	log logrus.FieldLogger
 
 	k0sVars              *config.CfgVars
+	nodeConfig           *v1beta1.ClusterConfig
 	primaryAddressFamily v1beta1.PrimaryAddressFamilyType
 	serviceCIDRs         string
 	singleStackIPv6      bool
@@ -54,11 +55,12 @@ type kubeRouterConfig struct {
 }
 
 // NewKubeRouter creates new KubeRouter reconciler component
-func NewKubeRouter(k0sVars *config.CfgVars, primaryAddressFamily v1beta1.PrimaryAddressFamilyType, serviceCIDRs string, singleStackIPv6 bool) *KubeRouter {
+func NewKubeRouter(k0sVars *config.CfgVars, nodeConfig *v1beta1.ClusterConfig, primaryAddressFamily v1beta1.PrimaryAddressFamilyType, serviceCIDRs string, singleStackIPv6 bool) *KubeRouter {
 	return &KubeRouter{
 		log: logrus.WithFields(logrus.Fields{"component": "kube-router"}),
 
 		k0sVars:              k0sVars,
+		nodeConfig:           nodeConfig,
 		primaryAddressFamily: primaryAddressFamily,
 		serviceCIDRs:         serviceCIDRs,
 		singleStackIPv6:      singleStackIPv6,
@@ -130,6 +132,9 @@ func (k *KubeRouter) Reconcile(_ context.Context, clusterConfig *v1beta1.Cluster
 		"metrics-port":             strconv.Itoa(clusterConfig.Spec.Network.KubeRouter.MetricsPort),
 		"hairpin-mode":             strconv.FormatBool(globalHairpin),
 		"service-cluster-ip-range": k.serviceCIDRs,
+		// Without this, kube-router dials the API through the service virtual
+		// IP. That address is only programmed when kube-proxy is running.
+		"master": apiServerEndpoint(k.log, k.nodeConfig, clusterConfig),
 	}
 
 	// IPv6 requires a router ID, instead of generating one ourselves, rely on kube-router logic

@@ -29,6 +29,10 @@ func TestKubeRouterManifests(t *testing.T) {
 		}}
 	}
 
+	nodeConfig := &v1beta1.ClusterConfig{Spec: &v1beta1.ClusterSpec{
+		API: &v1beta1.APISpec{Address: "192.0.2.10", Port: 6443},
+	}}
+
 	reconcile := func(t *testing.T, paf v1beta1.PrimaryAddressFamilyType, cfg *v1beta1.ClusterConfig) (ds *appsv1.DaemonSet, cm *corev1.ConfigMap) {
 		k0sVars, err := config.NewCfgVars(nil, t.TempDir())
 		require.NoError(t, err)
@@ -38,7 +42,7 @@ func TestKubeRouterManifests(t *testing.T) {
 			serviceCIDRs, singleStackIPv6 = "fd01::/108", true
 		}
 
-		kr := NewKubeRouter(k0sVars, paf, serviceCIDRs, singleStackIPv6)
+		kr := NewKubeRouter(k0sVars, nodeConfig, paf, serviceCIDRs, singleStackIPv6)
 		require.NoError(t, kr.Init(t.Context()))
 		require.NoError(t, kr.Start(t.Context()))
 		t.Cleanup(func() { assert.NoError(t, kr.Stop()) })
@@ -90,6 +94,7 @@ func TestKubeRouterManifests(t *testing.T) {
 		ds, cm := reconcile(t, v1beta1.PrimaryFamilyIPv4, newClusterConfig())
 
 		args := ds.Spec.Template.Spec.Containers[0].Args
+		assert.Contains(t, args, "--master=https://192.0.2.10:6443")
 		assert.Contains(t, args, "--auto-mtu=true")
 		assert.Contains(t, args, "--hairpin-mode=true")
 		assert.Contains(t, args, "--enable-ipv4=true")
@@ -148,6 +153,31 @@ func TestKubeRouterManifests(t *testing.T) {
 		assert.Contains(t, args, "--router-id=generate", "IPv6 related flags not found")
 		assert.Contains(t, args, "--run-firewall=false")
 		assert.Contains(t, args, "--foo=bar")
+		assert.Contains(t, args, "--master=https://192.0.2.10:6443")
+	})
+
+	t.Run("extra args can replace the API address", func(t *testing.T) {
+		cfg := newClusterConfig()
+		cfg.Spec.Network.KubeRouter.ExtraArgs = map[string]string{
+			"master": "https://api.example:1234",
+		}
+
+		ds, _ := reconcile(t, v1beta1.PrimaryFamilyIPv4, cfg)
+		args := ds.Spec.Template.Spec.Containers[0].Args
+		assert.Contains(t, args, "--master=https://api.example:1234")
+		assert.NotContains(t, args, "--master=https://192.0.2.10:6443")
+	})
+
+	t.Run("node-local load balancing", func(t *testing.T) {
+		cfg := newClusterConfig()
+		cfg.Spec.Network.NodeLocalLoadBalancing = &v1beta1.NodeLocalLoadBalancing{
+			Enabled:    true,
+			Type:       v1beta1.NllbTypeEnvoyProxy,
+			EnvoyProxy: &v1beta1.EnvoyProxy{APIServerBindPort: 7443},
+		}
+
+		ds, _ := reconcile(t, v1beta1.PrimaryFamilyIPv4, cfg)
+		assert.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--master=https://localhost:7443")
 	})
 
 	t.Run("raw args", func(t *testing.T) {

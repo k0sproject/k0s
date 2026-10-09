@@ -549,6 +549,7 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 		primaryAddressFamily := nodeConfig.Spec.PrimaryAddressFamily()
 		clusterComponents.Add(ctx, controller.NewKubeRouter(
 			c.K0sVars,
+			nodeConfig,
 			primaryAddressFamily,
 			nodeConfig.Spec.Network.BuildServiceCIDR(primaryAddressFamily),
 			nodeConfig.Spec.Network.IsSingleStackIPv6(),
