@@ -30,7 +30,7 @@ const (
 	signingDuration = 3 * time.Minute
 
 	// NotBefore gets backdated by this amount.
-	// https://github.com/kubernetes/kubernetes/blob/v1.37.0/pkg/controller/certificates/signer/signer.go#L209
+	// https://github.com/kubernetes/kubernetes/blob/v1.37.1/pkg/controller/certificates/signer/signer.go#L209
 	notBeforeBackdate = 5 * time.Minute
 
 	// The expected lifetime duration for certificates.
@@ -78,7 +78,7 @@ func (s *kubeletCertRotateSuite) TestWorkerClientsSurviveRotation() {
 	s.T().Log("Worker-to-API probe succeeded before the rotation")
 
 	// Rotation happens after 70-90% of the certificate lifetime.
-	// https://github.com/kubernetes/kubernetes/blob/v1.37.0/staging/src/k8s.io/client-go/util/certificate/certificate_manager.go#L736
+	// https://github.com/kubernetes/kubernetes/blob/v1.37.1/staging/src/k8s.io/client-go/util/certificate/certificate_manager.go#L736
 	initial := s.readKubeletClientCert(ctx, workerSSH)
 	earliestRotation := /* 70%: */ initial.NotBefore.Add(7 * lifetime / 10)
 	latestRotation := /*   90%: */ initial.NotBefore.Add(9 * lifetime / 10)
@@ -114,10 +114,10 @@ func (s *kubeletCertRotateSuite) TestWorkerClientsSurviveRotation() {
 	// The initial certificate stays valid for a while after the rotation, and
 	// the API server verifies the client certificate on every request, not just
 	// during the TLS handshake:
-	// https://github.com/kubernetes/kubernetes/blob/v1.37.0/staging/src/k8s.io/apiserver/pkg/authentication/request/x509/x509.go#L194
+	// https://github.com/kubernetes/kubernetes/blob/v1.37.1/staging/src/k8s.io/apiserver/pkg/authentication/request/x509/x509.go#L194
 	// A request over a connection that's still presenting the expired
 	// certificate gets rejected, rather than being treated as anonymous:
-	// https://github.com/kubernetes/kubernetes/blob/v1.37.0/pkg/kubeapiserver/authenticator/config.go#L245
+	// https://github.com/kubernetes/kubernetes/blob/v1.37.1/pkg/kubeapiserver/authenticator/config.go#L245
 	// So wait for the initial certificate to expire before probing again. A
 	// successful probe then proves that the new certificate is in use.
 	deadline = initial.NotAfter.Add(1 * time.Second)
@@ -131,14 +131,14 @@ func (s *kubeletCertRotateSuite) TestWorkerClientsSurviveRotation() {
 	// The worker clients rely on client-go to reload the certificate files, and
 	// to close connections that have been established using the initial
 	// certificate. It reloads the files during each TLS handshake ...
-	// https://github.com/kubernetes/kubernetes/blob/v1.37.0/staging/src/k8s.io/client-go/transport/cache.go#L135
+	// https://github.com/kubernetes/kubernetes/blob/v1.37.1/staging/src/k8s.io/client-go/transport/cache.go#L135
 	// ... and on a timer (see CertCallbackRefreshDuration below). A new
 	// handshake only happens if there's no usable connection in the pool, and
 	// the connection is usually kept busy by other clients that share the
 	// transport. The first probe after the expiry is hence expected to fail.
 	// The API server then tears down the HTTP/2 connection along with the
 	// rejected request:
-	// https://github.com/kubernetes/kubernetes/blob/v1.37.0/staging/src/k8s.io/apiserver/pkg/endpoints/filters/authentication.go#L139
+	// https://github.com/kubernetes/kubernetes/blob/v1.37.1/staging/src/k8s.io/apiserver/pkg/endpoints/filters/authentication.go#L139
 	// The next probe dials a new connection, and the handshake picks up the new
 	// certificate. Should this not happen for whatever reason, the timer is the
 	// fallback, so that's the upper bound for the recovery.
