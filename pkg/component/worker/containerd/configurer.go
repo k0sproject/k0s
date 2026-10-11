@@ -29,13 +29,10 @@ func marshalContainerdConfig(importsPath, sandboxImage, runDir string) ([]byte, 
 			"bin_dirs": []any{`c:\opt\cni\bin`},
 		}
 	} else {
-		// containerd-shim-runc-v2 does not derive runc's own state root from
-		// containerd's --state flag: it falls back to a hardcoded
-		// /run/containerd/runc whenever this option is left unset, which is a
-		// path k0s does not own and `k0s reset` never cleans. Point it at
-		// k0s's own run dir instead, mirroring the <state>/runc relationship
-		// of that hardcoded default, so a reset's existing run-dir cleanup
-		// (which already covers <runDir>/containerd) removes it too.
+		// containerd-shim-runc-v2 ignores containerd's --state flag for runc's
+		// own state root, defaulting to the unmanaged /run/containerd/runc
+		// that `k0s reset` never cleans. Point it at runDir/containerd/runc
+		// instead, which reset already cleans.
 		runtimeConf["containerd"] = map[string]any{
 			"runtimes": map[string]any{
 				"runc": map[string]any{

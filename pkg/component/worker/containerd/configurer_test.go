@@ -13,11 +13,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// On Linux, containerd-shim-runc-v2 derives runc's own state root from a
-// per-runtime-class config option, not from containerd's --state flag. Left
-// unset, it falls back to a hardcoded /run/containerd/runc, a path k0s does
-// not own and `k0s reset` never cleans (#8285). k0s must point it at its own
-// run dir instead.
 func TestMarshalContainerdConfig_runcStateRoot(t *testing.T) {
 	runDir := filepath.Join(string(filepath.Separator), "run", "k0s")
 
