@@ -7,6 +7,7 @@ package cleanup
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -19,13 +20,13 @@ import (
 )
 
 // Run removes Windows CNI artifacts.
-func (c *cni) Run() error {
+func (c *cni) Run(ctx context.Context) error {
 	removeCNIConfigFiles()
-	removeCalicoServices()
-	cleanupHNSArtifacts()
-	cleanupVethernetAdapters()
-	cleanupCalicoEnvVars()
-	cleanupCalicoFirewallRules()
+	removeCalicoServices(ctx)
+	cleanupHNSArtifacts(ctx)
+	cleanupVethernetAdapters(ctx)
+	cleanupCalicoEnvVars(ctx)
+	cleanupCalicoFirewallRules(ctx)
 	return nil
 }
 
@@ -53,14 +54,14 @@ func removeCNIConfigFiles() {
 }
 
 // removeCalicoServices stops and deletes Calico-related Windows services.
-func removeCalicoServices() {
+func removeCalicoServices(ctx context.Context) {
 	logrus.Debug("removing Windows Calico services")
 	services := []string{"CalicoNode", "CalicoFelix", "CalicoConfd"}
 	var errs []error
 	for _, name := range services {
 		logrus.Debugf("removing Windows service %s", name)
 		script := fmt.Sprintf("$svc = Get-Service -Name '%s' -ErrorAction SilentlyContinue; if (-not $svc) { exit 0 }; if ($svc.Status -ne 'Stopped') { Stop-Service -Name '%s' -Force -Confirm:$false -ErrorAction SilentlyContinue }; sc.exe delete '%s' | Out-Null", name, name, name)
-		if err := runPowerShell(script); err != nil {
+		if err := runPowerShell(ctx, script); err != nil {
 			logrus.WithError(err).Warnf("failed to remove Windows service %s", name)
 			errs = append(errs, err)
 		}
@@ -72,7 +73,7 @@ func removeCalicoServices() {
 }
 
 // cleanupHNSArtifacts clears Calico/External HNS networks and their endpoints.
-func cleanupHNSArtifacts() {
+func cleanupHNSArtifacts(ctx context.Context) {
 	logrus.Debug("cleaning up Windows HNS artifacts")
 	script := strings.Join([]string{
 		`$ensureHnsCmdlets = {`,
@@ -106,13 +107,13 @@ func cleanupHNSArtifacts() {
 		`}`,
 		`Get-HnsEndpoint | Where-Object { $_.Name -like '*calico*' } | Remove-HnsEndpoint -ErrorAction SilentlyContinue`,
 	}, "; ")
-	if err := runPowerShell(script); err != nil {
+	if err := runPowerShell(ctx, script); err != nil {
 		logrus.WithError(err).Warn("failed to remove Windows HNS networks and endpoints")
 	}
 }
 
 // cleanupVethernetAdapters removes the vEthernet adapters created for containers.
-func cleanupVethernetAdapters() {
+func cleanupVethernetAdapters(ctx context.Context) {
 	logrus.Debug("removing Windows vEthernet adapters")
 	script := strings.Join([]string{
 		`$getNetAdapterCmd = Get-Command -Name Get-NetAdapter -ErrorAction SilentlyContinue`,
@@ -121,13 +122,13 @@ func cleanupVethernetAdapters() {
 		`    Get-NetAdapter | Where-Object { $_.Name -like '*calico*' -or $_.Name -like 'vEthernet (Container NIC*' } | Remove-NetAdapter -Confirm:$false -ErrorAction SilentlyContinue`,
 		`}`,
 	}, "; ")
-	if err := runPowerShell(script); err != nil {
+	if err := runPowerShell(ctx, script); err != nil {
 		logrus.WithError(err).Warn("failed to remove Windows vEthernet adapters")
 	}
 }
 
 // cleanupCalicoEnvVars removes any Calico/Felix environment variables.
-func cleanupCalicoEnvVars() {
+func cleanupCalicoEnvVars(ctx context.Context) {
 	logrus.Debug("removing Windows Calico/Felix environment variables")
 	script := strings.Join([]string{
 		`$envPath = 'HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment'`,
@@ -138,23 +139,23 @@ func cleanupCalicoEnvVars() {
 		`    }`,
 		`}`,
 	}, "; ")
-	if err := runPowerShell(script); err != nil {
+	if err := runPowerShell(ctx, script); err != nil {
 		logrus.WithError(err).Warn("failed to remove Windows Calico/Felix environment variables")
 	}
 }
 
 // cleanupCalicoFirewallRules deletes firewall rules created by Calico.
-func cleanupCalicoFirewallRules() {
+func cleanupCalicoFirewallRules(ctx context.Context) {
 	logrus.Debug("removing Windows Calico firewall rules")
 	script := `Get-NetFirewallRule | Where-Object { $_.DisplayName -like '*calico*' } | Remove-NetFirewallRule -ErrorAction SilentlyContinue`
-	if err := runPowerShell(script); err != nil {
+	if err := runPowerShell(ctx, script); err != nil {
 		logrus.WithError(err).Warn("failed to remove Windows Calico firewall rules")
 	}
 }
 
 // runPowerShell executes a PowerShell script and wraps any errors with output.
-func runPowerShell(script string) error {
-	cmd := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-Command", script)
+func runPowerShell(ctx context.Context, script string) error {
+	cmd := exec.CommandContext(ctx, "powershell", "-NoProfile", "-NonInteractive", "-Command", script)
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 	cmd.Stdout = &stdout

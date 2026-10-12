@@ -6,6 +6,7 @@
 package cleanup
 
 import (
+	"context"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -15,19 +16,19 @@ import (
 )
 
 // Run removes the k0s data, kubelet root, and run directories.
-func (d *directories) Run() error {
+func (d *directories) Run(ctx context.Context) error {
 	paths := dedupePaths([]string{d.kubeletRootDir, d.dataDir, d.runDir})
 	for _, path := range paths {
 		if path == "" {
 			continue
 		}
-		removeDirectory(path)
+		removeDirectory(ctx, path)
 	}
 	return nil
 }
 
-func removeDirectory(path string) {
-	if out, err := exec.Command("powershell", "-NoProfile", "-Command",
+func removeDirectory(ctx context.Context, path string) {
+	if out, err := exec.CommandContext(ctx, "powershell", "-NoProfile", "-Command",
 		"Remove-Item", "-LiteralPath", path, "-Recurse", "-Force", "-ErrorAction", "SilentlyContinue",
 	).CombinedOutput(); err != nil {
 		logrus.WithError(err).Debugf("PowerShell Remove-Item for %s: %s", path, strings.TrimSpace(string(out)))
