@@ -100,7 +100,7 @@ jobs:
           echo "$K0S_EXE_PATH binary size: **$(du -sh "$K0S_EXE_PATH" | cut -f1)**" >>"$GITHUB_STEP_SUMMARY"
 
       - name: "Upload :: k0s"
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: k0s-${{ inputs.target-os }}-${{ inputs.target-arch }}
           path: |
@@ -110,7 +110,7 @@ jobs:
         run: make spdx.json
 
       - name: "Upload :: SBOM"
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: sbom-${{ inputs.target-os }}-${{ inputs.target-arch }}
           path: spdx.json
@@ -130,7 +130,7 @@ jobs:
           echo file-name="$target" >>"$GITHUB_OUTPUT"
 
       - name: "Upload :: Airgap image list"
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: ${{ steps.build-airgap-image-list.outputs.file-name }}
           path: ${{ steps.build-airgap-image-list.outputs.file-name }}
@@ -148,7 +148,7 @@ jobs:
 
       - name: "Upload :: IPv6 test image list"
         if: steps.build-ipv6-test-image-list.outcome == 'success'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: ${{ steps.build-ipv6-test-image-list.outputs.file-name }}
           path: ${{ steps.build-ipv6-test-image-list.outputs.file-name }}
