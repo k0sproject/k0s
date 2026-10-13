@@ -35,6 +35,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/certificate"
 	"github.com/k0sproject/k0s/pkg/component/controller"
 	"github.com/k0sproject/k0s/pkg/component/controller/clusterconfig"
+	"github.com/k0sproject/k0s/pkg/component/controller/clusterinfo"
 	"github.com/k0sproject/k0s/pkg/component/controller/cplb"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	"github.com/k0sproject/k0s/pkg/component/controller/leasecounter"
@@ -384,6 +385,7 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 			KubeClientFactory: adminClientFactory,
 			IgnoredStacks: []string{
 				controller.AutopilotStackName,
+				clusterinfo.StackName,
 				controller.ClusterConfigStackName,
 				controller.EtcdMemberStackName,
 				controller.HelmExtensionStackName,
@@ -596,6 +598,12 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 	if !slices.Contains(flags.DisableComponents, constant.NodeRoleComponentName) {
 		clusterComponents.Add(ctx, controller.NewNodeRole(c.K0sVars, adminClientFactory))
 	}
+
+	clusterComponents.Add(ctx, &clusterinfo.Publisher{
+		K0sVars:    c.K0sVars,
+		NodeConfig: nodeConfig,
+		Clients:    adminClientFactory,
+	})
 
 	if enableKonnectivity {
 		clusterComponents.Add(ctx, &controller.KonnectivityAgent{
