@@ -11,7 +11,7 @@ require (
 	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/bombsimon/logrusr/v4 v4.2.0
 	github.com/cilium/ebpf v0.22.0
-	github.com/cloudflare/cfssl v1.7.0
+	github.com/cloudflare/cfssl v1.7.1
 	github.com/containerd/cgroups/v3 v3.1.3
 	github.com/containerd/containerd/api v1.11.1
 	github.com/containerd/containerd/v2 v2.3.5
