@@ -797,6 +797,18 @@ func (s *BootlooseSuite) RestartController(name string) error {
 	return s.launchDelegate.StartController(s.Context(), ssh)
 }
 
+// RestartControllersWithConfig writes each controller's config to path and restarts the controllers one by one,
+// so the cluster stays available.
+func (s *BootlooseSuite) RestartControllersWithConfig(path string, config func(idx int) string) {
+	for idx := range s.ControllerCount {
+		node := s.ControllerNode(idx)
+		s.PutFile(node, path, config(idx))
+		s.Require().NoError(s.RestartController(node))
+		s.Require().NoError(s.WaitJoinAPI(node))
+		s.Require().NoError(s.WaitForKubeAPI(node))
+	}
+}
+
 func (s *BootlooseSuite) StartController(name string) error {
 	ssh, err := s.SSH(s.Context(), name)
 	s.Require().NoError(err)

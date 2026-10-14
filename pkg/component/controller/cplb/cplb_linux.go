@@ -44,6 +44,9 @@ type Keepalived struct {
 	LogConfig       bool
 	APIPort         int
 	KubeConfigPath  string
+	// Ports that may be load balanced as well, depending on the configuration.
+	KonnectivityAgentPort int
+	K0sAPIPort            int
 
 	keepalivedConfig       *keepalivedConfig
 	supervisor             *supervisor.Supervisor
@@ -98,7 +101,9 @@ func (k *Keepalived) Start(ctx context.Context) error {
 		}
 	}
 
-	if !k.Config.DisableLoadBalancer && (len(k.Config.VRRPInstances) > 0 || len(k.Config.VirtualServers) > 0) {
+	// The userspace proxy only runs if it has ports to load balance.
+	loadBalance := len(k.Config.VirtualServers) > 0 || len(k.balancedPorts()) > 0
+	if !k.Config.DisableLoadBalancer && loadBalance && (len(k.Config.VRRPInstances) > 0 || len(k.Config.VirtualServers) > 0) {
 		k.log.Info("Starting CPLB reconciler")
 		updateCh := make(chan struct{}, 1)
 		k.reconciler = NewCPLBReconciler(k.KubeConfigPath, k.APIPort, updateCh)
@@ -118,7 +123,14 @@ func (k *Keepalived) Start(ctx context.Context) error {
 
 	if len(k.Config.VirtualServers) > 0 {
 		k.keepalivedConfig.IPVSLoadBalancer = true
-
+		for _, p := range k.balancedPorts() {
+			k.keepalivedConfig.LoadBalancedPorts = append(k.keepalivedConfig.LoadBalancedPorts, p.Port)
+		}
+		// The run directory survives restarts, so drop the virtual servers of an earlier run.
+		// The reconciler writes the current ones if it runs.
+		if err := k.atomicFile(k.virtualServersFilePath).Write(nil); err != nil {
+			return fmt.Errorf("failed to reset the virtual servers: %w", err)
+		}
 	}
 
 	// In order to make the code simpler, we always create the keepalived template
@@ -223,6 +235,9 @@ func (k *Keepalived) Stop() error {
 	}
 
 	// Only clean iptables rules if we are using the userspace reverse proxy
+	if k.reconciler == nil {
+		return nil
+	}
 	return k.redirectToProxyIPTables(iptablesCommandDelete)
 }
 
@@ -380,10 +395,13 @@ func (k *Keepalived) setVirtualIPAddressLabels() error {
 	return nil
 }
 
+// atomicFile returns an atomic writer for a file that only the keepalived user can read.
+func (k *Keepalived) atomicFile(path string) *file.AtomicOpener {
+	return file.AtomicWithTarget(path).WithPermissions(0400).WithOwner(k.uid)
+}
+
 func (k *Keepalived) generateTemplate(templ *template.Template, path string) error {
-	if err := file.AtomicWithTarget(path).
-		WithPermissions(0400).
-		WithOwner(k.uid).
+	if err := k.atomicFile(path).
 		Do(func(unbuffered file.AtomicWriter) error {
 			w := bufio.NewWriter(unbuffered)
 			if err := templ.Execute(w, k.keepalivedConfig); err != nil {
@@ -397,11 +415,18 @@ func (k *Keepalived) generateTemplate(templ *template.Template, path string) err
 	return nil
 }
 
+// balancedPorts returns the ports that are load balanced on the virtual IPs.
+func (k *Keepalived) balancedPorts() []k0sAPI.BalancedPort {
+	return k.Config.BalancedPorts(k.APIPort, k.KonnectivityAgentPort, k.K0sAPIPort)
+}
+
 func (k *Keepalived) startReverseProxy() error {
 	k.proxy = tcpproxy.Proxy{}
 	// We don't know how long until we get the first update, so initially we
 	// forward everything to localhost
-	k.proxy.SetRoutes(fmt.Sprintf(":%d", k.Config.UserSpaceProxyPort), []tcpproxy.Route{tcpproxy.To(fmt.Sprintf("127.0.0.1:%d", k.APIPort))})
+	for _, p := range k.balancedPorts() {
+		k.proxy.SetRoutes(fmt.Sprintf(":%d", p.ProxyPort), []tcpproxy.Route{tcpproxy.To(net.JoinHostPort("127.0.0.1", strconv.Itoa(p.Port)))})
+	}
 	if err := k.proxy.Start(); err != nil {
 		return fmt.Errorf("failed to start proxy: %w", err)
 	}
@@ -422,45 +447,49 @@ func (k *Keepalived) watchReconcilerUpdatesReverseProxy(ctx context.Context) {
 }
 
 func (k *Keepalived) setProxyRoutes() {
-	routes := []tcpproxy.Route{}
-	port := strconv.Itoa(k.APIPort)
-	for _, addr := range k.reconciler.GetIPs() {
-		routes = append(routes, tcpproxy.To(net.JoinHostPort(addr, port)))
-	}
-
-	if len(routes) == 0 {
+	addrs := k.reconciler.GetIPs()
+	if len(addrs) == 0 {
 		k.log.Error("No API servers available, leave previous configuration")
 		return
 	}
-	k.proxy.SetRoutes(fmt.Sprintf(":%d", k.Config.UserSpaceProxyPort), routes)
+	for _, p := range k.balancedPorts() {
+		// Every API server address gets a route to the port.
+		routes := make([]tcpproxy.Route, 0, len(addrs))
+		for _, addr := range addrs {
+			routes = append(routes, tcpproxy.To(net.JoinHostPort(addr, strconv.Itoa(p.Port))))
+		}
+		k.proxy.SetRoutes(fmt.Sprintf(":%d", p.ProxyPort), routes)
+	}
 }
 
 func (k *Keepalived) redirectToProxyIPTables(op string) error {
 	for _, vrrp := range k.Config.VRRPInstances {
 		for _, vipCIDR := range vrrp.VirtualIPs {
 			vip, _, _ := strings.Cut(vipCIDR, "/")
-
-			cmdArgs := []string{
-				"-t", "nat", op, "PREROUTING", "-p", "tcp",
-				"-d", vip, "--dport", strconv.Itoa(k.APIPort),
-				"-j", "REDIRECT", "--to-port", strconv.Itoa(k.Config.UserSpaceProxyPort),
-			}
-
-			switch op {
-			case iptablesCommandAppend:
-				k.log.Infof("Adding iptables rule to redirect %s", vip)
-			case iptablesCommandDelete:
-				k.log.Infof("Deleting iptables rule to redirect %s", vip)
-			}
-
+			vipIP := net.ParseIP(vip)
 			iptablesBin := "iptables"
-			if ip := net.ParseIP(vip); ip != nil && ip.To4() == nil {
+			if vipIP != nil && vipIP.To4() == nil {
 				iptablesBin = "ip6tables"
 			}
-			cmd := exec.Command(filepath.Join(k.K0sVars.BinDir, iptablesBin), cmdArgs...)
-			output, err := cmd.CombinedOutput()
-			if err != nil {
-				return fmt.Errorf("failed to execute iptables command: %w, output: %s", err, output)
+			for _, p := range k.balancedPorts() {
+				cmdArgs := []string{
+					"-t", "nat", op, "PREROUTING", "-p", "tcp",
+					"-d", vip, "--dport", strconv.Itoa(p.Port),
+					"-j", "REDIRECT", "--to-port", strconv.Itoa(p.ProxyPort),
+				}
+
+				switch op {
+				case iptablesCommandAppend:
+					k.log.Infof("Adding iptables rule to redirect %s port %d", vip, p.Port)
+				case iptablesCommandDelete:
+					k.log.Infof("Deleting iptables rule to redirect %s port %d", vip, p.Port)
+				}
+
+				cmd := exec.Command(filepath.Join(k.K0sVars.BinDir, iptablesBin), cmdArgs...) //nolint:gosec,noctx // the call predates the per port loop, and Stop has no context
+				output, err := cmd.CombinedOutput()
+				if err != nil {
+					return fmt.Errorf("failed to execute iptables command: %w, output: %s", err, output)
+				}
 			}
 		}
 	}
@@ -529,6 +558,8 @@ type keepalivedConfig struct {
 	IPVSLoadBalancer bool
 	K0sBin           string
 	RunDir           string
+	// Ports that the keepalived virtual servers load balance.
+	LoadBalancedPorts []int
 }
 
 const dummyLinkName = "dummyvip0"

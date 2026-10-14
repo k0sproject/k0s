@@ -4,8 +4,6 @@
 package customports
 
 import (
-	"bytes"
-	"html/template"
 	"net"
 	"net/url"
 	"os"
@@ -77,9 +75,7 @@ func (s *customPortsSuite) getControllerConfig(ipAddress string) string {
 		KonnectivityAgentPort: agentPort,
 		KonnectivityAdminPort: adminPort,
 	}
-	content := bytes.NewBuffer([]byte{})
-	s.Require().NoError(template.Must(template.New("k0s.yaml").Parse(configWithExternaladdress)).Execute(content, data), "can't execute k0s.yaml template")
-	return content.String()
+	return s.RenderTemplate("k0s.yaml", configWithExternaladdress, data)
 }
 
 func (s *customPortsSuite) TestControllerJoinsWithCustomPort() {

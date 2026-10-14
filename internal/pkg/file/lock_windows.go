@@ -1,9 +1,9 @@
 //go:build windows
 
-// SPDX-FileCopyrightText: 2025 k0s authors
+// SPDX-FileCopyrightText: 2026 k0s authors
 // SPDX-License-Identifier: Apache-2.0
 
-package config
+package file
 
 import (
 	"os"
@@ -11,14 +11,17 @@ import (
 	"golang.org/x/sys/windows"
 )
 
-func lockFile(f *os.File, exclusive bool) (bool, error) {
+func lock(f *os.File, exclusive, wait bool) (bool, error) {
 	flags := uint32(windows.LOCKFILE_FAIL_IMMEDIATELY)
+	if wait {
+		flags = 0
+	}
 	var overlapped windows.Overlapped // The OVERLAPPED structure, required for asynchronous I/O operations
 	if exclusive {
 		flags |= windows.LOCKFILE_EXCLUSIVE_LOCK
 	}
 
-	// Attempt to lock the file exclusively and fail immediately if it's already locked
+	// Attempt to lock the file, and unless asked to wait, fail immediately if it's already locked
 	// https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-lockfileex
 	if err := windows.LockFileEx(
 		/* HANDLE hFile                   */ windows.Handle(f.Fd()), // The handle to the file (must have GENERIC_READ or GENERIC_WRITE access)

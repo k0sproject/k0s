@@ -4,16 +4,18 @@
 package keepalived
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"html/template"
 	"net"
 	"os"
+	"slices"
+	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/k0sproject/k0s/inttest/common"
+	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 
 	"github.com/stretchr/testify/suite"
 )
@@ -21,6 +23,8 @@ import (
 type cplbIPVSSuite struct {
 	common.BootlooseSuite
 	isIPv6Only bool
+	// Whether the konnectivity agent and k0s API ports are load balanced as well.
+	loadBalanceAllPorts bool
 }
 
 const keepalivedTestMarker = "# k0s-inttest-cplb-ipvs"
@@ -48,40 +52,35 @@ spec:
 {{- end }}
         virtualServers:
         - ipAddress: {{ .lbAddr }}
+{{ .keepalived }}
     nodeLocalLoadBalancing:
       enabled: true
       type: EnvoyProxy
 `
 
-func (s *cplbIPVSSuite) getK0sCfg(nodeIdx int, vip string) string {
-	k0sCfg := bytes.NewBuffer([]byte{})
+// getK0sCfg renders the k0s config with the given keepalived settings.
+func (s *cplbIPVSSuite) getK0sCfg(nodeIdx int, vip string, spec *v1beta1.KeepalivedSpec) string {
 	srcIP, peers := s.getUnicastAddresses(nodeIdx, vip)
 	data := map[string]any{
 		"isIPv6Only":      s.isIPv6Only,
+		"keepalived":      s.KeepalivedSettings(spec),
 		"lbAddr":          vip,
 		"lbCIDR":          common.GetCPLBVIPCIDR(vip, s.isIPv6Only),
 		"unicastSourceIP": srcIP,
 		"unicastPeers":    peers,
 	}
-	s.Require().NoError(template.Must(template.New("k0s.yaml").
-		Parse(cplbCfgTemplate)).
-		Execute(k0sCfg, data), "can't execute k0s.yaml template")
-	return k0sCfg.String()
+	return s.RenderTemplate("k0s.yaml", cplbCfgTemplate, data)
 }
 
 // generateKeepalivedTemplates creates keepalived configuration files by executing
 // k0s keepalived-config commands on the controller and appending an inttest marker.
-func (s *cplbIPVSSuite) generateKeepalivedTemplates(ctx context.Context, idx int) {
-	ssh, err := s.SSH(ctx, s.ControllerNode(idx))
-	s.Require().NoError(err)
-	defer ssh.Disconnect()
-
-	vsOutput, err := ssh.ExecWithOutput(ctx, "/usr/local/bin/k0s keepalived-config virtualservers")
+func (s *cplbIPVSSuite) generateKeepalivedTemplates(idx int) {
+	vsOutput, err := s.RunCommandController(idx, "/usr/local/bin/k0s keepalived-config virtualservers")
 	s.Require().NoError(err)
 	vsContent := vsOutput + "\n" + keepalivedTestMarker
 	s.PutFile(s.ControllerNode(idx), "/tmp/keepalived-virtualservers.conf", vsContent)
 
-	vrrpOutput, err := ssh.ExecWithOutput(ctx, "/usr/local/bin/k0s keepalived-config vrrp")
+	vrrpOutput, err := s.RunCommandController(idx, "/usr/local/bin/k0s keepalived-config vrrp")
 	s.Require().NoError(err)
 	vrrpContent := vrrpOutput + "\n" + keepalivedTestMarker
 	s.PutFile(s.ControllerNode(idx), "/tmp/keepalived-vrrp.conf", vrrpContent)
@@ -89,18 +88,14 @@ func (s *cplbIPVSSuite) generateKeepalivedTemplates(ctx context.Context, idx int
 
 // verifyCustomTemplate verifies that the custom template marker is present in the
 // generated keepalived configuration files on the controller node.
-func (s *cplbIPVSSuite) verifyCustomTemplate(ctx context.Context, idx int) {
-	ssh, err := s.SSH(ctx, s.ControllerNode(idx))
-	s.Require().NoError(err)
-	defer ssh.Disconnect()
-
+func (s *cplbIPVSSuite) verifyCustomTemplate(idx int) {
 	// Verify keepalived.conf contains the marker
-	keepalivedConf, err := ssh.ExecWithOutput(ctx, "cat /run/k0s/keepalived.conf")
+	keepalivedConf, err := s.RunCommandController(idx, "cat /run/k0s/keepalived.conf")
 	s.Require().NoError(err)
 	s.Require().Contains(keepalivedConf, keepalivedTestMarker, "keepalived.conf should contain the custom template marker")
 
 	// Verify keepalived-virtualservers-generated.conf contains the marker
-	vsConf, err := ssh.ExecWithOutput(ctx, "cat /run/k0s/keepalived-virtualservers-generated.conf")
+	vsConf, err := s.RunCommandController(idx, "cat /run/k0s/keepalived-virtualservers-generated.conf")
 	s.Require().NoError(err)
 	s.Require().Contains(vsConf, keepalivedTestMarker, "keepalived-virtualservers-generated.conf should contain the custom template marker")
 }
@@ -114,13 +109,15 @@ func (s *cplbIPVSSuite) TestK0sGetsUp() {
 
 	vip := common.GetCPLBVIP(&s.BootlooseSuite, s.isIPv6Only)
 	ctx := s.Context()
+	// Keepalived settings for the API server port only, and for all ports.
+	specs := map[bool]*v1beta1.KeepalivedSpec{false: {}, true: common.AllPortsKeepalivedSpec()}
 	var joinToken string
 
 	for idx := range s.ControllerCount {
 		s.T().Logf("getting config")
-		k0sCfg := s.getK0sCfg(idx, vip)
+		k0sCfg := s.getK0sCfg(idx, vip, specs[s.loadBalanceAllPorts])
 		s.T().Logf("putting files")
-		s.generateKeepalivedTemplates(ctx, idx)
+		s.generateKeepalivedTemplates(idx)
 		s.PutFile(s.ControllerNode(idx), "/tmp/k0s.yaml", k0sCfg)
 
 		s.T().Logf("init controller")
@@ -166,24 +163,28 @@ func (s *cplbIPVSSuite) TestK0sGetsUp() {
 	}
 
 	// Verify that only one controller has the VIP in eth0
-	activeNode := -1
-	count := 0
-	for idx := range s.ControllerCount {
-		if s.hasVIP(ctx, s.ControllerNode(idx), vip) {
-			activeNode = idx
-			count++
-		}
-	}
-	s.Require().Equal(1, count, "Expected exactly one controller to have the VIP")
+	s.Require().Len(common.VIPHolders(ctx, &s.BootlooseSuite, vip, s.isIPv6Only), 1, "Expected exactly one controller to have the VIP")
 
 	// Verify that the real servers are present in the ipvsadm output in the active node and missing in the others
-	for idx := range s.ControllerCount {
-		s.validateRealServers(ctx, s.ControllerNode(idx), vip, idx == activeNode)
-	}
+	s.checkRealServers(ctx, vip, specs[s.loadBalanceAllPorts])
 
 	// Verify that the custom templates were used to generate the keepalived configuration
 	for idx := range s.ControllerCount {
-		s.verifyCustomTemplate(ctx, idx)
+		s.verifyCustomTemplate(idx)
+	}
+
+	// Restarts move the virtual IP, so each phase also checks that only the new holder load balances.
+	for _, phase := range []struct {
+		spec *v1beta1.KeepalivedSpec
+		name string
+	}{
+		{specs[!s.loadBalanceAllPorts], "the other way around"},
+		{&v1beta1.KeepalivedSpec{DisableLoadBalancer: true, LoadBalancedPorts: common.AllPortsKeepalivedSpec().LoadBalancedPorts}, "disabled load balancer"},
+	} {
+		s.Run(phase.name, func() {
+			s.RestartControllersWithConfig("/tmp/k0s.yaml", func(idx int) string { return s.getK0sCfg(idx, vip, phase.spec) })
+			s.checkRealServers(ctx, vip, phase.spec)
+		})
 	}
 }
 
@@ -191,10 +192,7 @@ func (s *cplbIPVSSuite) TestK0sGetsUp() {
 // slice with the IP addresses of the next two controllers.
 func (s *cplbIPVSSuite) getUnicastAddresses(i int, cplbVIP string) (string, []string) {
 	getAddr := func(i int) string {
-		if s.isIPv6Only {
-			return common.FirstPublicIPv6Address(&s.BootlooseSuite, s.ControllerNode(i%s.ControllerCount), cplbVIP)
-		}
-		return s.GetIPAddress(s.ControllerNode(i % s.ControllerCount))
+		return common.ControllerAddress(&s.BootlooseSuite, i%s.ControllerCount, cplbVIP, s.isIPv6Only)
 	}
 
 	return getAddr(i % s.ControllerCount), []string{
@@ -203,36 +201,70 @@ func (s *cplbIPVSSuite) getUnicastAddresses(i int, cplbVIP string) (string, []st
 	}
 }
 
+// checkRealServers waits until one controller has the virtual IP and load balances the ports of the spec to all
+// controllers. The other controllers must not load balance anything.
+func (s *cplbIPVSSuite) checkRealServers(ctx context.Context, vip string, spec *v1beta1.KeepalivedSpec) {
+	ports := s.BalancedPorts(spec)
+	check := func() error {
+		holders := common.VIPHolders(ctx, &s.BootlooseSuite, vip, s.isIPv6Only)
+		if len(holders) != 1 {
+			return fmt.Errorf("controllers %v hold the virtual IP instead of exactly one", holders)
+		}
+		for idx := range s.ControllerCount {
+			node := s.ControllerNode(idx)
+			if err := s.validateRealServers(ctx, node, vip, node == holders[0], ports); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	deadline := time.Now().Add(3 * time.Minute)
+	for err := check(); err != nil; err = check() {
+		s.Require().False(time.Now().After(deadline), "%v", err)
+		select {
+		case <-ctx.Done():
+			s.Require().NoError(ctx.Err())
+		case <-time.After(time.Second):
+		}
+	}
+}
+
 // validateRealServers checks that the real servers are present in the
-// ipvsadm output.
-func (s *cplbIPVSSuite) validateRealServers(ctx context.Context, node string, vip string, isActive bool) {
+// ipvsadm output for the given ports, and that no other port is load balanced.
+func (s *cplbIPVSSuite) validateRealServers(ctx context.Context, node string, vip string, isActive bool, ports []v1beta1.BalancedPort) error {
 	ssh, err := s.SSH(ctx, node)
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
 
 	servers := []string{}
 	for i := range s.ControllerCount {
-		if s.isIPv6Only {
-			servers = append(servers, common.FirstPublicIPv6Address(&s.BootlooseSuite, s.ControllerNode(i), vip))
-		} else {
-			servers = append(servers, s.GetIPAddress(s.ControllerNode(i)))
-		}
+		servers = append(servers, common.ControllerAddress(&s.BootlooseSuite, i, vip, s.isIPv6Only))
 	}
 
 	output, err := ssh.ExecWithOutput(ctx, "ipvsadm --save -n")
 	s.Require().NoError(err)
 
-	vipHostPort := net.JoinHostPort(vip, "6443")
-	for _, server := range servers {
-		serverHostPort := net.JoinHostPort(server, "6443")
+	for _, port := range []int{s.KubeAPIExternalPort, s.KonnectivityAgentPort, s.K0sAPIExternalPort} {
+		vipHostPort := net.JoinHostPort(vip, strconv.Itoa(port))
+		if !slices.ContainsFunc(ports, func(p v1beta1.BalancedPort) bool { return p.Port == port }) {
+			if strings.Contains(output, "-A -t "+vipHostPort+" ") {
+				return fmt.Errorf("controller %s load balances port %d", node, port)
+			}
+			continue
+		}
+		for _, server := range servers {
+			serverHostPort := net.JoinHostPort(server, strconv.Itoa(port))
 
-		expected := fmt.Sprintf("-a -t %s -r %s", vipHostPort, serverHostPort)
-		if isActive {
-			s.Require().Containsf(output, expected, "Controller %s is missing a server in ipvsadm", node)
-		} else {
-			s.Require().NotContainsf(output, expected, "Controller %s has a server in ipvsadm", node)
+			expected := fmt.Sprintf("-a -t %s -r %s", vipHostPort, serverHostPort)
+			if isActive && !strings.Contains(output, expected) {
+				return fmt.Errorf("controller %s is missing a server in ipvsadm", node)
+			} else if !isActive && strings.Contains(output, expected) {
+				return fmt.Errorf("controller %s has a server in ipvsadm", node)
+			}
 		}
 	}
+	return nil
 }
 
 // checkDummy checks that the dummy interface is present on the given node and
@@ -254,22 +286,6 @@ func (s *cplbIPVSSuite) checkDummy(ctx context.Context, node string, vip string)
 	s.Require().Contains(output, expected)
 }
 
-// hasVIP checks that the dummy interface is present on the given node and
-// that it has only the virtual IP address.
-func (s *cplbIPVSSuite) hasVIP(ctx context.Context, node string, vip string) bool {
-	ssh, err := s.SSH(ctx, node)
-	s.Require().NoError(err)
-	defer ssh.Disconnect()
-
-	output, err := ssh.ExecWithOutput(ctx, "ip --oneline addr show eth0")
-	s.Require().NoError(err)
-
-	if s.isIPv6Only {
-		return strings.Contains(output, fmt.Sprintf("inet6 %s/64", vip))
-	}
-	return strings.Contains(output, fmt.Sprintf("inet %s/16", vip))
-}
-
 // TestKeepAlivedSuite runs the keepalived test suite. It verifies that the
 // virtual IP is working by joining a node to the cluster using the VIP.
 func TestCPLBIPVSSuite(t *testing.T) {
@@ -285,6 +301,8 @@ func TestCPLBIPVSSuite(t *testing.T) {
 		s.isIPv6Only = true
 		s.Networks = []string{"bridge-ipv6"}
 		s.AirgapImageBundleMountPoints = []string{"/var/lib/k0s/images/bundle-ipv6.tar"}
+		// The userspace suite covers IPv6 with only the API server port.
+		s.loadBalanceAllPorts = true
 	}
 	suite.Run(t, s)
 }

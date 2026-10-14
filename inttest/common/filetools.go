@@ -45,16 +45,20 @@ func (s *BootlooseSuite) PutFile(node, path, content string) {
 
 // PutFileTemplate writes content to file on given node using templated data
 func (s *BootlooseSuite) PutFileTemplate(node string, filename string, template string, data any) {
+	s.PutFile(node, filename, s.RenderTemplate(filepath.Base(filename), template, data))
+}
+
+// RenderTemplate renders the template with the data.
+func (s *BootlooseSuite) RenderTemplate(name string, template string, data any) string {
 	tw := templatewriter.TemplateWriter{
-		Name:     filepath.Base(filename),
+		Name:     name,
 		Template: template,
 		Data:     data,
-		Path:     filename,
 	}
 
 	var buf bytes.Buffer
 	s.Require().NoError(tw.WriteToBuffer(&buf))
-	s.WriteFile(node, filename, &buf)
+	return buf.String()
 }
 
 // Mkdir makes directory

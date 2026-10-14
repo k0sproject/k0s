@@ -6,11 +6,9 @@
 package privilegedport
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
-	"html/template"
 	"strconv"
 	"strings"
 	"testing"
@@ -53,9 +51,7 @@ func (s *PrivilegedPortSuite) getControllerConfig() string {
 	}{
 		Port: privilegedPort,
 	}
-	content := bytes.NewBuffer([]byte{})
-	s.Require().NoError(template.Must(template.New("k0s.yaml").Parse(configWithPrivilegedPort)).Execute(content, data), "can't execute k0s.yaml template")
-	return content.String()
+	return s.RenderTemplate("k0s.yaml", configWithPrivilegedPort, data)
 }
 
 func (s *PrivilegedPortSuite) TestCapNetBindServiceIsSet() {

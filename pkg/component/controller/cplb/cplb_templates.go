@@ -24,8 +24,9 @@ vrrp_instance k0s-vip-{{$i}} {
     {{ if and ($ipvsLoadBalancer) (eq $VRRPInstancesLen 1) }}
     # Required to prevent routing loops when we use keepalived
     # virtual_servers: https://github.com/k0sproject/k0s/issues/5178
-    notify_master "'{{ $k0s }}' keepalived-setstate -r '{{ $runDir }}' -s MASTER"
-    notify_backup "'{{ $k0s }}' keepalived-setstate -r '{{ $runDir }}' -s BACKUP"
+    # The scripts may finish in any order, so the virtual IPs on the interface decide the state.
+    notify_master "'{{ $k0s }}' keepalived-setstate -r '{{ $runDir }}' -s MASTER --interface '{{ $instance.Interface }}'{{ range $instance.VirtualIPs }} --virtual-ip '{{ . }}'{{ end }}"
+    notify_backup "'{{ $k0s }}' keepalived-setstate -r '{{ $runDir }}' -s BACKUP --interface '{{ $instance.Interface }}'{{ range $instance.VirtualIPs }} --virtual-ip '{{ . }}'{{ end }}"
     {{ end }}
 
 	#advertisement interval, 1 second by default
@@ -64,29 +65,31 @@ include keepalived-virtualservers-generated.conf
 `
 
 const KeepalivedVirtualServersConfigTemplate = `
-{{ $APIServerPort := .APIServerPort }}
+{{ $LoadBalancedPorts := .LoadBalancedPorts }}
 {{ $RealServers := .RealServers }}
 {{ if gt (len $RealServers) 0 }}
-{{ range .VirtualServers }}
-virtual_server {{ .IPAddress }} {{ $APIServerPort }} {
-    delay_loop {{ .DelayLoop.Seconds }}
-    lb_algo {{ .LBAlgo }}
-    lb_kind {{ .LBKind }}
-    persistence_timeout {{ .PersistenceTimeoutSeconds }}
+{{ range $VirtualServer := .VirtualServers }}
+{{ range $Port := $LoadBalancedPorts }}
+virtual_server {{ $VirtualServer.IPAddress }} {{ $Port }} {
+    delay_loop {{ $VirtualServer.DelayLoop.Seconds }}
+    lb_algo {{ $VirtualServer.LBAlgo }}
+    lb_kind {{ $VirtualServer.LBKind }}
+    persistence_timeout {{ $VirtualServer.PersistenceTimeoutSeconds }}
     protocol TCP
 
     {{ range $RealServers }}
-    real_server {{ . }} {{ $APIServerPort }} {
+    real_server {{ . }} {{ $Port }} {
         weight 1
         TCP_CHECK {
             warmup 0
             retry 1
             connect_timeout 3
-            connect_port {{ $APIServerPort }}
+            connect_port {{ $Port }}
         }
     }
     {{end}}
 }
+{{ end }}
 {{ end }}
 {{ end }}
 `

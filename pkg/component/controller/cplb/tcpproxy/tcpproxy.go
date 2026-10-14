@@ -13,6 +13,7 @@ import (
 	"io"
 	"net"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -27,10 +28,9 @@ type Proxy struct {
 	mux     sync.RWMutex
 	configs map[string]*config // ip:port => config
 
-	lns        []net.Listener
-	donec      chan struct{} // closed before err
-	err        error         // any error from listening
-	connNumber int           // connection number counter, used for round robin
+	lns   []net.Listener
+	donec chan struct{} // closed before err
+	err   error         // any error from listening
 
 	// ListenFunc optionally specifies an alternate listen
 	// function. If nil, net.Dial is used.
@@ -45,6 +45,8 @@ type Matcher func(ctx context.Context, hostname string) bool
 // config contains the proxying state for one listener.
 type config struct {
 	routes []Route
+	// Counts connections to this address, to round robin over its routes.
+	connNumber atomic.Uint64
 }
 
 func (p *Proxy) netListen() func(net, laddr string) (net.Listener, error) {
@@ -159,9 +161,10 @@ func (p *Proxy) serveConn(c net.Conn, cfg *config) bool {
 	br := bufio.NewReader(c)
 
 	p.mux.RLock()
-	p.connNumber++
-	route := cfg.routes[p.connNumber%(len(cfg.routes))]
+	routes := cfg.routes
 	p.mux.RUnlock()
+	// Each address has its own counter, so that busy ports don't skew the others.
+	route := routes[cfg.connNumber.Add(1)%uint64(len(routes))]
 
 	if n := br.Buffered(); n > 0 {
 		peeked, _ := br.Peek(br.Buffered())

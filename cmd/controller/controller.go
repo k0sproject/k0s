@@ -304,12 +304,14 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 		})
 
 		nodeComponents.Add(ctx, &cplb.Keepalived{
-			K0sVars:         c.K0sVars,
-			Config:          cplbCfg.Keepalived,
-			DetailedLogging: debug,
-			LogConfig:       debug,
-			KubeConfigPath:  c.K0sVars.AdminKubeConfigPath,
-			APIPort:         nodeConfig.Spec.API.Port,
+			K0sVars:               c.K0sVars,
+			Config:                cplbCfg.Keepalived,
+			DetailedLogging:       debug,
+			LogConfig:             debug,
+			KubeConfigPath:        c.K0sVars.AdminKubeConfigPath,
+			APIPort:               nodeConfig.Spec.API.Port,
+			KonnectivityAgentPort: int(cmp.Or(nodeConfig.Spec.Konnectivity, v1beta1.DefaultKonnectivitySpec()).AgentPort),
+			K0sAPIPort:            nodeConfig.Spec.API.K0sAPIPort,
 		})
 	}
 

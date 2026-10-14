@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -155,23 +156,23 @@ func (r *RuntimeConfigSpec) Cleanup() error {
 
 // tryLock attempts to acquire the lock. Returns *os.File if successful, nil otherwise.
 func tryLock(path string) (*os.File, error) {
-	if file, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR, 0600); err != nil {
+	if f, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR, 0600); err != nil {
 		return nil, err
-	} else if locked, err := lockFile(file, true); err != nil {
-		return nil, errors.Join(err, file.Close())
+	} else if locked, err := file.TryLock(f, true); err != nil {
+		return nil, errors.Join(err, f.Close())
 	} else if locked {
-		return file, nil
+		return f, nil
 	} else {
-		return nil, errors.Join(ErrK0sStillRunning, file.Close())
+		return nil, errors.Join(ErrK0sStillRunning, f.Close())
 	}
 }
 
 // isLocked checks if the lock is currently held by another process.
 func isLocked(path string) (bool, error) {
-	if file, err := os.OpenFile(path, os.O_RDWR, 0); err == nil {
+	if f, err := os.OpenFile(path, os.O_RDWR, 0); err == nil {
 		// Attempt to acquire a shared lock to test the lock state
-		acquired, err := lockFile(file, false)
-		return !acquired, errors.Join(err, file.Close())
+		acquired, err := file.TryLock(f, false)
+		return !acquired, errors.Join(err, f.Close())
 	} else if errors.Is(err, os.ErrNotExist) {
 		return false, nil
 	} else {

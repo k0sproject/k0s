@@ -24,6 +24,9 @@ type Keepalived struct {
 	LogConfig       bool
 	APIPort         int
 	KubeConfigPath  string
+	// Ports that may be load balanced as well, depending on the configuration.
+	KonnectivityAgentPort int
+	K0sAPIPort            int
 }
 
 func (k *Keepalived) Init(context.Context) error {
