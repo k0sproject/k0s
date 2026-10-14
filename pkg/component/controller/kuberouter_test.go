@@ -29,10 +29,6 @@ func TestKubeRouterManifests(t *testing.T) {
 		}}
 	}
 
-	nodeConfig := &v1beta1.ClusterConfig{Spec: &v1beta1.ClusterSpec{
-		API: &v1beta1.APISpec{Address: "192.0.2.10", Port: 6443},
-	}}
-
 	reconcile := func(t *testing.T, paf v1beta1.PrimaryAddressFamilyType, cfg *v1beta1.ClusterConfig) (ds *appsv1.DaemonSet, cm *corev1.ConfigMap) {
 		k0sVars, err := config.NewCfgVars(nil, t.TempDir())
 		require.NoError(t, err)
@@ -42,7 +38,7 @@ func TestKubeRouterManifests(t *testing.T) {
 			serviceCIDRs, singleStackIPv6 = "fd01::/108", true
 		}
 
-		kr := NewKubeRouter(k0sVars, nodeConfig, paf, serviceCIDRs, singleStackIPv6)
+		kr := NewKubeRouter(k0sVars, "https://192.0.2.10:6443", paf, serviceCIDRs, singleStackIPv6)
 		require.NoError(t, kr.Init(t.Context()))
 		require.NoError(t, kr.Start(t.Context()))
 		t.Cleanup(func() { assert.NoError(t, kr.Stop()) })

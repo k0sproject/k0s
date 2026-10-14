@@ -17,6 +17,7 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/manager"
+	"github.com/k0sproject/k0s/pkg/component/worker/nllb"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 
@@ -28,7 +29,7 @@ type KubeRouter struct {
 	log logrus.FieldLogger
 
 	k0sVars              *config.CfgVars
-	nodeConfig           *v1beta1.ClusterConfig
+	apiServerAddress     string
 	primaryAddressFamily v1beta1.PrimaryAddressFamilyType
 	serviceCIDRs         string
 	singleStackIPv6      bool
@@ -55,12 +56,12 @@ type kubeRouterConfig struct {
 }
 
 // NewKubeRouter creates new KubeRouter reconciler component
-func NewKubeRouter(k0sVars *config.CfgVars, nodeConfig *v1beta1.ClusterConfig, primaryAddressFamily v1beta1.PrimaryAddressFamilyType, serviceCIDRs string, singleStackIPv6 bool) *KubeRouter {
+func NewKubeRouter(k0sVars *config.CfgVars, apiServerAddress string, primaryAddressFamily v1beta1.PrimaryAddressFamilyType, serviceCIDRs string, singleStackIPv6 bool) *KubeRouter {
 	return &KubeRouter{
 		log: logrus.WithFields(logrus.Fields{"component": "kube-router"}),
 
 		k0sVars:              k0sVars,
-		nodeConfig:           nodeConfig,
+		apiServerAddress:     apiServerAddress,
 		primaryAddressFamily: primaryAddressFamily,
 		serviceCIDRs:         serviceCIDRs,
 		singleStackIPv6:      singleStackIPv6,
@@ -95,6 +96,25 @@ func getHairpinConfig(krc *v1beta1.KubeRouter) (cniHairpin bool, globalHairpin b
 		globalHairpin = true
 	}
 	return
+}
+
+func (k *KubeRouter) apiServerAddressFor(clusterConfig *v1beta1.ClusterConfig) string {
+	address := k.apiServerAddress
+	if nllbURL, err := nllb.APIServerURL(clusterConfig.Spec.Network.NodeLocalLoadBalancing); err != nil {
+		k.log.WithError(err).Warn("Using cluster-wide API server address: ", address)
+	} else if nllbURL != nil {
+		// FIXME: Transitions from non-node-local load balanced to node-local
+		// load balanced setups will be problematic: The controller will update
+		// the DaemonSet with localhost, but the worker nodes won't reconcile
+		// their state (yet) and need to be restarted manually in order to start
+		// their load balancer. Transitions in the other direction suffer from
+		// the same limitation, but that will be less grave, as the node-local
+		// load balancers will remain operational until the next node restart
+		// and the proxy will stay connected.
+		address = nllbURL.String()
+		k.log.Debug("Using node-local load balanced API server URL: ", address)
+	}
+	return address
 }
 
 // Reconcile detects changes in configuration and applies them to the component
@@ -132,9 +152,9 @@ func (k *KubeRouter) Reconcile(_ context.Context, clusterConfig *v1beta1.Cluster
 		"metrics-port":             strconv.Itoa(clusterConfig.Spec.Network.KubeRouter.MetricsPort),
 		"hairpin-mode":             strconv.FormatBool(globalHairpin),
 		"service-cluster-ip-range": k.serviceCIDRs,
-		// Without this, kube-router dials the API through the service virtual
-		// IP. That address is only programmed when kube-proxy is running.
-		"master": apiServerEndpoint(k.log, k.nodeConfig, clusterConfig),
+		// Dial the API directly. kube-router must not depend on in-cluster
+		// networking already being functional.
+		"master": k.apiServerAddressFor(clusterConfig),
 	}
 
 	// IPv6 requires a router ID, instead of generating one ourselves, rely on kube-router logic

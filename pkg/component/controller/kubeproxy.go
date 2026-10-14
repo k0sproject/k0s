@@ -8,7 +8,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/base64"
-	"fmt"
 	"io"
 	"io/fs"
 	"os"
@@ -25,6 +24,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/applier"
 	"github.com/k0sproject/k0s/pkg/component/featuregates"
 	"github.com/k0sproject/k0s/pkg/component/manager"
+	"github.com/k0sproject/k0s/pkg/component/worker/nllb"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/static"
@@ -213,49 +213,26 @@ func (k *KubeProxy) updateManifests(cfg *proxyConfig, includeWindows bool) error
 		})
 }
 
-// apiServerEndpoint is the URL in-cluster clients on a node use to reach
-// the Kubernetes API. Node-local load balancing replaces the routable API
-// address with the local balancer, matching the worker-side proxy.
-func apiServerEndpoint(log logrus.FieldLogger, nodeConfig, clusterConfig *v1beta1.ClusterConfig) string {
-	endpoint := nodeConfig.Spec.API.APIAddressURL()
-	nllb := clusterConfig.Spec.Network.NodeLocalLoadBalancing
-	if !nllb.IsEnabled() {
-		return endpoint
-	}
-
-	switch nllb.Type {
-	case v1beta1.NllbTypeEnvoyProxy:
-		log.Debug("Enabling node-local load balancing via ", nllb.Type)
-		return fmt.Sprintf("https://localhost:%d", nllb.EnvoyProxy.APIServerBindPort)
-	case v1beta1.NllbTypeTraefik:
-		log.Debug("Enabling node-local load balancing via ", nllb.Type)
-		return fmt.Sprintf("https://localhost:%d", nllb.Traefik.APIServerBindPort)
-	default:
-		log.Warnf("Unsupported node-local load balancer type (%q), using %q as control plane endpoint", nllb.Type, endpoint)
-		return endpoint
-	}
-}
-
 func (k *KubeProxy) getConfig(clusterConfig *v1beta1.ClusterConfig) *proxyConfig {
 	if clusterConfig.Spec.Network.KubeProxy.Disabled {
 		return &proxyConfig{}
 	}
 
-	// FIXME: Transitions from non-node-local load balanced to node-local
-	// load balanced setups will be problematic: The controller will update
-	// the DaemonSet with localhost, but the worker nodes won't reconcile
-	// their state (yet) and need to be restarted manually in order to start
-	// their load balancer. Transitions in the other direction suffer from
-	// the same limitation, but that will be less grave, as the node-local
-	// load balancers will remain operational until the next node restart
-	// and the proxy will stay connected.
-	//
-	// FIXME: The localhost address is not exactly on par with the way it's
-	// implemented on the worker side, i.e. there's no fallback if localhost
-	// doesn't resolve to a loopback address. But this would require some
-	// shenanigans to pull in node-specific values here. A possible solution
-	// would be to convert kube-proxy to a static Pod as well.
-	controlPlaneEndpoint := apiServerEndpoint(k.log, k.nodeConfig, clusterConfig)
+	controlPlaneEndpoint := k.nodeConfig.Spec.API.APIAddressURL()
+	if nllbURL, err := nllb.APIServerURL(clusterConfig.Spec.Network.NodeLocalLoadBalancing); err != nil {
+		k.log.WithError(err).Warn("Using cluster-wide API server address: ", controlPlaneEndpoint)
+	} else if nllbURL != nil {
+		// FIXME: Transitions from non-node-local load balanced to node-local
+		// load balanced setups will be problematic: The controller will update
+		// the DaemonSet with localhost, but the worker nodes won't reconcile
+		// their state (yet) and need to be restarted manually in order to start
+		// their load balancer. Transitions in the other direction suffer from
+		// the same limitation, but that will be less grave, as the node-local
+		// load balancers will remain operational until the next node restart
+		// and the proxy will stay connected.
+		controlPlaneEndpoint = nllbURL.String()
+		k.log.Debug("Using node-local load balanced API server URL: ", controlPlaneEndpoint)
+	}
 	args := stringmap.StringMap{
 		"config":            "/var/lib/kube-proxy/config.conf",
 		"hostname-override": "$(NODE_NAME)",
