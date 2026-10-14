@@ -33,6 +33,27 @@ k0s supports providing only partial configurations. In case of partial configura
    sudo k0s start
    ```
 
+## Editor completion and validation
+
+k0s can generate [JSON Schema](https://json-schema.org/learn/getting-started-step-by-step)
+documents for its configuration APIs. Editors that support
+[schema associations](https://github.com/redhat-developer/yaml-language-server#using-inlined-schema)
+use them for completion and validation.
+
+Generate the ClusterConfig schema from the installed executable:
+
+```shell
+k0s docs json-schema gen k0s.k0sproject.io/v1beta1 ClusterConfig > k0s.json
+```
+
+Add this comment at the top of your `k0s.yaml`:
+
+```yaml
+# yaml-language-server: $schema=./k0s.json
+```
+
+Use `k0s config validate --config k0s.yaml` for cross-field and semantic validation.
+
 ## Configuring k0s via k0sctl
 
 k0sctl can deploy your configuration options at cluster creation time. Your
