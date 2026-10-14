@@ -4,6 +4,7 @@
 package nllb
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"net/url"
@@ -29,12 +30,12 @@ func APIServerURL(nllb *v1beta1.NodeLocalLoadBalancing) (*url.URL, error) {
 	switch nllb.Type {
 	case v1beta1.NllbTypeEnvoyProxy:
 		if nllb.EnvoyProxy == nil {
-			return nil, fmt.Errorf("envoy proxy node-local load balancing config is missing")
+			return nil, errors.New("envoy proxy node-local load balancing config is missing")
 		}
 		port = nllb.EnvoyProxy.APIServerBindPort
 	case v1beta1.NllbTypeTraefik:
 		if nllb.Traefik == nil {
-			return nil, fmt.Errorf("traefik node-local load balancing config is missing")
+			return nil, errors.New("traefik node-local load balancing config is missing")
 		}
 		port = nllb.Traefik.APIServerBindPort
 	default:
