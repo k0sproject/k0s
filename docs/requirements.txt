@@ -1,6 +1,6 @@
 babel==2.18.0
 backrefs==8.1
-bracex==3.0.1
+bracex==3.1
 certifi==2026.7.22
 charset-normalizer==3.4.7
 click==8.5.0
