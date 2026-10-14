@@ -312,6 +312,7 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 			APIPort:               nodeConfig.Spec.API.Port,
 			KonnectivityAgentPort: int(cmp.Or(nodeConfig.Spec.Konnectivity, v1beta1.DefaultKonnectivitySpec()).AgentPort),
 			K0sAPIPort:            nodeConfig.Spec.API.K0sAPIPort,
+			Address:               nodeConfig.Spec.API.Address,
 		})
 	}
 

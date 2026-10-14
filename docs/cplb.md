@@ -572,23 +572,26 @@ tcp        0      0 :::6446                 :::*                    LISTEN      
 Then one iptables rule per port forwards the requests to the VIP to the matching proxy port:
 
 ```console
--A PREROUTING -d <VIP>/32 -p tcp -m tcp --dport <load balanced port> -j REDIRECT --to-ports <userspace proxy port>
+-A PREROUTING -d <VIP>/32 -p tcp -m tcp --dport <load balanced port> -j DNAT --to-destination <controller address>:<userspace proxy port>
 ```
+
+With `userSpaceProxyForwarding: REDIRECT` in the `keepalived` section, or if `spec.api.address` and the VIP are
+in different IP families, the rule uses `-j REDIRECT --to-ports <userspace proxy port>` instead.
 
 A real life example of a cluster using the VIP `172.17.0.102` looks like:
 
 ```console
 controller0:/# /var/lib/k0s/bin/iptables-save | grep 172.17.0.102
--A PREROUTING -d 172.17.0.102/32 -p tcp -m tcp --dport 6443 -j REDIRECT --to-ports 6444
+-A PREROUTING -d 172.17.0.102/32 -p tcp -m tcp --dport 6443 -j DNAT --to-destination 172.17.0.2:6444
 ```
 
 With `konnectivity` and `k0sApi` enabled in `loadBalancedPorts`, there are two more rules:
 
 ```console
 controller0:/# /var/lib/k0s/bin/iptables-save | grep 172.17.0.102
--A PREROUTING -d 172.17.0.102/32 -p tcp -m tcp --dport 6443 -j REDIRECT --to-ports 6444
--A PREROUTING -d 172.17.0.102/32 -p tcp -m tcp --dport 8132 -j REDIRECT --to-ports 6445
--A PREROUTING -d 172.17.0.102/32 -p tcp -m tcp --dport 9443 -j REDIRECT --to-ports 6446
+-A PREROUTING -d 172.17.0.102/32 -p tcp -m tcp --dport 6443 -j DNAT --to-destination 172.17.0.2:6444
+-A PREROUTING -d 172.17.0.102/32 -p tcp -m tcp --dport 8132 -j DNAT --to-destination 172.17.0.2:6445
+-A PREROUTING -d 172.17.0.102/32 -p tcp -m tcp --dport 9443 -j DNAT --to-destination 172.17.0.2:6446
 ```
 
 If `loadBalancedPorts` is set but only the API server port has a rule, check that the field is in the `keepalived` section.

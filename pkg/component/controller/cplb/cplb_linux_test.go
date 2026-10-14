@@ -19,6 +19,28 @@ const (
 	konnectivityAgentPort = 8132
 )
 
+func TestProxyRuleArgs(t *testing.T) {
+	port := k0sAPI.BalancedPort{Port: konnectivityAgentPort, ProxyPort: 6445}
+	for _, test := range []struct {
+		name, forwarding, address, vip, target string
+	}{
+		{"DNAT by default", "", "10.0.0.2", "10.0.0.100", "-j DNAT --to-destination 10.0.0.2:6445"},
+		{"DNAT on IPv6", "DNAT", "fd00::2", "fd00::100", "-j DNAT --to-destination [fd00::2]:6445"},
+		{"REDIRECT", "REDIRECT", "10.0.0.2", "10.0.0.100", "-j REDIRECT --to-port 6445"},
+		{"other IP family", "DNAT", "fd00::2", "10.0.0.100", "-j REDIRECT --to-port 6445"},
+		{"no address", "DNAT", "", "10.0.0.100", "-j REDIRECT --to-port 6445"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			k := &Keepalived{
+				Config:  &k0sAPI.KeepalivedSpec{UserSpaceProxyForwarding: k0sAPI.UserSpaceProxyForwarding(test.forwarding)},
+				Address: test.address,
+			}
+			args := strings.Join(k.proxyRuleArgs("-A", test.vip, port), " ")
+			assert.Equal(t, "-t nat -A PREROUTING -p tcp -d "+test.vip+" --dport 8132 "+test.target, args)
+		})
+	}
+}
+
 func TestEscapeSingleQuotes(t *testing.T) {
 	assert.Equal(t, `It\'s a "nice" \'test\'`, escapeSingleQuotes(`It's a "nice" \'test'`))
 }

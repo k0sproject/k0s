@@ -363,15 +363,16 @@ Configuration options related to k0s's [control plane load balancing] feature
 
 Configuration options related to keepalived in [control plane load balancing]
 
-| Element                  | Description                                                                                                                     |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
-| `vrrpInstances`          | Configuration options related to the VRRP. This is an array which allows to configure multiple virtual IPs.                     |
-| `virtualServers`         | Configuration options related to load balancing. This is an array which allows to configure multiple load balancers.            |
-| `userSpaceProxyBindPort` | The port the user space proxy will bind to. This port is for internal use only, but listens on every interface. Default: `6444` |
-| `disableLoadBalancer`    | Disables the load balancer. Default: `false`                                                                                    |
-| `loadBalancedPorts`      | The control plane ports that are load balanced on the virtual IPs. Default: only the API server port                            |
-| `configTemplateVRRP`     | Path to a custom Keepalived configuration template for VRRP. Default: empty .                                                   |
-| `configTemplateVS`       | Path to a custom Keepalived configuration template for Virtual Servers. Default: empty                                          |
+| Element                    | Description                                                                                                                       |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `vrrpInstances`            | Configuration options related to the VRRP. This is an array which allows to configure multiple virtual IPs.                       |
+| `virtualServers`           | Configuration options related to load balancing. This is an array which allows to configure multiple load balancers.              |
+| `userSpaceProxyBindPort`   | The port the user space proxy will bind to. This port is for internal use only, but listens on every interface. Default: `6444`   |
+| `disableLoadBalancer`      | Disables the load balancer. Default: `false`                                                                                      |
+| `loadBalancedPorts`        | The control plane ports that are load balanced on the virtual IPs. Default: only the API server port                              |
+| `userSpaceProxyForwarding` | How the virtual IPs reach the user space proxy, `DNAT` to the controller address or `REDIRECT` to the local port. Default: `DNAT` |
+| `configTemplateVRRP`       | Path to a custom Keepalived configuration template for VRRP. Default: empty .                                                     |
+| `configTemplateVS`         | Path to a custom Keepalived configuration template for Virtual Servers. Default: empty                                            |
 
 ##### `spec.network.controlPlaneLoadBalancing.keepalived.loadBalancedPorts`
 

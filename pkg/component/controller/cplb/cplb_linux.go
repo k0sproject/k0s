@@ -47,6 +47,8 @@ type Keepalived struct {
 	// Ports that may be load balanced as well, depending on the configuration.
 	KonnectivityAgentPort int
 	K0sAPIPort            int
+	// The address of this controller. Traffic to the virtual IPs reaches the userspace proxy there.
+	Address string
 
 	keepalivedConfig       *keepalivedConfig
 	supervisor             *supervisor.Supervisor
@@ -462,6 +464,21 @@ func (k *Keepalived) setProxyRoutes() {
 	}
 }
 
+// proxyRuleArgs returns the iptables arguments that send the port on the virtual IP to the userspace proxy.
+// REDIRECT drops packets from interfaces without an address, which DNAT to the controller address avoids.
+func (k *Keepalived) proxyRuleArgs(op, vip string, p k0sAPI.BalancedPort) []string {
+	args := []string{
+		"-t", "nat", op, "PREROUTING", "-p", "tcp",
+		"-d", vip, "--dport", strconv.Itoa(p.Port),
+	}
+	vipIP, addressIP := net.ParseIP(vip), net.ParseIP(k.Address)
+	sameFamily := vipIP != nil && addressIP != nil && (vipIP.To4() == nil) == (addressIP.To4() == nil)
+	if k.Config.UserSpaceProxyForwarding != k0sAPI.UserSpaceProxyForwardingREDIRECT && sameFamily {
+		return append(args, "-j", "DNAT", "--to-destination", net.JoinHostPort(k.Address, strconv.Itoa(p.ProxyPort)))
+	}
+	return append(args, "-j", "REDIRECT", "--to-port", strconv.Itoa(p.ProxyPort))
+}
+
 func (k *Keepalived) redirectToProxyIPTables(op string) error {
 	for _, vrrp := range k.Config.VRRPInstances {
 		for _, vipCIDR := range vrrp.VirtualIPs {
@@ -472,11 +489,7 @@ func (k *Keepalived) redirectToProxyIPTables(op string) error {
 				iptablesBin = "ip6tables"
 			}
 			for _, p := range k.balancedPorts() {
-				cmdArgs := []string{
-					"-t", "nat", op, "PREROUTING", "-p", "tcp",
-					"-d", vip, "--dport", strconv.Itoa(p.Port),
-					"-j", "REDIRECT", "--to-port", strconv.Itoa(p.ProxyPort),
-				}
+				cmdArgs := k.proxyRuleArgs(op, vip, p)
 
 				switch op {
 				case iptablesCommandAppend:

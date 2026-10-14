@@ -749,6 +749,16 @@ spec:
                             maximum: 65535
                             minimum: 1
                             type: integer
+                          userSpaceProxyForwarding:
+                            default: DNAT
+                            description: |-
+                              UserSpaceProxyForwarding selects how the virtual IPs reach the userspace proxy. DNAT forwards to the
+                              controller address, REDIRECT to the local proxy port. DNAT falls back to REDIRECT without an address in
+                              the IP family of the virtual IP. Defaults to DNAT.
+                            enum:
+                            - DNAT
+                            - REDIRECT
+                            type: string
                           virtualServers:
                             description: |-
                               Configuration options related to the virtual servers. This is an array
