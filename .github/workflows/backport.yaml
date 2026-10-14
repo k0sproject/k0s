@@ -68,6 +68,13 @@ jobs:
 
           auto_merge_enabled: true
 
+          # On cherry-pick conflicts, open a draft PR with the conflicting
+          # commit committed instead of failing, so it can be resolved manually.
+          experimental: >
+            {
+              "conflict_resolution": "draft_commit_conflicts"
+            }
+
           # Regex pattern to match github labels
           # The capture group catches the target branch
           # i.e. label backport/release-1.23 will create backport PR for branch release-1.23
