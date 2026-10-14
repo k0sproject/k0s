@@ -21,12 +21,12 @@ import (
 	"time"
 
 	"github.com/k0sproject/k0s/cmd/internal"
+	"github.com/k0sproject/k0s/internal/k0scontext"
 	mw "github.com/k0sproject/k0s/internal/pkg/middleware"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/etcd"
-	"github.com/k0sproject/k0s/pkg/k0scontext"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"

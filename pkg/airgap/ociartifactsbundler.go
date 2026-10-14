@@ -23,8 +23,8 @@ import (
 
 	"github.com/containerd/containerd/v2/core/images"
 	"github.com/containerd/platforms"
+	"github.com/k0sproject/k0s/internal/k0scontext"
 	"github.com/k0sproject/k0s/internal/pkg/stringslice"
-	"github.com/k0sproject/k0s/pkg/k0scontext"
 
 	"github.com/distribution/reference"
 	"github.com/dustin/go-humanize"

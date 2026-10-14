@@ -10,8 +10,8 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/k0sproject/k0s/internal/k0scontext"
 	internallog "github.com/k0sproject/k0s/internal/pkg/log"
-	"github.com/k0sproject/k0s/pkg/k0scontext"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
