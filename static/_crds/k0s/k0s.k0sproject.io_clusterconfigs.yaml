@@ -613,9 +613,7 @@ spec:
                         type: string
                       mtu:
                         default: 1450
-                        description: |-
-                          MTU for overlay network (default: 1450). Set to 0 to let Calico detect
-                          the MTU on each node.
+                        description: 'MTU for overlay network (default: 1450)'
                         type: integer
                       overlay:
                         default: Always

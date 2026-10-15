@@ -28,8 +28,7 @@ type Calico struct {
 	// Host's IPv6 Auto-detection method for Calico
 	IPv6AutodetectionMethod string `json:"ipV6AutodetectionMethod,omitempty"`
 
-	// MTU for overlay network (default: 1450). Set to 0 to let Calico detect
-	// the MTU on each node.
+	// MTU for overlay network (default: 1450)
 	// +kubebuilder:default=1450
 	// +optional
 	MTU int `json:"mtu"`

@@ -104,12 +104,8 @@ Search for `.MTU` to find:
 # Set MTU for the VXLAN tunnel device.
 - name: FELIX_VXLANMTU
   value: "{{ .MTU }}"
-- name: FELIX_VXLANMTUV6
-  value: "{{ .MTU }}"
 # Set MTU for the Wireguard tunnel device.
 - name: FELIX_WIREGUARDMTU
-  value: "{{ .MTU }}"
-- name: FELIX_WIREGUARDMTUV6
   value: "{{ .MTU }}"
 ```
 
