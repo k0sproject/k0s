@@ -141,7 +141,7 @@ spec:
 	s.NotNil(n.Calico)
 	s.Nil(n.KubeRouter)
 	s.Equal(4789, n.Calico.VxlanPort)
-	s.Zero(n.Calico.MTU, "MTU should default to auto-detection")
+	s.Equal(1450, n.Calico.MTU)
 	s.Equal(CalicoModeVXLAN, n.Calico.Mode)
 }
 
@@ -180,9 +180,9 @@ func (s *NetworkSuite) TestCalicoMTURoundTrip() {
 		mtu      string
 		expected int
 	}{
-		{"unset", "", 0},
+		{"unset", "", 1450},
 		{"auto", "mtu: 0", 0},
-		{"explicit", "mtu: 1450", 1450},
+		{"explicit", "mtu: 1400", 1400},
 	} {
 		s.Run(test.name, func() {
 			c, err := ConfigFromBytes([]byte(`
@@ -208,7 +208,7 @@ spec:
 		})
 	}
 
-	s.Zero(DefaultCalico().MTU, "MTU should default to auto-detection")
+	s.Equal(1450, DefaultCalico().MTU)
 }
 
 func (s *NetworkSuite) TestKubeRouterDefaultsAfterMarshaling() {

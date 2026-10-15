@@ -28,9 +28,11 @@ type Calico struct {
 	// Host's IPv6 Auto-detection method for Calico
 	IPv6AutodetectionMethod string `json:"ipV6AutodetectionMethod,omitempty"`
 
-	// MTU for overlay network. If unset or 0, Calico detects the MTU on each
-	// node.
-	MTU int `json:"mtu,omitempty"`
+	// MTU for overlay network (default: 1450). Set to 0 to let Calico detect
+	// the MTU on each node.
+	// +kubebuilder:default=1450
+	// +optional
+	MTU int `json:"mtu"`
 
 	// +kubebuilder:default=vxlan
 	Mode CalicoMode `json:"mode,omitempty"`
@@ -70,6 +72,7 @@ func DefaultCalico() *Calico {
 		Mode:                 CalicoModeVXLAN,
 		VxlanPort:            4789,
 		VxlanVNI:             4096,
+		MTU:                  1450,
 		FlexVolumeDriverPath: "/usr/libexec/k0s/kubelet-plugins/volume/exec/nodeagent~uds",
 		Overlay:              "Always",
 	}
@@ -80,6 +83,7 @@ func (c *Calico) UnmarshalJSON(data []byte) error {
 	c.Mode = CalicoModeVXLAN
 	c.VxlanPort = 4789
 	c.VxlanVNI = 4096
+	c.MTU = 1450
 	c.FlexVolumeDriverPath = "/usr/libexec/kubernetes/kubelet-plugins/volume/exec/nodeagent~uds"
 	c.Overlay = "Always"
 

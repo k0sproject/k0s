@@ -129,7 +129,8 @@ func TestCalicoManifests(t *testing.T) {
 			mtu      int
 			expected string
 		}{
-			{"auto_detected_by_default", 0, "0"},
+			{"defaults_to_1450", v1beta1.DefaultCalico().MTU, "1450"},
+			{"auto_detected_if_zero", 0, "0"},
 			{"overridden_if_specified", 1400, "1400"},
 		} {
 			t.Run(test.name, func(t *testing.T) {

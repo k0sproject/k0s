@@ -43,6 +43,7 @@ func (s *CalicoSuite) TestK0sGetsUp() {
 					network := v1beta1.DefaultNetwork()
 					network.Provider = "calico"
 					network.Calico = &v1beta1.Calico{
+						MTU: 0, // let Calico detect the MTU on each node
 						EnvVars: map[string]string{
 							"TEST_BOOL_VAR":   "true",
 							"TEST_INT_VAR":    "42",
@@ -63,8 +64,8 @@ func (s *CalicoSuite) TestK0sGetsUp() {
 		s.WriteFileContent(s.ControllerNode(0), "/tmp/k0s.yaml", config)
 	}
 
-	// Use a host MTU below 1500, so that a fixed overlay MTU (e.g. 1450) won't
-	// fit into the tunnel. The MTU is left unset in the cluster config, so
+	// Use a host MTU below 1500, so that the default overlay MTU (1450) won't
+	// fit into the tunnel. The MTU is set to 0 in the cluster config, so
 	// Calico has to detect it on each node.
 	setMTU := "ip link set dev eth0 mtu " + strconv.Itoa(hostMTU)
 	_, err := s.RunCommandController(0, setMTU)
