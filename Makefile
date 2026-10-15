@@ -379,6 +379,10 @@ check-unit: GO_TEST_RACE ?=
 else
 check-unit: GO_TEST_RACE ?= -race
 endif
+ifeq ($(HOST_ARCH), arm)
+# Externally linked arm test binaries hit a Go-vs-ld branch veneer bug
+check-unit: export CGO_ENABLED ?= 0
+endif
 check-unit: BUILD_GO_TAGS += hack
 check-unit: $(GO_ENV_REQUISITES) go.sum
 	CGO_CFLAGS='$(BUILD_CGO_CFLAGS)' $(GO) test -tags=$(subst $(space),$(comma),$(BUILD_GO_TAGS)) $(GO_TEST_RACE) -ldflags='$(LD_FLAGS)' `$(GO) list -tags=$(subst $(space),$(comma),$(BUILD_GO_TAGS)) $(GO_CHECK_UNIT_DIRS)`
