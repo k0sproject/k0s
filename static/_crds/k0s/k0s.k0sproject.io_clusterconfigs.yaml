@@ -612,8 +612,9 @@ spec:
                         - ipip
                         type: string
                       mtu:
-                        default: 1450
-                        description: 'MTU for overlay network (default: 1450)'
+                        description: |-
+                          MTU for overlay network. If unset or 0, Calico detects the MTU on each
+                          node.
                         type: integer
                       overlay:
                         default: Always

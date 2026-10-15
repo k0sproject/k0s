@@ -7,6 +7,7 @@ import (
 	"context"
 	"net"
 	"os"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -23,6 +24,9 @@ import (
 	"github.com/k0sproject/k0s/inttest/common/ociimages"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 )
+
+// The MTU of the nodes' network interface, below the usual 1500.
+const hostMTU = 1400
 
 type CalicoSuite struct {
 	common.BootlooseSuite
@@ -57,6 +61,21 @@ func (s *CalicoSuite) TestK0sGetsUp() {
 		config, err := yaml.Marshal(clusterCfg)
 		s.Require().NoError(err)
 		s.WriteFileContent(s.ControllerNode(0), "/tmp/k0s.yaml", config)
+	}
+
+	// Use a host MTU below 1500, so that a fixed overlay MTU (e.g. 1450) won't
+	// fit into the tunnel. The MTU is left unset in the cluster config, so
+	// Calico has to detect it on each node.
+	nodes := []string{s.ControllerNode(0)}
+	for i := range s.WorkerCount {
+		nodes = append(nodes, s.WorkerNode(i))
+	}
+	for _, node := range nodes {
+		ssh, err := s.SSH(ctx, node)
+		s.Require().NoError(err)
+		_, err = ssh.ExecWithOutput(ctx, "ip link set dev eth0 mtu "+strconv.Itoa(hostMTU))
+		ssh.Disconnect()
+		s.Require().NoError(err, "failed to set MTU on %s", node)
 	}
 
 	s.Require().NoError(s.InitController(0, "--config=/tmp/k0s.yaml", "--feature-gates=IPv6SingleStack=true"))
@@ -140,6 +159,24 @@ func (s *CalicoSuite) TestK0sGetsUp() {
 	}, metav1.CreateOptions{})
 	s.Require().NoError(err)
 	s.NoError(common.WaitForPod(ctx, kc, "alpine", metav1.NamespaceDefault), "alpine pod did not start")
+
+	s.Run("pod MTU matches the tunnel MTU", func() {
+		tunnelDevice := "vxlan.calico"
+		if s.isIPv6Only {
+			tunnelDevice = "vxlan-v6.calico"
+		}
+		tunnelMTU, err := s.RunCommandWorker(1, "cat /sys/class/net/"+tunnelDevice+"/mtu")
+		s.Require().NoError(err)
+		podMTU, err := common.PodExecCmdOutput(kc, restConfig, sourcePod.Name, sourcePod.Namespace, "cat /sys/class/net/eth0/mtu")
+		s.Require().NoError(err)
+		podMTU = strings.TrimSpace(podMTU)
+
+		s.T().Logf("Host MTU: %d, tunnel MTU: %s, pod MTU: %s", hostMTU, tunnelMTU, podMTU)
+		s.Equal(tunnelMTU, podMTU, "pod MTU doesn't match the MTU of %s", tunnelDevice)
+		if mtu, err := strconv.Atoi(podMTU); s.NoError(err) {
+			s.Less(mtu, hostMTU, "pod MTU doesn't leave room for the VXLAN overhead")
+		}
+	})
 
 	err = wait.PollImmediateWithContext(ctx, 100*time.Millisecond, time.Minute, func(ctx context.Context) (done bool, err error) {
 		out, err := common.PodExecCmdOutput(kc, restConfig, sourcePod.Name, sourcePod.Namespace,

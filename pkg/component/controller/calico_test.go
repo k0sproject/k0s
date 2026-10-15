@@ -122,6 +122,36 @@ func TestCalicoManifests(t *testing.T) {
 		})
 	})
 
+	t.Run("mtu", func(t *testing.T) {
+		for _, test := range []struct {
+			name     string
+			mtu      int
+			expected string
+		}{
+			{"auto_detected_by_default", 0, "0"},
+			{"overridden_if_specified", 1400, "1400"},
+		} {
+			t.Run(test.name, func(t *testing.T) {
+				clusterConfig := clusterConfig.DeepCopy()
+				clusterConfig.Spec.Network.Calico.MTU = test.mtu
+
+				calico := newTestInstance(t)
+				cfg, err := calico.getConfig(clusterConfig)
+				require.NoError(t, err)
+				require.NoError(t, calico.processConfigChanges(&calicoConfig{&calico.nodeConfig, cfg, false}, nil))
+
+				daemonSetManifestRaw, err := os.ReadFile(filepath.Join(calico.manifestsDir, "calico", "calico-DaemonSet-calico-node.yaml"))
+				require.NoError(t, err, "must have daemon set for calico")
+				spec := daemonSetContainersEnv{}
+				require.NoError(t, yaml.Unmarshal(daemonSetManifestRaw, &spec))
+				for _, varName := range []string{"FELIX_IPINIPMTU", "FELIX_VXLANMTU", "FELIX_WIREGUARDMTU"} {
+					spec.RequireContainerHasEnvVariable(t, "calico-node", varName, test.expected)
+				}
+				assert.Contains(t, string(daemonSetManifestRaw), `"mtu": `+test.expected+",")
+			})
+		}
+	})
+
 	t.Run("pod CIDR comes from node config", func(t *testing.T) {
 		clusterConfig := clusterConfig.DeepCopy()
 		clusterConfig.Spec.Network.PodCIDR = "10.245.0.0/16"
