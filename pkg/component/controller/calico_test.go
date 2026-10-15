@@ -6,6 +6,7 @@ package controller
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
@@ -139,7 +140,7 @@ func TestCalicoManifests(t *testing.T) {
 				calico := newTestInstance(t)
 				cfg, err := calico.getConfig(clusterConfig)
 				require.NoError(t, err)
-				require.NoError(t, calico.processConfigChanges(&calicoConfig{&calico.nodeConfig, cfg, false}, nil))
+				require.NoError(t, calico.processConfigChanges(&calicoConfig{&calico.nodeConfig, cfg, true}, nil))
 
 				daemonSetManifestRaw, err := os.ReadFile(filepath.Join(calico.manifestsDir, "calico", "calico-DaemonSet-calico-node.yaml"))
 				require.NoError(t, err, "must have daemon set for calico")
@@ -149,6 +150,13 @@ func TestCalicoManifests(t *testing.T) {
 					spec.RequireContainerHasEnvVariable(t, "calico-node", varName, test.expected)
 				}
 				assert.Contains(t, string(daemonSetManifestRaw), `"mtu": `+test.expected+",")
+
+				daemonSetManifestRaw, err = os.ReadFile(filepath.Join(calico.manifestsDir, "calico", "calico-DaemonSet-calico-node-windows.yaml"))
+				require.NoError(t, err, "must have daemon set for calico on Windows")
+				spec = daemonSetContainersEnv{}
+				require.NoError(t, yaml.Unmarshal(daemonSetManifestRaw, &spec))
+				spec.RequireContainerHasEnvVariable(t, "install-cni", "CNI_MTU", test.expected)
+				spec.RequireContainerHasEnvVariable(t, "felix", "FELIX_VXLANMTU", test.expected)
 			})
 		}
 	})
@@ -180,15 +188,9 @@ type daemonSetContainersEnv struct {
 	Spec struct {
 		Template struct {
 			Spec struct {
-				Containers []struct {
-					Name string `yaml:"name"`
-					Env  []struct {
-						Name      string `yaml:"name"`
-						Value     string `yaml:"value"`
-						ValueFrom any    `yaml:"valueFrom"`
-					} `yaml:"env"`
-				} `yaml:"containers"`
-				Volumes []struct {
+				InitContainers []daemonSetContainer `yaml:"initContainers"`
+				Containers     []daemonSetContainer `yaml:"containers"`
+				Volumes        []struct {
 					Name     string `yaml:"name"`
 					HostPath struct {
 						Type string `yaml:"type"`
@@ -200,11 +202,26 @@ type daemonSetContainersEnv struct {
 	} `yaml:"spec"`
 }
 
+type daemonSetContainer struct {
+	Name string `yaml:"name"`
+	Env  []struct {
+		Name      string `yaml:"name"`
+		Value     string `yaml:"value"`
+		ValueFrom any    `yaml:"valueFrom"`
+	} `yaml:"env"`
+}
+
+func (ds daemonSetContainersEnv) allContainers() []daemonSetContainer {
+	return slices.Concat(ds.Spec.Template.Spec.InitContainers, ds.Spec.Template.Spec.Containers)
+}
+
 func (ds daemonSetContainersEnv) RequireContainerHasEnvVariable(t *testing.T, containerName string, varName string, varValue string) {
-	for _, container := range ds.Spec.Template.Spec.Containers {
+	containerFound := false
+	for _, container := range ds.allContainers() {
 		if container.Name != containerName {
 			continue
 		}
+		containerFound = true
 		found := false
 		for _, envSpec := range container.Env {
 			if envSpec.Name == varName {
@@ -214,10 +231,11 @@ func (ds daemonSetContainersEnv) RequireContainerHasEnvVariable(t *testing.T, co
 		}
 		require.Truef(t, found, "Variable %s not found", varName)
 	}
+	require.Truef(t, containerFound, "Container %s not found", containerName)
 }
 
 func (ds daemonSetContainersEnv) RequireContainerHasNoEnvVariable(t *testing.T, containerName string, varName string) {
-	for _, container := range ds.Spec.Template.Spec.Containers {
+	for _, container := range ds.allContainers() {
 		if container.Name != containerName {
 			continue
 		}
