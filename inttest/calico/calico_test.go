@@ -66,16 +66,12 @@ func (s *CalicoSuite) TestK0sGetsUp() {
 	// Use a host MTU below 1500, so that a fixed overlay MTU (e.g. 1450) won't
 	// fit into the tunnel. The MTU is left unset in the cluster config, so
 	// Calico has to detect it on each node.
-	nodes := []string{s.ControllerNode(0)}
+	setMTU := "ip link set dev eth0 mtu " + strconv.Itoa(hostMTU)
+	_, err := s.RunCommandController(0, setMTU)
+	s.Require().NoError(err, "failed to set MTU on controller 0")
 	for i := range s.WorkerCount {
-		nodes = append(nodes, s.WorkerNode(i))
-	}
-	for _, node := range nodes {
-		ssh, err := s.SSH(ctx, node)
-		s.Require().NoError(err)
-		_, err = ssh.ExecWithOutput(ctx, "ip link set dev eth0 mtu "+strconv.Itoa(hostMTU))
-		ssh.Disconnect()
-		s.Require().NoError(err, "failed to set MTU on %s", node)
+		_, err := s.RunCommandWorker(i, setMTU)
+		s.Require().NoError(err, "failed to set MTU on worker %d", i)
 	}
 
 	s.Require().NoError(s.InitController(0, "--config=/tmp/k0s.yaml", "--feature-gates=IPv6SingleStack=true"))
@@ -161,9 +157,10 @@ func (s *CalicoSuite) TestK0sGetsUp() {
 	s.NoError(common.WaitForPod(ctx, kc, "alpine", metav1.NamespaceDefault), "alpine pod did not start")
 
 	s.Run("pod MTU matches the tunnel MTU", func() {
-		tunnelDevice := "vxlan.calico"
+		// VXLAN adds 50 bytes of overhead over IPv4 and 70 bytes over IPv6.
+		tunnelDevice, expectedMTU := "vxlan.calico", hostMTU-50
 		if s.isIPv6Only {
-			tunnelDevice = "vxlan-v6.calico"
+			tunnelDevice, expectedMTU = "vxlan-v6.calico", hostMTU-70
 		}
 		tunnelMTU, err := s.RunCommandWorker(1, "cat /sys/class/net/"+tunnelDevice+"/mtu")
 		s.Require().NoError(err)
@@ -172,10 +169,8 @@ func (s *CalicoSuite) TestK0sGetsUp() {
 		podMTU = strings.TrimSpace(podMTU)
 
 		s.T().Logf("Host MTU: %d, tunnel MTU: %s, pod MTU: %s", hostMTU, tunnelMTU, podMTU)
+		s.Equal(strconv.Itoa(expectedMTU), tunnelMTU, "MTU of %s doesn't fit the host MTU", tunnelDevice)
 		s.Equal(tunnelMTU, podMTU, "pod MTU doesn't match the MTU of %s", tunnelDevice)
-		if mtu, err := strconv.Atoi(podMTU); s.NoError(err) {
-			s.Less(mtu, hostMTU, "pod MTU doesn't leave room for the VXLAN overhead")
-		}
 	})
 
 	err = wait.PollImmediateWithContext(ctx, 100*time.Millisecond, time.Minute, func(ctx context.Context) (done bool, err error) {

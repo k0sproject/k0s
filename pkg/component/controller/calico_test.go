@@ -219,10 +219,12 @@ func (ds daemonSetContainersEnv) allContainers() []daemonSetContainer {
 }
 
 func (ds daemonSetContainersEnv) RequireContainerHasEnvVariable(t *testing.T, containerName string, varName string, varValue string) {
+	containerFound := false
 	for _, container := range ds.allContainers() {
 		if container.Name != containerName {
 			continue
 		}
+		containerFound = true
 		found := false
 		for _, envSpec := range container.Env {
 			if envSpec.Name == varName {
@@ -232,6 +234,7 @@ func (ds daemonSetContainersEnv) RequireContainerHasEnvVariable(t *testing.T, co
 		}
 		require.Truef(t, found, "Variable %s not found", varName)
 	}
+	require.Truef(t, containerFound, "Container %s not found", containerName)
 }
 
 func (ds daemonSetContainersEnv) RequireContainerHasNoEnvVariable(t *testing.T, containerName string, varName string) {
