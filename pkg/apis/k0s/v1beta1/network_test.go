@@ -192,6 +192,7 @@ spec:
   network:
     provider: calico
     calico:
+      mode: vxlan
       ` + test.mtu + `
 `))
 			s.Require().NoError(err)
