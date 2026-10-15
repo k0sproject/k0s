@@ -18,5 +18,4 @@ Emeritus Maintainers are valued individuals who previously dedicated their time 
 
 | Maintainer         | GitHub ID                                                  | Affiliation |
 |--------------------|------------------------------------------------------------|-------------|
-| Juan Luis Valadas  | [@juanluisvaladas](https://github.com/juanluisvaladas)     | Mirantis    |
 | Ricardo Maraschini | [@ricardomaraschini](https://github.com/ricardomaraschini) | Replicated  |
