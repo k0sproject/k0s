@@ -262,8 +262,9 @@ jobs:
 
       - name: Reinstall with force
         run: |
-          & .\k0s.exe install worker --force --token-file=k0s-worker-token --debug --labels test.k0sproject.io/foo=bar --kubelet-extra-args="--hostname-override=windowsworker"
-          & .\k0s.exe start
+          # Install doesn't stop the service, so --start has to restart it for
+          # the new service definition to take effect.
+          & .\k0s.exe install worker --force --start --token-file=k0s-worker-token --debug --labels test.k0sproject.io/foo=bar --kubelet-extra-args="--hostname-override=windowsworker"
       - name: Stop & reset k0s worker
         run: |
           & .\k0s.exe stop --debug
