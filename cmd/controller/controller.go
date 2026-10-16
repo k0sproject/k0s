@@ -250,21 +250,38 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 
 	switch storageType {
 	case v1beta1.KineStorageType:
+		userName := constant.KineUser
+		if i := nodeConfig.Spec.Install; i != nil && i.SystemUsers != nil && i.SystemUsers.Kine != "" {
+			userName = i.SystemUsers.Kine
+		}
 		storageBackend = &controller.Kine{
-			Config:  nodeConfig.Spec.Storage.Kine,
-			K0sVars: c.K0sVars,
+			Config:   nodeConfig.Spec.Storage.Kine,
+			K0sVars:  c.K0sVars,
+			UserName: userName,
 		}
 	case v1beta1.EtcdStorageType:
 		config := nodeConfig.Spec.Storage.Etcd
 		if !config.IsExternalClusterUsed() {
+			userName, apiServerUserName := constant.EtcdUser, constant.ApiserverUser
+			if i := nodeConfig.Spec.Install; i != nil && i.SystemUsers != nil {
+				if i.SystemUsers.Etcd != "" {
+					userName = i.SystemUsers.Etcd
+				}
+				if i.SystemUsers.KubeAPIServer != "" {
+					apiServerUserName = i.SystemUsers.KubeAPIServer
+				}
+			}
+
 			leaveEtcdClusterOnStop = new(atomic.Bool)
 			storageBackend = &controller.Etcd{
-				CertManager: certificateManager,
-				Config:      config,
-				JoinClient:  joinClient,
-				K0sVars:     c.K0sVars,
-				LogLevel:    c.LogLevels.Etcd,
-				LeaveOnStop: leaveEtcdClusterOnStop.Load,
+				CertManager:       certificateManager,
+				Config:            config,
+				JoinClient:        joinClient,
+				K0sVars:           c.K0sVars,
+				LogLevel:          c.LogLevels.Etcd,
+				UserName:          userName,
+				APIServerUserName: apiServerUserName,
+				LeaveOnStop:       leaveEtcdClusterOnStop.Load,
 			}
 		}
 	default:
@@ -316,10 +333,15 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 	enableKonnectivity := controllerMode != config.SingleNodeMode && !slices.Contains(flags.DisableComponents, constant.KonnectivityServerComponentName)
 
 	if enableKonnectivity {
+		userName := constant.KonnectivityServerUser
+		if i := nodeConfig.Spec.Install; i != nil && i.SystemUsers != nil && i.SystemUsers.Konnectivity != "" {
+			userName = i.SystemUsers.Konnectivity
+		}
 		nodeComponents.Add(ctx, &controller.Konnectivity{
 			Spec:         nodeConfig.Spec.Konnectivity,
 			K0sVars:      c.K0sVars,
 			LogLevel:     c.LogLevels.Konnectivity,
+			UserName:     userName,
 			EventEmitter: prober.NewEventEmitter(),
 			ServerCount:  numActiveControllers.Peek,
 		})
@@ -607,17 +629,29 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 	}
 
 	if !slices.Contains(flags.DisableComponents, constant.KubeSchedulerComponentName) {
+		userName := constant.SchedulerUser
+		if i := nodeConfig.Spec.Install; i != nil && i.SystemUsers != nil && i.SystemUsers.KubeScheduler != "" {
+			userName = i.SystemUsers.KubeScheduler
+		}
 		clusterComponents.Add(ctx, &controller.Scheduler{
 			LogLevel:              c.LogLevels.KubeScheduler,
 			K0sVars:               c.K0sVars,
+			UserName:              userName,
 			DisableLeaderElection: singleController,
 		})
 	}
 
 	if !slices.Contains(flags.DisableComponents, constant.KubeControllerManagerComponentName) {
+		// controller manager running as api-server user as they both need access to same sa.key
+		userName := constant.ApiserverUser
+		if i := nodeConfig.Spec.Install; i != nil && i.SystemUsers != nil && i.SystemUsers.KubeAPIServer != "" {
+			userName = i.SystemUsers.KubeAPIServer
+		}
+
 		clusterComponents.Add(ctx, &controller.Manager{
 			LogLevel:              c.LogLevels.KubeControllerManager,
 			K0sVars:               c.K0sVars,
+			UserName:              userName,
 			DisableLeaderElection: singleController,
 			ServiceClusterIPRange: nodeConfig.Spec.Network.BuildServiceCIDR(nodeConfig.Spec.PrimaryAddressFamily()),
 			ClusterCIDR:           nodeConfig.Spec.Network.BuildPodCIDR(nodeConfig.Spec.PrimaryAddressFamily()),

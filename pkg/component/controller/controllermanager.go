@@ -20,7 +20,6 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/featuregates"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/config"
-	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/supervisor"
 )
 
@@ -28,6 +27,7 @@ import (
 type Manager struct {
 	K0sVars               *config.CfgVars
 	LogLevel              string
+	UserName              string
 	DisableLeaderElection bool
 	ServiceClusterIPRange string
 	ClusterCIDR           string
@@ -57,10 +57,9 @@ var _ manager.Reconciler = (*Manager)(nil)
 // Init extracts the needed binaries
 func (a *Manager) Init(_ context.Context) error {
 	var err error
-	// controller manager running as api-server user as they both need access to same sa.key
-	a.uid, err = users.LookupUID(constant.ApiserverUser)
+	a.uid, err = users.LookupUID(a.UserName)
 	if err != nil {
-		err = fmt.Errorf("failed to lookup UID for %q: %w", constant.ApiserverUser, err)
+		err = fmt.Errorf("failed to lookup UID for %q: %w", a.UserName, err)
 		a.uid = users.RootUID
 		logrus.WithError(err).Warn("Running Kubernetes controller manager as root")
 	}
