@@ -6,6 +6,7 @@
 package reset
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -34,7 +35,7 @@ func NewResetCmd() *cobra.Command {
 				return err
 			}
 			c := (*command)(opts)
-			return c.reset(debugFlags.IsDebug())
+			return c.reset(cmd.Context(), debugFlags.IsDebug())
 		},
 	}
 
@@ -49,7 +50,7 @@ func NewResetCmd() *cobra.Command {
 	return cmd
 }
 
-func (c *command) reset(debug bool) error {
+func (c *command) reset(ctx context.Context, debug bool) error {
 	if os.Geteuid() != 0 {
 		return errors.New("this command must be run as root")
 	}
@@ -74,7 +75,7 @@ func (c *command) reset(debug bool) error {
 		return fmt.Errorf("failed to configure cleanup: %w", err)
 	}
 
-	err = cfg.Cleanup()
+	err = cfg.Cleanup(ctx)
 	logrus.Info("k0s cleanup operations done.")
 	logrus.Warn("To ensure a full reset, a node reboot is recommended.")
 
