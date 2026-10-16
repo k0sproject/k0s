@@ -37,8 +37,10 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/rest"
 	apiretry "k8s.io/client-go/util/retry"
 
 	"github.com/Masterminds/sprig"
@@ -783,9 +785,15 @@ func (ec *ExtensionsController) Init(_ context.Context) error {
 func (ec *ExtensionsController) Start(context.Context) error {
 	ec.L.Debug("Starting")
 
-	mgr, err := ec.instantiateManager()
+	clientConfig, err := ec.clients.GetRESTConfig()
 	if err != nil {
-		return fmt.Errorf("can't instantiate controller-runtime manager: %w", err)
+		return fmt.Errorf("can't build controller-runtime controller for helm extensions: %w", err)
+	}
+
+	// Create a scheme with both k0s types and core Kubernetes types (needed for Secret access)
+	scheme := k0sscheme.Scheme
+	if err := corev1.AddToScheme(scheme); err != nil {
+		return fmt.Errorf("can't add corev1 to scheme: %w", err)
 	}
 
 	var wg sync.WaitGroup
@@ -798,6 +806,13 @@ func (ec *ExtensionsController) Start(context.Context) error {
 			select {
 			case <-stackReconciledOnce:
 			case <-ctx.Done():
+				return
+			}
+
+			// A controller-runtime manager can only be started once.
+			mgr, err := ec.instantiateManager(clientConfig, scheme)
+			if err != nil {
+				ec.L.WithError(err).Error("Failed to instantiate controller-runtime manager")
 				return
 			}
 
@@ -819,18 +834,7 @@ func (ec *ExtensionsController) Start(context.Context) error {
 	return nil
 }
 
-func (ec *ExtensionsController) instantiateManager() (crman.Manager, error) {
-	clientConfig, err := ec.clients.GetRESTConfig()
-	if err != nil {
-		return nil, fmt.Errorf("can't build controller-runtime controller for helm extensions: %w", err)
-	}
-
-	// Create a scheme with both k0s types and core Kubernetes types (needed for Secret access)
-	scheme := k0sscheme.Scheme
-	if err := corev1.AddToScheme(scheme); err != nil {
-		return nil, fmt.Errorf("can't add corev1 to scheme: %w", err)
-	}
-
+func (ec *ExtensionsController) instantiateManager(clientConfig *rest.Config, scheme *runtime.Scheme) (crman.Manager, error) {
 	mgr, err := controllerruntime.NewManager(clientConfig, crman.Options{
 		Scheme: scheme,
 		Metrics: metricsserver.Options{
@@ -839,6 +843,8 @@ func (ec *ExtensionsController) instantiateManager() (crman.Manager, error) {
 		Logger: logrusr.New(ec.L),
 		Controller: ctrlconfig.Controller{
 			MaxConcurrentReconciles: 10,
+			// Controller names stay registered process-wide after a manager is discarded.
+			SkipNameValidation: new(true),
 		},
 	})
 	if err != nil {
