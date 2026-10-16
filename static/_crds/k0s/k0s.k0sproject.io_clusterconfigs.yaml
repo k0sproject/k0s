@@ -720,6 +720,26 @@ spec:
                           disableLoadBalancer:
                             description: DisableLoadBalancer disables the load balancer.
                             type: boolean
+                          loadBalancedPorts:
+                            description: |-
+                              LoadBalancedPorts selects the ports that are load balanced on the virtual IPs. By default, only the API server port.
+                              The userspace proxy listens on userSpaceProxyBindPort for it, and on the next two ports for the others.
+                            properties:
+                              api:
+                                default: true
+                                description: Load balance the API server port. Enabled
+                                  by default.
+                                type: boolean
+                              k0sApi:
+                                description: Load balance the k0s API port, which
+                                  joining controllers use. Disabled by default.
+                                type: boolean
+                              konnectivity:
+                                description: |-
+                                  Load balance the konnectivity agent port, so that agents connecting via a virtual IP reach every
+                                  konnectivity server. Disabled by default.
+                                type: boolean
+                            type: object
                           userSpaceProxyBindPort:
                             default: 6444
                             description: |-
@@ -729,6 +749,16 @@ spec:
                             maximum: 65535
                             minimum: 1
                             type: integer
+                          userSpaceProxyForwarding:
+                            default: DNAT
+                            description: |-
+                              UserSpaceProxyForwarding selects how the virtual IPs reach the userspace proxy. DNAT forwards to the
+                              controller address, REDIRECT to the local proxy port. DNAT falls back to REDIRECT without an address in
+                              the IP family of the virtual IP. Defaults to DNAT.
+                            enum:
+                            - DNAT
+                            - REDIRECT
+                            type: string
                           virtualServers:
                             description: |-
                               Configuration options related to the virtual servers. This is an array

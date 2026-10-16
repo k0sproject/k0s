@@ -196,6 +196,32 @@ spec:
         - ipAddress: "<VIP address without netmask>" # for instance 172.16.0.100
 ```
 
+### Load Balanced Ports
+
+By default, only the API server port is load balanced on the virtual IPs. Both load balancing mechanisms
+can also load balance the konnectivity agent port and the k0s API port. Put `loadBalancedPorts` in the
+`keepalived` section. Anywhere else, k0s ignores it.
+
+```yaml
+spec:
+  network:
+    controlPlaneLoadBalancing:
+      enabled: true
+      type: Keepalived
+      keepalived:
+        vrrpInstances:
+        - virtualIPs: ["<VIP address>/<netmask>"]
+          authPass: "<my password>"
+        loadBalancedPorts:
+          konnectivity: true # agents connecting via a VIP reach every konnectivity server
+          k0sApi: true       # controllers joining via a VIP reach any controller
+```
+
+The userspace reverse proxy listens on `userSpaceProxyBindPort` for the API server port, on the next port
+for the konnectivity agent port and on the port after that for the k0s API port. With the default of 6444,
+that's 6444, 6445 and 6446. Keepalived's virtual servers load balance each selected port directly, with one
+virtual server per port.
+
 ## Full example using `k0sctl`
 
 The following example shows a full `k0sctl` configuration file featuring three
@@ -512,6 +538,8 @@ NAME         ENDPOINTS                                         AGE
 kubernetes   172.17.0.6:6443,172.17.0.7:6443,172.17.0.8:6443   9m14s
 ```
 
+Every load balanced port uses the same list of control plane nodes.
+
 You can see the `cplb-reconciler` updates by running:
 
 ```console
@@ -531,18 +559,42 @@ controller0:/# netstat -tlpn | grep 6444
 tcp        0      0 :::6444                 :::*                    LISTEN      345/k0s
 ```
 
-Then the requests to the VIP on the apiserver port are forwarded to this socket using one iptables rule:
+With [`loadBalancedPorts`](#load-balanced-ports), it also listens on port 6445 for the konnectivity agent port
+and on port 6446 for the k0s API port, if they're enabled. With both enabled:
 
 ```console
--A PREROUTING -d <VIP>/32 -p tcp -m tcp --dport <apiserver port> -j REDIRECT --to-ports <userspace proxy port>
+controller0:/# netstat -tlpn | grep -E ':644[4-6] '
+tcp        0      0 :::6444                 :::*                    LISTEN      345/k0s
+tcp        0      0 :::6445                 :::*                    LISTEN      345/k0s
+tcp        0      0 :::6446                 :::*                    LISTEN      345/k0s
 ```
 
-A real life example of a cluster using the VIP `17.177.0.102` looks like:
+Then one iptables rule per port forwards the requests to the VIP to the matching proxy port:
 
 ```console
-controller0:/# /var/lib/k0s/bin/iptables-save | grep 6444
--A PREROUTING -d 172.17.0.102/32 -p tcp -m tcp --dport 6443 -j REDIRECT --to-ports 6444
+-A PREROUTING -d <VIP>/32 -p tcp -m tcp --dport <load balanced port> -j DNAT --to-destination <controller address>:<userspace proxy port>
 ```
+
+With `userSpaceProxyForwarding: REDIRECT` in the `keepalived` section, or if `spec.api.address` and the VIP are
+in different IP families, the rule uses `-j REDIRECT --to-ports <userspace proxy port>` instead.
+
+A real life example of a cluster using the VIP `172.17.0.102` looks like:
+
+```console
+controller0:/# /var/lib/k0s/bin/iptables-save | grep 172.17.0.102
+-A PREROUTING -d 172.17.0.102/32 -p tcp -m tcp --dport 6443 -j DNAT --to-destination 172.17.0.2:6444
+```
+
+With `konnectivity` and `k0sApi` enabled in `loadBalancedPorts`, there are two more rules:
+
+```console
+controller0:/# /var/lib/k0s/bin/iptables-save | grep 172.17.0.102
+-A PREROUTING -d 172.17.0.102/32 -p tcp -m tcp --dport 6443 -j DNAT --to-destination 172.17.0.2:6444
+-A PREROUTING -d 172.17.0.102/32 -p tcp -m tcp --dport 8132 -j DNAT --to-destination 172.17.0.2:6445
+-A PREROUTING -d 172.17.0.102/32 -p tcp -m tcp --dport 9443 -j DNAT --to-destination 172.17.0.2:6446
+```
+
+If `loadBalancedPorts` is set but only the API server port has a rule, check that the field is in the `keepalived` section.
 
 Keep in mind that clusters using IPv6 as a primary address family, should use ip6tables or ip6tables-save.
 
@@ -563,8 +615,10 @@ controller0:/# openssl s_client -connect 172.17.0.102:6444  </dev/null 2>/dev/nu
 SHA1 Fingerprint=B7:90:E6:E4:E1:EE:5B:19:72:99:02:28:54:36:D9:84:D5:39:67:8B
 ```
 
-Note: You can't query the port 6444 on the localhost address, there is an iptables conflict. You are expected to
-be able to reach the port 6443 on any address and the port 6444 on any address except localhost.
+You can check the k0s API port the same way, on port 6446 or on port 9443 of the VIP.
+
+Note: You can't query the userspace proxy ports on the localhost address because of an iptables conflict. You should
+be able to reach the load balanced ports on any address, and the userspace proxy ports on any address except localhost.
 
 ### Troubleshooting Keepalived Virtual Servers
 
@@ -593,6 +647,16 @@ TCP  192.168.122.200:6443 rr persistent 360
 
   In this example `192.168.122.200` is the virtual IP, and `192.168.122.185`, `192.168.122.87`
   and `192.168.122.122` are the control plane nodes.
+
+With [`loadBalancedPorts`](#load-balanced-ports), there's one virtual server for each load balanced port. For
+example, with `konnectivity` and `k0sApi` enabled:
+
+```console
+controller0:/# ipvsadm --save -n | grep -- '-A -t 192.168.122.200'
+-A -t 192.168.122.200:6443 -s rr -p 360
+-A -t 192.168.122.200:8132 -s rr -p 360
+-A -t 192.168.122.200:9443 -s rr -p 360
+```
 
 If there is only one VRRP instance, only the current master should be load balancing.
 
@@ -653,6 +717,7 @@ The templates are only read during the k0s bootstrap. If a template is changed i
 | Variable                                      | Description                                             |
 |-----------------------------------------------|---------------------------------------------------------|
 | `.APIServerPort`                              | Kubernetes API server port.                             |
+| `.LoadBalancedPorts`                          | List of ports that the virtual servers load balance.    |
 | `.RealServers`                                | List of real server IP addresses (control plane nodes). |
 | `.VirtualServers`                             | Array of virtual server configurations.                 |
 | `.VirtualServers[].DelayLoop`                 | Delay timer for check polling.                          |

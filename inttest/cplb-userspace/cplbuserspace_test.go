@@ -4,27 +4,27 @@
 package keepalived
 
 import (
-	"bytes"
 	"context"
-	"crypto/tls"
-	"encoding/hex"
-	"errors"
 	"fmt"
-	"html/template"
+	"maps"
 	"net"
-	"net/http"
 	"net/url"
 	"os"
+	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/token"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/k0sproject/k0s/inttest/common"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -32,6 +32,8 @@ type CPLBUserSpaceSuite struct {
 	common.BootlooseSuite
 	isIPv6Only         bool
 	useExternalAddress bool
+	// Whether the konnectivity agent and k0s API ports are load balanced as well.
+	loadBalanceAllPorts bool
 }
 
 const nllbControllerConfig = `
@@ -42,8 +44,9 @@ spec:
       type: Keepalived
       keepalived:
         vrrpInstances:
-        - virtualIPs: ["%s"]
+        - virtualIPs: ["{{ .VIP }}"]
           authPass: "123456"
+{{ .Keepalived }}
     nodeLocalLoadBalancing:
       enabled: true
       type: EnvoyProxy
@@ -68,47 +71,41 @@ spec:
         - virtualIPs: ["{{ .VIP }}"]
           authPass: "123456"
           interface: "{{ .Interface }}"
+{{ .Keepalived }}
 {{ if .IsIPv6Only }}
     podCIDR: fd00::/108
     serviceCIDR: fd01::/108
 {{ end }}
 `
 
-func (s *CPLBUserSpaceSuite) getK0sCfg(lb string, nic string) string {
-	if !s.useExternalAddress {
-		return fmt.Sprintf(nllbControllerConfig, common.GetCPLBVIPCIDR(lb, s.isIPv6Only))
+// getK0sCfg renders the k0s config with the given keepalived settings.
+func (s *CPLBUserSpaceSuite) getK0sCfg(lb string, nic string, spec *v1beta1.KeepalivedSpec) string {
+	cfg := nllbControllerConfig
+	if s.useExternalAddress {
+		cfg = extAddrControllerConfig
 	}
 
-	k0sCfg := bytes.NewBuffer([]byte{})
 	data := map[string]any{
 		"ExtAddr":    lb,
 		"VIP":        common.GetCPLBVIPCIDR(lb, s.isIPv6Only),
 		"IsIPv6Only": s.isIPv6Only,
 		"Interface":  nic,
+		"Keepalived": s.KeepalivedSettings(spec),
 	}
-	s.Require().NoError(template.Must(template.New("k0s.yaml").
-		Parse(extAddrControllerConfig)).
-		Execute(k0sCfg, data), "can't execute k0s.yaml template")
-	return k0sCfg.String()
+	return s.RenderTemplate("k0s.yaml", cfg, data)
 }
 
 // SetupTest prepares the controller and filesystem, getting it into a consistent
 // state which we can run tests against.
 func (s *CPLBUserSpaceSuite) TestK0sGetsUp() {
 	lb := common.GetCPLBVIP(&s.BootlooseSuite, s.isIPv6Only)
+	// Keepalived settings for the API server port only, and for all ports.
+	specs := map[bool]*v1beta1.KeepalivedSpec{false: {}, true: common.AllPortsKeepalivedSpec()}
 
 	ctx := s.Context()
 	var joinToken string
 	for idx := range s.ControllerCount {
-		// Test that all NIC selection mechanisms, default, interface name and MAC address work
-		nic := ""
-		switch idx {
-		case 1:
-			nic = "eth0"
-		case 2:
-			nic = s.getMAC(ctx, s.ControllerNode(idx))
-		}
-		k0sCfg := s.getK0sCfg(lb, nic)
+		k0sCfg := s.getK0sCfg(lb, s.nic(idx), specs[s.loadBalanceAllPorts])
 		s.PutFile(s.ControllerNode(idx), "/tmp/k0s.yaml", k0sCfg)
 		if s.isIPv6Only {
 			// Note that the token is intentionally empty for the first controller
@@ -163,13 +160,7 @@ func (s *CPLBUserSpaceSuite) TestK0sGetsUp() {
 	}
 
 	// Verify that only one controller has the VIP in eth0
-	count := 0
-	for idx := range s.ControllerCount {
-		if s.hasVIP(ctx, s.ControllerNode(idx), lb) {
-			count++
-		}
-	}
-	s.Require().Equal(1, count, "Expected exactly one controller to have the VIP")
+	s.Require().Len(common.VIPHolders(ctx, &s.BootlooseSuite, lb, s.isIPv6Only), 1, "Expected exactly one controller to have the VIP")
 
 	// Verify that controller+worker nodes are working normally.
 	s.T().Log("waiting to see CNI pods ready")
@@ -184,35 +175,43 @@ func (s *CPLBUserSpaceSuite) TestK0sGetsUp() {
 	{
 		s.T().Log("waiting for konnectivity")
 		controllerCount := uint(s.ControllerCount)
-		// FIXME: Currently, the external address doesn't load-balance konnectivity properly.
-		if s.useExternalAddress {
+		// Agents connect through the external address. Unless its konnectivity port is load balanced, they reach one server.
+		if s.useExternalAddress && !s.loadBalanceAllPorts {
 			controllerCount = 1
 		}
 		s.Require().NoError(common.VerifyKonnectivityMesh(ctx, restConfig, client, s.T(), controllerCount, uint(s.ControllerCount+s.WorkerCount)), "While verifying konnectivity mesh")
 	}
 
 	s.T().Log("Testing that the load balancer is actually balancing the load")
-	// Other stuff may be querying the controller, running the HTTPS request 15 times
-	// should be more than we need.
-	attempt := 0
-	signatures := make(map[string]int)
-	url := url.URL{Scheme: "https", Host: net.JoinHostPort(lb, strconv.Itoa(6443))}
-	for len(signatures) < 3 {
-		signature, err := getServerCertSignature(ctx, url.String())
-		s.Require().NoError(err)
-		signatures[signature] = 1
-		attempt++
-		s.Require().LessOrEqual(attempt, 15, "Failed to get a signature from all controllers")
+	s.verifyLoadBalanced(ctx, lb, s.KubeAPIExternalPort, s.ControllerCount)
+	if s.loadBalanceAllPorts {
+		s.T().Log("Testing that the load balancer is balancing the k0s API port, too")
+		s.verifyLoadBalanced(ctx, lb, s.K0sAPIExternalPort, s.ControllerCount)
 	}
+	s.checkPorts(ctx, lb, s.BalancedPorts(specs[s.loadBalanceAllPorts]))
 
 	s.T().Log("Verify that controllers resolved the interface name from the MAC address correctly")
 	for idx := range s.ControllerCount {
-		keepalivedCfg := s.getFile(ctx, s.ControllerNode(idx), "/run/k0s/keepalived.conf")
+		keepalivedCfg := s.GetFileFromController(idx, "/run/k0s/keepalived.conf")
 		s.Require().Contains(keepalivedCfg, "interface eth0", "Expected keepalived to resolve the interface name from the MAC address")
 		if idx == 2 {
-			s.Require().NotContains(keepalivedCfg, s.getMAC(ctx, s.ControllerNode(idx)), "Expected keepalived to have an interface configured")
+			s.Require().NotContains(keepalivedCfg, s.getMAC(idx), "Expected keepalived to have an interface configured")
 		}
 	}
+
+	s.Run("the other way around", func() {
+		allPorts := !s.loadBalanceAllPorts
+		s.RestartControllersWithConfig("/tmp/k0s.yaml", func(idx int) string { return s.getK0sCfg(lb, s.nic(idx), specs[allPorts]) })
+		// A controller holds the virtual IP again after the restarts.
+		s.Require().EventuallyWithT(func(c *assert.CollectT) {
+			assert.Len(c, common.VIPHolders(ctx, &s.BootlooseSuite, lb, s.isIPv6Only), 1, "Exactly one controller should hold the virtual IP")
+		}, 2*time.Minute, time.Second)
+		s.checkPorts(ctx, lb, s.BalancedPorts(specs[allPorts]))
+		s.verifyLoadBalanced(ctx, lb, s.KubeAPIExternalPort, s.ControllerCount)
+		if allPorts {
+			s.verifyLoadBalanced(ctx, lb, s.K0sAPIExternalPort, s.ControllerCount)
+		}
+	})
 }
 
 // checkDummy checks that the dummy interface isn't present in the node.
@@ -224,77 +223,91 @@ func (s *CPLBUserSpaceSuite) checkDummy(ctx context.Context, node string) {
 	s.Require().Error(ssh.Exec(ctx, "ip --oneline addr show dummyvip0", common.SSHStreams{}))
 }
 
-// hasVIP checks that the dummy interface is present on the given node and
-// that it has only the virtual IP address.
-func (s *CPLBUserSpaceSuite) hasVIP(ctx context.Context, node string, vip string) bool {
-	ssh, err := s.SSH(ctx, node)
-	s.Require().NoError(err)
-	defer ssh.Disconnect()
-
-	output, err := ssh.ExecWithOutput(ctx, "ip --oneline addr show eth0")
-	s.Require().NoError(err)
-
-	return strings.Contains(output, fmt.Sprintf(" %s scope", common.GetCPLBVIPCIDR(vip, s.isIPv6Only)))
+// verifyLoadBalanced checks that the port on the virtual IP reaches the given number of controllers.
+func (s *CPLBUserSpaceSuite) verifyLoadBalanced(ctx context.Context, lb string, port int, controllers int) {
+	url := url.URL{Scheme: "https", Host: net.JoinHostPort(lb, strconv.Itoa(port))}
+	s.Require().EventuallyWithT(func(c *assert.CollectT) {
+		// Other stuff may be querying the controller, running the HTTPS request 15 times
+		// should be more than we need. A single controller is still checked a few times.
+		signatures := make(map[string]struct{})
+		for attempt := 0; attempt < 15 && (len(signatures) < controllers || controllers == 1 && attempt < 5); attempt++ {
+			signature, err := common.ServerCertSignature(ctx, url.String())
+			if !assert.NoError(c, err) {
+				return
+			}
+			signatures[signature] = struct{}{}
+		}
+		assert.Len(c, signatures, controllers, "Port %d on the virtual IP should reach %d controllers", port, controllers)
+	}, 3*time.Minute, 2*time.Second)
 }
 
-// getServerCertSignature connects to the given HTTPS URL and returns the server certificate signature.
-func getServerCertSignature(ctx context.Context, url string) (string, error) {
-	// Create a custom HTTP client with a custom TLS configuration
-	client := &http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: true, // Skip verification for demonstration purposes
-			},
-		},
+// checkPorts checks that each controller redirects exactly the given ports on the virtual IP to their proxy ports,
+// and that the userspace proxy listens on exactly those proxy ports.
+func (s *CPLBUserSpaceSuite) checkPorts(ctx context.Context, lb string, ports []v1beta1.BalancedPort) {
+	redirects := map[int]int{}
+	for _, p := range ports {
+		redirects[p.Port] = p.ProxyPort
 	}
-	defer client.CloseIdleConnections()
-
-	// Make a request to the URL
-
-	// Make a request to the URL with the context
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		return "", err
+	wantRedirects := fmt.Sprint(redirects)
+	wantListeners := fmt.Sprint(slices.Sorted(maps.Values(redirects)))
+	iptables := "iptables"
+	if s.isIPv6Only {
+		iptables = "ip6tables"
 	}
+	redirect := regexp.MustCompile(`--dport (\d+) .*(?:--to-ports |--to-destination \S*:)(\d+)`)
+	for idx := range s.ControllerCount {
+		node := s.ControllerNode(idx)
+		s.Require().EventuallyWithT(func(c *assert.CollectT) {
+			ssh, err := s.SSH(ctx, node)
+			if !assert.NoError(c, err) {
+				return
+			}
+			defer ssh.Disconnect()
 
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", err
+			// Ports redirected on the virtual IP, mapped to their target ports.
+			rules, err := ssh.ExecWithOutput(ctx, "/var/lib/k0s/bin/"+iptables+" -t nat -S PREROUTING")
+			if !assert.NoError(c, err) {
+				return
+			}
+			got := map[int]int{}
+			for rule := range strings.Lines(rules) {
+				if m := redirect.FindStringSubmatch(rule); m != nil && strings.Contains(rule, "-d "+lb+"/") {
+					port, _ := strconv.Atoi(m[1])
+					got[port], _ = strconv.Atoi(m[2])
+				}
+			}
+			assert.Equal(c, wantRedirects, fmt.Sprint(got), "Controller %s should redirect these ports on the virtual IP", node)
+
+			// Proxy ports that the userspace proxy listens on.
+			listening, err := ssh.ExecWithOutput(ctx, "netstat -tln")
+			if !assert.NoError(c, err) {
+				return
+			}
+			listeners := []int{}
+			for _, p := range s.BalancedPorts(common.AllPortsKeepalivedSpec()) {
+				if regexp.MustCompile(fmt.Sprintf(`:%d\s`, p.ProxyPort)).MatchString(listening) {
+					listeners = append(listeners, p.ProxyPort)
+				}
+			}
+			assert.Equal(c, wantListeners, fmt.Sprint(listeners), "The userspace proxy on controller %s should listen on these ports", node)
+		}, 2*time.Minute, time.Second)
 	}
-	defer resp.Body.Close()
-
-	// Get the TLS connection state
-	connState := resp.TLS
-	if connState == nil {
-		return "", errors.New("no TLS connection state")
-	}
-
-	// Get the server certificate
-	if len(connState.PeerCertificates) != 1 {
-		return "", errors.New("no server certificate found")
-	}
-	cert := connState.PeerCertificates[0]
-
-	// Get the certificate signature
-	signature := cert.Signature
-
-	// Return the signature as a hex string
-	return hex.EncodeToString(signature), nil
 }
 
-func (s *CPLBUserSpaceSuite) getMAC(ctx context.Context, nodeName string) string {
-	return s.getFile(ctx, nodeName, "/sys/class/net/eth0/address")
+// nic returns the interface setting of the controller, so that all NIC selection mechanisms are tested, the
+// default, the interface name and the MAC address.
+func (s *CPLBUserSpaceSuite) nic(idx int) string {
+	switch idx {
+	case 1:
+		return "eth0"
+	case 2:
+		return s.getMAC(idx)
+	}
+	return ""
 }
 
-func (s *CPLBUserSpaceSuite) getFile(ctx context.Context, nodeName string, path string) string {
-	ssh, err := s.SSH(ctx, nodeName)
-	s.Require().NoError(err)
-	defer ssh.Disconnect()
-
-	output, err := ssh.ExecWithOutput(ctx, "cat "+path)
-	s.Require().NoError(err)
-
-	return output
+func (s *CPLBUserSpaceSuite) getMAC(idx int) string {
+	return s.GetFileFromController(idx, "/sys/class/net/eth0/address")
 }
 
 // TestKeepAlivedSuite runs the keepalived test suite. It verifies that the
@@ -305,6 +318,8 @@ func TestCPLBUserSpaceSuite(t *testing.T) {
 			ControllerCount: 3,
 			WorkerCount:     1,
 		},
+		// The IPVS suite covers IPv4 with only the API server port.
+		loadBalanceAllPorts: true,
 	}
 
 	target := os.Getenv("K0S_INTTEST_TARGET")
@@ -313,6 +328,7 @@ func TestCPLBUserSpaceSuite(t *testing.T) {
 		t.Log("Testing IPv6 only mode")
 		cplbSuite.isIPv6Only = true
 		cplbSuite.useExternalAddress = true
+		cplbSuite.loadBalanceAllPorts = false
 		cplbSuite.Networks = []string{"bridge-ipv6"}
 		cplbSuite.AirgapImageBundleMountPoints = []string{"/var/lib/k0s/images/bundle-ipv6.tar"}
 

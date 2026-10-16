@@ -69,6 +69,16 @@ type KeepalivedSpec struct {
 	UserSpaceProxyPort int `json:"userSpaceProxyBindPort,omitempty"`
 	// DisableLoadBalancer disables the load balancer.
 	DisableLoadBalancer bool `json:"disableLoadBalancer,omitempty"`
+	// LoadBalancedPorts selects the ports that are load balanced on the virtual IPs. By default, only the API server port.
+	// The userspace proxy listens on userSpaceProxyBindPort for it, and on the next two ports for the others.
+	// +optional
+	LoadBalancedPorts *LoadBalancedPorts `json:"loadBalancedPorts,omitempty"`
+	// UserSpaceProxyForwarding selects how the virtual IPs reach the userspace proxy. DNAT forwards to the
+	// controller address, REDIRECT to the local proxy port. DNAT falls back to REDIRECT without an address in
+	// the IP family of the virtual IP. Defaults to DNAT.
+	// +kubebuilder:default=DNAT
+	// +optional
+	UserSpaceProxyForwarding UserSpaceProxyForwarding `json:"userSpaceProxyForwarding,omitempty"`
 	// ConfigTemplateVRRP specifies the path to a custom Keepalived configuration template for VRRP.
 	// If specified, this template will be used instead of the default configuration.
 	// The template must be a valid Go template and will receive keepalivedConfig as input.
@@ -79,6 +89,20 @@ type KeepalivedSpec struct {
 	// The template must be a valid Go template and will receive keepalivedConfig as input.
 	// +optional
 	ConfigTemplateVS string `json:"configTemplateVS,omitempty"`
+}
+
+// UserSpaceProxyForwarding describes how the virtual IPs reach the userspace proxy.
+// +kubebuilder:validation:Enum=DNAT;REDIRECT
+type UserSpaceProxyForwarding string
+
+const (
+	UserSpaceProxyForwardingDNAT     UserSpaceProxyForwarding = "DNAT"
+	UserSpaceProxyForwardingREDIRECT UserSpaceProxyForwarding = "REDIRECT"
+)
+
+var validUserSpaceProxyForwardings = [...]UserSpaceProxyForwarding{
+	UserSpaceProxyForwardingDNAT,
+	UserSpaceProxyForwardingREDIRECT,
 }
 
 // VRRPInstances is a list of VRRPInstance
@@ -369,11 +393,17 @@ func (k *KeepalivedSpec) Validate(path *field.Path) (errs field.ErrorList) {
 	errs = append(errs, k.VRRPInstances.validate(path.Child("vrrpInstances"), nil)...)
 	errs = append(errs, k.VirtualServers.validate(path.Child("virtualServers"))...)
 	if k.UserSpaceProxyPort == 0 {
-		k.UserSpaceProxyPort = 6444
+		k.UserSpaceProxyPort = defaultUserSpaceProxyPort
 	} else {
 		for _, msg := range validation.IsValidPortNum(k.UserSpaceProxyPort) {
 			errs = append(errs, field.Invalid(path.Child("userSpaceProxyBindPort"), k.UserSpaceProxyPort, msg))
 		}
+	}
+	errs = append(errs, k.validateLoadBalancedPorts(path)...)
+	if k.UserSpaceProxyForwarding == "" {
+		k.UserSpaceProxyForwarding = UserSpaceProxyForwardingDNAT
+	} else if !slices.Contains(validUserSpaceProxyForwardings[:], k.UserSpaceProxyForwarding) {
+		errs = append(errs, field.NotSupported(path.Child("userSpaceProxyForwarding"), k.UserSpaceProxyForwarding, validUserSpaceProxyForwardings[:]))
 	}
 
 	return errs

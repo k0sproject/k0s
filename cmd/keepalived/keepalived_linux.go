@@ -6,19 +6,24 @@ package keepalived
 import (
 	"errors"
 	"fmt"
+	"net"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
 
+	"github.com/k0sproject/k0s/internal/pkg/file"
+
 	"github.com/spf13/cobra"
 )
 
 func NewKeepalivedSetStateCmd() *cobra.Command {
 	var (
-		rundir string
-		state  string
+		rundir     string
+		state      string
+		iface      string
+		virtualIPs []string
 	)
 
 	cmd := &cobra.Command{
@@ -35,47 +40,96 @@ func NewKeepalivedSetStateCmd() *cobra.Command {
 				return err
 			}
 
-			// generatedVirtualServers doesn't need to exist in order to be linked
-			// so we don't need to check for it.
-			// If it doesn't exist yet, we link it now and when k0s creates it, it
-			// will signal keepalived.
-			generatedVirtualServers := filepath.Join(rundir, "keepalived-virtualservers-generated.conf")
-
-			sourceFile := ""
-			switch state {
-			case "MASTER":
-				sourceFile = generatedVirtualServers
-			case "BACKUP":
-				sourceFile = os.DevNull
-			default:
+			if state != "MASTER" && state != "BACKUP" {
 				return fmt.Errorf("invalid state %s, expected MASTER or BACKUP", state)
-
 			}
 
-			if err = createSymlink(rundir, sourceFile); err != nil {
-				return fmt.Errorf("failed to create symlink: %w", err)
-			}
-
-			pid, err := getPid(rundir)
-			if err != nil {
-				return err
-			}
-
-			if err := syscall.Kill(pid, syscall.SIGHUP); err != nil {
-				return fmt.Errorf("failed to send SIGHUP to pid %d: %w", pid, err)
-			}
-			return nil
+			return setState(rundir, state, iface, virtualIPs)
 		},
 	}
 	// Add flags
 	cmd.Flags().StringVarP(&rundir, "run-dir", "r", "", "Path to the run-dir (required)")
 	cmd.Flags().StringVarP(&state, "state", "s", "", "State to set (MASTER or BACKUP) (required)")
+	cmd.Flags().StringVar(&iface, "interface", "", "Interface of the VRRP instance, decides the state with --virtual-ip")
+	cmd.Flags().StringArrayVar(&virtualIPs, "virtual-ip", nil, "Virtual IP of the VRRP instance, in CIDR notation")
 
 	// Mark flags as required
 	_ = cmd.MarkFlagRequired("rundir")
 	_ = cmd.MarkFlagRequired("state")
 
 	return cmd
+}
+
+// setState links the virtual servers for MASTER and nothing for BACKUP, then reloads keepalived.
+// Notify scripts can run at the same time, so a lock runs them one by one and the virtual IPs decide.
+func setState(rundir, state, iface string, virtualIPs []string) error {
+	lockFile, err := file.LockPath(filepath.Join(rundir, "keepalived-setstate.lock"), true)
+	if err != nil {
+		return err
+	}
+	// Closing the file releases the lock.
+	defer func() { _ = lockFile.Close() }()
+
+	master := state == "MASTER"
+	if iface != "" && len(virtualIPs) > 0 {
+		if master, err = interfaceHoldsVirtualIP(iface, virtualIPs); err != nil {
+			return err
+		}
+	}
+
+	// The generated file may not exist yet. k0s reloads keepalived once it writes the file.
+	sourceFile := os.DevNull
+	if master {
+		sourceFile = filepath.Join(rundir, "keepalived-virtualservers-generated.conf")
+	}
+
+	if err = createSymlink(rundir, sourceFile); err != nil {
+		return fmt.Errorf("failed to create symlink: %w", err)
+	}
+
+	return reloadKeepalived(rundir)
+}
+
+// interfaceHoldsVirtualIP reports whether any of the virtual IPs is on the interface.
+func interfaceHoldsVirtualIP(iface string, virtualIPs []string) (bool, error) {
+	link, err := net.InterfaceByName(iface)
+	if err != nil {
+		return false, err
+	}
+	addrs, err := link.Addrs()
+	if err != nil {
+		return false, fmt.Errorf("failed to list the addresses of %s: %w", iface, err)
+	}
+	return holdsVirtualIP(virtualIPs, addrs)
+}
+
+// reloadKeepalived makes keepalived reload its configuration.
+func reloadKeepalived(rundir string) error {
+	pid, err := getPid(rundir)
+	if err != nil {
+		return err
+	}
+
+	if err = syscall.Kill(pid, syscall.SIGHUP); err != nil {
+		return fmt.Errorf("failed to send SIGHUP to pid %d: %w", pid, err)
+	}
+	return nil
+}
+
+// holdsVirtualIP reports whether any of the virtual IPs is among the addresses.
+func holdsVirtualIP(virtualIPs []string, addrs []net.Addr) (bool, error) {
+	for _, virtualIP := range virtualIPs {
+		ip, _, err := net.ParseCIDR(virtualIP)
+		if err != nil {
+			return false, err
+		}
+		for _, addr := range addrs {
+			if ipNet, ok := addr.(*net.IPNet); ok && ipNet.IP.Equal(ip) {
+				return true, nil
+			}
+		}
+	}
+	return false, nil
 }
 
 func createSymlink(rundir string, sourceFile string) error {
