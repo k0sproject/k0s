@@ -33,6 +33,11 @@ rules:
   - apiGroups: [autopilot.k0sproject.io]
     resources: [plans]
     verbs: [get, list, watch]
+  # Workers wait for the plans CRD to be established before starting Autopilot.
+  - apiGroups: [apiextensions.k8s.io]
+    resources: [customresourcedefinitions]
+    resourceNames: [plans.autopilot.k0sproject.io]
+    verbs: [get, list, watch]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
