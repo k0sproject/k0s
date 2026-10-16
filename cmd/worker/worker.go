@@ -296,7 +296,7 @@ func (c *Command) Start(ctx context.Context, nodeName apitypes.NodeName, kubelet
 			DualStackEnabled:    workerConfig.DualStackEnabled,
 		})
 
-	addPlatformSpecificComponents(ctx, componentManager, c.K0sVars, workerConfig, controller, certManager)
+	addPlatformSpecificComponents(ctx, componentManager, c.K0sVars, nodeName, workerConfig, controller, certManager)
 
 	if controller == nil {
 		// if running inside a controller, status component is already running
