@@ -179,7 +179,7 @@ func (c *Component) setupConfig() error {
 		return fmt.Errorf("can't create containerd config imports dir: %w", err)
 	}
 
-	configData, err := marshalContainerdConfig(c.importsPath, c.Profile.PauseImage.URI())
+	configData, err := marshalContainerdConfig(c.importsPath, c.Profile.PauseImage.URI(), c.K0sVars.RunDir)
 	if err != nil {
 		return fmt.Errorf("can't marshal containerd config: %w", err)
 	}
