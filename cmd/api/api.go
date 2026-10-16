@@ -148,7 +148,7 @@ func buildServer(log logrus.FieldLogger, k0sVars *config.CfgVars, nodeConfig *v1
 		// Only mount the etcd handler if we're running on internal etcd storage
 		// by default the mux will return 404 back which the caller should handle
 		mux.Handle(prefix+"/etcd/members", mw.AllowMethods(http.MethodPost)(
-			authMiddleware(etcdHandler(log, k0sVars.CertRootDir, k0sVars.EtcdCertDir), log, secrets, "controller-join")))
+			authMiddleware(etcdHandler(log, k0sVars.CertRootDir, k0sVars.EtcdCertDir, k0sVars.EtcdSocketPath), log, secrets, "controller-join")))
 	}
 
 	if storage.IsJoinable() {
@@ -182,7 +182,7 @@ func buildServer(log logrus.FieldLogger, k0sVars *config.CfgVars, nodeConfig *v1
 	}, nil
 }
 
-func etcdHandler(log logrus.FieldLogger, certRootDir, etcdCertDir string) http.Handler {
+func etcdHandler(log logrus.FieldLogger, certRootDir, etcdCertDir, etcdSocketPath string) http.Handler {
 	return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 		var etcdReq v1beta1.EtcdRequest
@@ -198,7 +198,7 @@ func etcdHandler(log logrus.FieldLogger, certRootDir, etcdCertDir string) http.H
 			return
 		}
 
-		etcdClient, err := etcd.NewClient(certRootDir, etcdCertDir, nil)
+		etcdClient, err := etcd.NewClient(certRootDir, etcdCertDir, etcdSocketPath, nil)
 		if err != nil {
 			sendError(err, resp)
 			return

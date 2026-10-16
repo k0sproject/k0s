@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -48,9 +49,10 @@ type Etcd struct {
 	LogLevel    string
 	LeaveOnStop func() bool
 
-	supervisor     *supervisor.Supervisor
-	executablePath string
-	uid            int
+	supervisor      *supervisor.Supervisor
+	stopSocketWatch func()
+	executablePath  string
+	uid             int
 }
 
 var _ manager.Component = (*Etcd)(nil)
@@ -81,7 +83,20 @@ func (e *Etcd) Init(_ context.Context) error {
 		return fmt.Errorf("failed to create etcd cert dir: %w", err)
 	}
 
-	for _, f := range []string{e.K0sVars.EtcdDataDir, e.K0sVars.EtcdCertDir} {
+	// Unix domain socket paths, including the terminating NUL byte, are
+	// limited to 108 bytes on Linux and to 104 bytes on some other platforms,
+	// see unix(7). Check against the lower limit.
+	if len(e.K0sVars.EtcdSocketPath) > 103 {
+		return fmt.Errorf("etcd socket path %q exceeds the unix domain socket path length limit; use a shorter run directory", e.K0sVars.EtcdSocketPath)
+	}
+
+	etcdSocketDir := filepath.Dir(e.K0sVars.EtcdSocketPath)
+	err = dir.Init(etcdSocketDir, 0755)
+	if err != nil {
+		return fmt.Errorf("failed to create etcd socket dir: %w", err)
+	}
+
+	for _, f := range []string{e.K0sVars.EtcdDataDir, e.K0sVars.EtcdCertDir, etcdSocketDir} {
 		err = recursiveChown(f, e.uid, etcdGID)
 		if err != nil && os.Geteuid() == 0 {
 			return err
@@ -167,11 +182,12 @@ func (e *Etcd) Start(ctx context.Context) (err error) {
 	}
 
 	peerURL := e.Config.GetPeerURL()
+	clientURL := etcd.SocketURL(e.K0sVars.EtcdSocketPath)
 
 	args := stringmap.StringMap{
 		"--data-dir":                    e.K0sVars.EtcdDataDir,
-		"--listen-client-urls":          "https://127.0.0.1:2379",
-		"--advertise-client-urls":       "https://127.0.0.1:2379",
+		"--listen-client-urls":          clientURL,
+		"--advertise-client-urls":       clientURL,
 		"--client-cert-auth":            "true",
 		"--listen-peer-urls":            peerURL,
 		"--initial-advertise-peer-urls": peerURL,
@@ -223,6 +239,16 @@ func (e *Etcd) Start(ctx context.Context) (err error) {
 		args[argName] = value
 	}
 
+	// All internal etcd clients, including kube-apiserver, connect via the
+	// unix socket. Make sure that etcd keeps listening on it and advertising
+	// it, even if the user overrides the listener configuration.
+	for _, argName := range []string{"--listen-client-urls", "--advertise-client-urls"} {
+		if merged := ensureURLInList(clientURL, args[argName]); merged != args[argName] {
+			logrus.WithField("component", "etcd").Warnf("Appending %s to the user-provided %s, as internal etcd clients rely on it", clientURL, argName)
+			args[argName] = merged
+		}
+	}
+
 	// Specifying a minimum version of TLS 1.3 _and_ a list of cipher suites
 	// will be rejected.
 	// https://github.com/etcd-io/etcd/pull/15156/files#diff-538c79cd00ec18cb43b5dddd5f36b979d9d050cf478a241304493284739d31bfR810-R813
@@ -231,6 +257,18 @@ func (e *Etcd) Start(ctx context.Context) (err error) {
 	}
 
 	logrus.Debugf("starting etcd with args: %v", args)
+
+	// etcd creates its client socket according to its umask on each start.
+	// Keep adjusting its mode, so that other local users can connect to it.
+	stopSocketWatch, err := watchSocketMode(logrus.WithField("component", "etcd"), e.K0sVars.EtcdSocketPath)
+	if err != nil {
+		return fmt.Errorf("failed to watch etcd socket: %w", err)
+	}
+	defer func() {
+		if err != nil {
+			stopSocketWatch()
+		}
+	}()
 
 	e.supervisor = &supervisor.Supervisor{
 		Name:          "etcd",
@@ -246,6 +284,8 @@ func (e *Etcd) Start(ctx context.Context) (err error) {
 	if err := e.supervisor.Supervise(ctx); err != nil {
 		return err
 	}
+	e.stopSocketWatch = stopSocketWatch
+
 	defer func() {
 		if err != nil {
 			err = errors.Join(err, e.supervisor.Stop())
@@ -278,8 +318,20 @@ func (e *Etcd) Start(ctx context.Context) (err error) {
 	}
 }
 
+// ensureURLInList ensures that url is an element of the comma-separated list
+// of URLs, appending it if necessary.
+func ensureURLInList(url, urls string) string {
+	if urls == "" {
+		return url
+	}
+	if !slices.Contains(strings.Split(urls, ","), url) {
+		return urls + "," + url
+	}
+	return urls
+}
+
 func (e *Etcd) fixupPeerURL(ctx context.Context) (err error) {
-	c, err := etcd.NewClient(e.K0sVars.CertRootDir, e.K0sVars.EtcdCertDir, e.Config)
+	c, err := etcd.NewClient(e.K0sVars.CertRootDir, e.K0sVars.EtcdCertDir, e.K0sVars.EtcdSocketPath, e.Config)
 	if err != nil {
 		return err
 	}
@@ -331,6 +383,10 @@ func (e *Etcd) Stop() error {
 		return nil
 	}
 
+	if stop := e.stopSocketWatch; stop != nil {
+		defer stop()
+	}
+
 	if !e.LeaveOnStop() {
 		return s.Stop()
 	}
@@ -371,7 +427,7 @@ func (e *Etcd) leave(ctx context.Context) error {
 	log.Info("Attempting to leave the cluster")
 
 	if err := func() error {
-		c, err := etcd.NewClient(e.K0sVars.CertRootDir, e.K0sVars.EtcdCertDir, e.Config)
+		c, err := etcd.NewClient(e.K0sVars.CertRootDir, e.K0sVars.EtcdCertDir, e.K0sVars.EtcdSocketPath, e.Config)
 		if err != nil {
 			return fmt.Errorf("failed to initialize etcd client: %w", err)
 		}
@@ -481,6 +537,7 @@ func (e *Etcd) setupCerts(ctx context.Context) error {
 			CAKey:  etcdCaCertKey,
 			Hostnames: []string{
 				"127.0.0.1",
+				"::1",
 				"localhost",
 			},
 		}
@@ -516,7 +573,7 @@ func (e *Etcd) Ready() error {
 	logrus.WithField("component", "etcd").Debug("checking etcd endpoint for health")
 	ctx, cancel := context.WithTimeout(context.TODO(), 1*time.Second)
 	defer cancel()
-	err := etcd.CheckEtcdReady(ctx, e.K0sVars.CertRootDir, e.K0sVars.EtcdCertDir, e.Config)
+	err := etcd.CheckEtcdReady(ctx, e.K0sVars.CertRootDir, e.K0sVars.EtcdCertDir, e.K0sVars.EtcdSocketPath, e.Config)
 	return err
 }
 

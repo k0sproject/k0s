@@ -250,6 +250,9 @@ func (k *KineConfig) IsJoinable() bool {
 
 // GetEndpointsAsString returns comma-separated list of external cluster endpoints if exist
 // or internal etcd address which is https://127.0.0.1:2379
+//
+// Deprecated: k0s's internal etcd listens on a unix socket. This method is
+// retained for compatibility and isn't used by k0s itself.
 func (e *EtcdConfig) GetEndpointsAsString() string {
 	if e != nil && e.IsExternalClusterUsed() {
 		return strings.Join(e.ExternalCluster.Endpoints, ",")
@@ -259,6 +262,9 @@ func (e *EtcdConfig) GetEndpointsAsString() string {
 
 // GetEndpointsAsString returns external cluster endpoints if exist
 // or internal etcd address which is https://127.0.0.1:2379
+//
+// Deprecated: k0s's internal etcd listens on a unix socket. This method is
+// retained for compatibility and isn't used by k0s itself.
 func (e *EtcdConfig) GetEndpoints() []string {
 	if e != nil && e.IsExternalClusterUsed() {
 		return e.ExternalCluster.Endpoints
