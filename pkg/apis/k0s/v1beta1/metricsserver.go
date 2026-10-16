@@ -19,6 +19,6 @@ func (m *MetricsServer) Validate(path *field.Path) (errs []error) {
 	if m == nil {
 		return
 	}
-	errs = append(errs, m.Patches.validate(path.Child("patches"))...)
+	errs = append(errs, toErrors(m.Patches.validate(path.Child("patches")))...)
 	return
 }
