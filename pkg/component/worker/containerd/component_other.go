@@ -6,7 +6,7 @@
 package containerd
 
 import (
-	"github.com/k0sproject/k0s/pkg/assets"
+	"github.com/k0sproject/k0s/internal/assets"
 )
 
 const (
