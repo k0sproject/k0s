@@ -2,7 +2,7 @@ sonobuoy_image = docker.io/sonobuoy/sonobuoy:v0.57.5@sha256:7a65a613a53017dfbe67
 sonobuoy_version = $(patsubst v%,%,$(lastword $(subst :, ,$(firstword $(subst @, ,$(sonobuoy_image))))))
 
 # renovate: datasource=github-releases depName=helm/helm
-helm_version = 4.3.0
+helm_version = 4.3.1
 
 smoketests := \
 	check-addons \
