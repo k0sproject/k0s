@@ -289,6 +289,9 @@ func (c *Command) Start(ctx context.Context, nodeName apitypes.NodeName, kubelet
 			BinDir:       c.K0sVars.BinDir,
 		})
 	}
+	// Marks the node as running k0s. The leading controller labels the other nodes.
+	labels := stringmap.Merge(stringmap.StringMap{constant.K0sNodeLabel: "true"}, c.Labels)
+
 	componentManager.Add(ctx,
 		&worker.Kubelet{
 			NodeName:             nodeName,
@@ -299,7 +302,7 @@ func (c *Command) Start(ctx context.Context, nodeName apitypes.NodeName, kubelet
 			Kubeconfig:           kubeletKubeconfigPath,
 			Configuration:        *workerConfig.KubeletConfiguration.DeepCopy(),
 			LogLevel:             c.LogLevels.Kubelet,
-			Labels:               c.Labels,
+			Labels:               labels,
 			Taints:               c.Taints,
 			ExtraArgs:            kubeletExtraArgs,
 			DualStackEnabled:     workerConfig.DualStackEnabled,

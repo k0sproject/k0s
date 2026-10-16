@@ -130,6 +130,8 @@ type apiServerConfig struct {
 	rawArgs        []string              // Raw arguments appended after the flags
 	stopTimeout    time.Duration         // How long to wait for kube-apiserver to terminate gracefully
 	egressSelector *egressSelectorConfig // The egress selector config, if konnectivity is enabled
+	// The path of the authentication config for cluster-info discovery, if k0s manages it.
+	discoveryAuthentication string
 }
 
 // Computes the kube-apiserver launch config from the k0s configuration.
@@ -192,12 +194,19 @@ func (a *APIServer) buildConfig() (*apiServerConfig, error) {
 	}
 	args = featuregates.ToArgs(args, a.NodeConfig.Spec.FeatureGates, kubeAPIComponentName)
 
+	var discoveryAuthentication string
+	if a.NodeConfig.Spec.API.ClusterInfoDiscovery && manageDiscoveryAuthentication(args, a.NodeConfig.Spec.API.RawArgs) {
+		discoveryAuthentication = discoveryAuthenticationConfigPath(a.K0sVars)
+		args["authentication-config"] = discoveryAuthentication
+	}
+
 	// kube-apiserver refuses to start if the --anonymous-auth flag is set
 	// while the file referenced by --authentication-config contains the
 	// anonymous field. Skip the anonymous-auth default in that case, so that
 	// anonymous authentication can be managed via the configuration file.
-	anonymousAuthManaged := false
-	if path := args["authentication-config"]; path != "" {
+	// The discovery configuration contains the anonymous field.
+	anonymousAuthManaged := discoveryAuthentication != ""
+	if path := args["authentication-config"]; path != "" && !anonymousAuthManaged {
 		var err error
 		anonymousAuthManaged, err = authenticationConfigHasAnonymous(path)
 		if err != nil {
@@ -267,6 +276,8 @@ func (a *APIServer) buildConfig() (*apiServerConfig, error) {
 		rawArgs:        a.NodeConfig.Spec.API.RawArgs,
 		stopTimeout:    stopTimeout,
 		egressSelector: egressSelector,
+
+		discoveryAuthentication: discoveryAuthentication,
 	}, nil
 }
 
@@ -281,6 +292,11 @@ func (c *apiServerConfig) writeFiles() error {
 		}
 		if err := tw.Write(); err != nil {
 			return fmt.Errorf("failed to write konnectivity config: %w", err)
+		}
+	}
+	if c.discoveryAuthentication != "" {
+		if err := writeDiscoveryAuthenticationConfig(c.discoveryAuthentication); err != nil {
+			return fmt.Errorf("failed to write the authentication config: %w", err)
 		}
 	}
 

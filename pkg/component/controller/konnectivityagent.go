@@ -146,6 +146,7 @@ func (k *KonnectivityAgent) writeKonnectivityAgent(clusterConfig *v1beta1.Cluste
 			// solution would be to convert the konnectivity agent to a static
 			// Pod as well.
 			cfg.ProxyServerHost = "localhost"
+			cfg.K0sNodesOnly = true
 
 			switch nllb.Type {
 			case v1beta1.NllbTypeEnvoyProxy:
@@ -200,6 +201,8 @@ type konnectivityAgentConfig struct {
 	ServerCount     uint
 	PullPolicy      string
 	HostNetwork     bool
+	// Keeps the pods off nodes without k0s, which don't run the node-local load balancer.
+	K0sNodesOnly bool
 }
 
 const konnectivityAgentTemplate = `
@@ -258,6 +261,17 @@ spec:
       priorityClassName: system-cluster-critical
       tolerations:
         - operator: Exists
+      {{- if .K0sNodesOnly }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: ` + constant.K0sNodeLabel + `
+                operator: NotIn
+                values:
+                - "false"
+      {{- end }}
       {{- if .HostNetwork }}
       hostNetwork: true
       {{- end }}

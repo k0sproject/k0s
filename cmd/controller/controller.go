@@ -35,7 +35,9 @@ import (
 	"github.com/k0sproject/k0s/pkg/certificate"
 	"github.com/k0sproject/k0s/pkg/component/controller"
 	"github.com/k0sproject/k0s/pkg/component/controller/clusterconfig"
+	"github.com/k0sproject/k0s/pkg/component/controller/clusterinfo"
 	"github.com/k0sproject/k0s/pkg/component/controller/cplb"
+	"github.com/k0sproject/k0s/pkg/component/controller/externalnodes"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	"github.com/k0sproject/k0s/pkg/component/controller/leasecounter"
 	"github.com/k0sproject/k0s/pkg/component/controller/workerconfig"
@@ -304,12 +306,14 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 		})
 
 		nodeComponents.Add(ctx, &cplb.Keepalived{
-			K0sVars:         c.K0sVars,
-			Config:          cplbCfg.Keepalived,
-			DetailedLogging: debug,
-			LogConfig:       debug,
-			KubeConfigPath:  c.K0sVars.AdminKubeConfigPath,
-			APIPort:         nodeConfig.Spec.API.Port,
+			K0sVars:               c.K0sVars,
+			Config:                cplbCfg.Keepalived,
+			DetailedLogging:       debug,
+			LogConfig:             debug,
+			KubeConfigPath:        c.K0sVars.AdminKubeConfigPath,
+			APIPort:               nodeConfig.Spec.API.Port,
+			KonnectivityAgentPort: int(cmp.Or(nodeConfig.Spec.Konnectivity, v1beta1.DefaultKonnectivitySpec()).AgentPort),
+			K0sAPIPort:            nodeConfig.Spec.API.K0sAPIPort,
 		})
 	}
 
@@ -596,6 +600,23 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 	if !slices.Contains(flags.DisableComponents, constant.NodeRoleComponentName) {
 		clusterComponents.Add(ctx, controller.NewNodeRole(c.K0sVars, adminClientFactory))
 	}
+
+	clusterComponents.Add(ctx, &controller.K0sNodeLabeler{
+		Clients:       adminClientFactory,
+		LeaderElector: leaderElector,
+	})
+
+	clusterComponents.Add(ctx, &externalnodes.Component{
+		K0sVars:    c.K0sVars,
+		NodeConfig: nodeConfig,
+		Clients:    adminClientFactory,
+	})
+
+	clusterComponents.Add(ctx, &clusterinfo.Publisher{
+		K0sVars:    c.K0sVars,
+		NodeConfig: nodeConfig,
+		Clients:    adminClientFactory,
+	})
 
 	if enableKonnectivity {
 		clusterComponents.Add(ctx, &controller.KonnectivityAgent{

@@ -23,7 +23,10 @@ type Keepalived struct {
 	DetailedLogging bool
 	LogConfig       bool
 	APIPort         int
-	KubeConfigPath  string
+	// The ports that the userspace proxy may load balance, too, depending on the configuration.
+	KonnectivityAgentPort int
+	K0sAPIPort            int
+	KubeConfigPath        string
 }
 
 func (k *Keepalived) Init(context.Context) error {
