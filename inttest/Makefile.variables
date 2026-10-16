@@ -50,6 +50,7 @@ smoketests := \
 	check-dualstack-kuberouter \
 	check-dualstack-kuberouter-dynamicconfig \
 	check-embedded-binaries \
+	check-embedded-images \
 	check-etcdlearner \
 	check-etcdmember \
 	check-externaletcd \
