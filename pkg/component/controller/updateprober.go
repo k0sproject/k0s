@@ -11,9 +11,9 @@ import (
 
 	// "github.com/k0sproject/k0s/pkg/component/manager"
 
+	"github.com/k0sproject/k0s/internal/build"
 	"github.com/k0sproject/k0s/pkg/autopilot/channels"
 	"github.com/k0sproject/k0s/pkg/autopilot/controller/updates"
-	"github.com/k0sproject/k0s/pkg/build"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
