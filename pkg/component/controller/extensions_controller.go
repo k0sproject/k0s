@@ -37,6 +37,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	apiretry "k8s.io/client-go/util/retry"
@@ -826,9 +827,12 @@ func (ec *ExtensionsController) instantiateManager() (crman.Manager, error) {
 	}
 
 	// Create a scheme with both k0s types and core Kubernetes types (needed for Secret access)
-	scheme := k0sscheme.Scheme
+	scheme := runtime.NewScheme()
 	if err := corev1.AddToScheme(scheme); err != nil {
-		return nil, fmt.Errorf("can't add corev1 to scheme: %w", err)
+		return nil, err
+	}
+	if err := k0sscheme.AddToScheme(scheme); err != nil {
+		return nil, err
 	}
 
 	mgr, err := controllerruntime.NewManager(clientConfig, crman.Options{
