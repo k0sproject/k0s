@@ -15,6 +15,8 @@ import (
 	"github.com/k0sproject/k0s/pkg/autopilot/controller/signal/k0s"
 	"github.com/k0sproject/k0s/pkg/leaderelection"
 
+	apitypes "k8s.io/apimachinery/pkg/types"
+
 	"github.com/sirupsen/logrus"
 	crman "sigs.k8s.io/controller-runtime/pkg/manager"
 )
@@ -23,12 +25,12 @@ import (
 // controller and worker modes. The restart tracker's lifetime needs to be tied
 // to the process, i.e. it has to be shared by all the managers this function is
 // called with throughout the lifetime of the process.
-func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Manager, delegate apdel.ControllerDelegate, restartTracker *k0s.RestartTracker, k0sDataDir string, enableWorker bool, clusterID string, leaseStatus leaderelection.Status) error {
-	if err := k0s.RegisterControllers(ctx, logger, mgr, delegate, restartTracker, enableWorker, clusterID, leaseStatus); err != nil {
+func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Manager, delegate apdel.ControllerDelegate, nodeName apitypes.NodeName, restartTracker *k0s.RestartTracker, k0sDataDir string, enableWorker bool, clusterID string, leaseStatus leaderelection.Status) error {
+	if err := k0s.RegisterControllers(ctx, logger, mgr, delegate, nodeName, restartTracker, enableWorker, clusterID, leaseStatus); err != nil {
 		return fmt.Errorf("unable to register k0s controllers: %w", err)
 	}
 
-	if err := airgap.RegisterControllers(ctx, logger, mgr, delegate, k0sDataDir); err != nil {
+	if err := airgap.RegisterControllers(ctx, logger, mgr, delegate, nodeName, k0sDataDir); err != nil {
 		return fmt.Errorf("unable to register airgap controllers: %w", err)
 	}
 
@@ -38,7 +40,7 @@ func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Ma
 	// acting as an embedded worker.
 	if enableWorker {
 		if _, isControlNode := delegate.CreateObject().(*apv1beta2.ControlNode); isControlNode {
-			if err := airgap.RegisterControllers(ctx, logger, mgr, apdel.NodeControllerDelegate(), k0sDataDir); err != nil {
+			if err := airgap.RegisterControllers(ctx, logger, mgr, apdel.NodeControllerDelegate(), nodeName, k0sDataDir); err != nil {
 				return fmt.Errorf("unable to register airgap controllers for embedded worker node: %w", err)
 			}
 		}

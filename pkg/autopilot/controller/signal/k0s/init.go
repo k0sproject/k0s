@@ -14,7 +14,6 @@ import (
 	"path/filepath"
 
 	autopilotv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
-	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
 	"github.com/k0sproject/k0s/pkg/autopilot/constant"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
 	apsigpred "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/common/predicate"
@@ -38,17 +37,12 @@ import (
 // controller-runtime manager. The restart tracker's lifetime needs to be tied
 // to the process, i.e. it has to be shared by all the managers this function is
 // called with throughout the lifetime of the process.
-func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Manager, delegate apdel.ControllerDelegate, restartTracker *RestartTracker, enableWorker bool, clusterID string, leaseStatus leaderelection.Status) error {
+func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Manager, delegate apdel.ControllerDelegate, nodeName types.NodeName, restartTracker *RestartTracker, enableWorker bool, clusterID string, leaseStatus leaderelection.Status) error {
 	if restartTracker == nil {
 		return errors.New("restart tracker is required")
 	}
 
 	logger = logger.WithField("controller", delegate.Name())
-
-	hostname, err := apcomm.FindEffectiveHostname()
-	if err != nil {
-		return fmt.Errorf("unable to determine hostname: %w", err)
-	}
 
 	k0sBinaryPath, err := os.Executable()
 	if err != nil {
@@ -56,7 +50,7 @@ func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Ma
 	}
 	k0sBinaryDir := filepath.Dir(k0sBinaryPath)
 
-	logger.Infof("Using effective hostname = '%v'", hostname)
+	logger.Infof("Using node name = '%v'", nodeName)
 
 	k0sVersionHandler := func() (string, error) {
 		return getK0sVersion(status.DefaultSocketPath)
@@ -73,7 +67,7 @@ func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Ma
 		// then-unused label.
 		c := mgr.GetClient()
 		if err := c.Apply(ctx, applycoordinationv1.
-			Lease(hostname, corev1.NamespaceNodeLease).
+			Lease(string(nodeName), corev1.NamespaceNodeLease).
 			WithLabels(map[string]string{constant.CentralCordoningLabel: ""}),
 			client.FieldOwner("k0s/autopilot"), client.ForceOwnership); err != nil {
 			return fmt.Errorf("unable to apply lease labels: %w", err)
@@ -98,7 +92,7 @@ func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Ma
 			Value string `json:"value,omitempty"`
 		}{
 			{"test", "/spec/holderIdentity", ""},
-			{"add", "/spec/holderIdentity", hostname},
+			{"add", "/spec/holderIdentity", string(nodeName)},
 		})
 		if err != nil {
 			return err
@@ -107,7 +101,7 @@ func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Ma
 		if err := c.Patch(
 			ctx,
 			&coordinationv1.Lease{ObjectMeta: metav1.ObjectMeta{
-				Name:      hostname,
+				Name:      string(nodeName),
 				Namespace: corev1.NamespaceNodeLease,
 			}},
 			client.RawPatch(types.JSONPatchType, patch),
@@ -116,11 +110,11 @@ func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Ma
 		}
 	}
 
-	if err := registerSignalController(logger, mgr, signalControllerEventFilter(hostname, apsigpred.DefaultErrorHandler(logger, "k0s signal")), delegate, clusterID, k0sVersionHandler); err != nil {
+	if err := registerSignalController(logger, mgr, signalControllerEventFilter(nodeName, apsigpred.DefaultErrorHandler(logger, "k0s signal")), delegate, clusterID, k0sVersionHandler); err != nil {
 		return fmt.Errorf("unable to register signal controller: %w", err)
 	}
 
-	if err := registerDownloading(logger, mgr, downloadEventFilter(hostname, apsigpred.DefaultErrorHandler(logger, "k0s downloading")), delegate, k0sBinaryDir); err != nil {
+	if err := registerDownloading(logger, mgr, downloadEventFilter(nodeName, apsigpred.DefaultErrorHandler(logger, "k0s downloading")), delegate, k0sBinaryDir); err != nil {
 		return fmt.Errorf("unable to register downloading controller: %w", err)
 	}
 
@@ -133,42 +127,42 @@ func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Ma
 
 	cordoningEventFilter := cordoningEventFilter(apsigpred.DefaultErrorHandler(logger, "k0s cordoning"))
 	if leaseStatus != leaderelection.StatusLeading {
-		cordoningEventFilter = crpred.And(apsigpred.SignalNamePredicate(hostname), cordoningEventFilter)
+		cordoningEventFilter = crpred.And(apsigpred.SignalNamePredicate(nodeName), cordoningEventFilter)
 	}
 
-	if err := registerCordoning(logger, mgr, cordoningEventFilter, delegate, types.NodeName(hostname), leaseStatus); err != nil {
+	if err := registerCordoning(logger, mgr, cordoningEventFilter, delegate, nodeName, leaseStatus); err != nil {
 		return fmt.Errorf("unable to register cordoning controller: %w", err)
 	}
 
 	if nodeDelegate != nil {
-		if err := registerCordoning(logger, mgr, cordoningEventFilter, nodeDelegate, types.NodeName(hostname), leaseStatus); err != nil {
+		if err := registerCordoning(logger, mgr, cordoningEventFilter, nodeDelegate, nodeName, leaseStatus); err != nil {
 			return fmt.Errorf("unable to register cordoning node controller: %w", err)
 		}
 	}
 
-	if err := registerApplyingUpdate(logger, mgr, applyingUpdateEventFilter(hostname, apsigpred.DefaultErrorHandler(logger, "k0s applying-update")), delegate, k0sBinaryDir, restartTracker.RestartInitiated); err != nil {
+	if err := registerApplyingUpdate(logger, mgr, applyingUpdateEventFilter(nodeName, apsigpred.DefaultErrorHandler(logger, "k0s applying-update")), delegate, k0sBinaryDir, restartTracker.RestartInitiated); err != nil {
 		return fmt.Errorf("unable to register applying-update controller: %w", err)
 	}
 
-	if err := registerRestart(logger, mgr, restartEventFilter(hostname, apsigpred.DefaultErrorHandler(logger, "k0s restart")), delegate, restartTracker.IsRestartPending); err != nil {
+	if err := registerRestart(logger, mgr, restartEventFilter(nodeName, apsigpred.DefaultErrorHandler(logger, "k0s restart")), delegate, restartTracker.IsRestartPending); err != nil {
 		return fmt.Errorf("unable to register restart controller: %w", err)
 	}
 
-	if err := registerRestarted(logger, mgr, restartedEventFilter(hostname, apsigpred.DefaultErrorHandler(logger, "k0s restarted")), delegate, restartTracker.IsRestartPending); err != nil {
+	if err := registerRestarted(logger, mgr, restartedEventFilter(nodeName, apsigpred.DefaultErrorHandler(logger, "k0s restarted")), delegate, restartTracker.IsRestartPending); err != nil {
 		return fmt.Errorf("unable to register restarted controller: %w", err)
 	}
 
 	unCordoningEventFilter := unCordoningEventFilter(apsigpred.DefaultErrorHandler(logger, "k0s uncordoning"))
 	if leaseStatus != leaderelection.StatusLeading {
-		unCordoningEventFilter = crpred.And(apsigpred.SignalNamePredicate(hostname), unCordoningEventFilter)
+		unCordoningEventFilter = crpred.And(apsigpred.SignalNamePredicate(nodeName), unCordoningEventFilter)
 	}
 
-	if err := registerUncordoning(logger, mgr, unCordoningEventFilter, delegate, types.NodeName(hostname), leaseStatus); err != nil {
+	if err := registerUncordoning(logger, mgr, unCordoningEventFilter, delegate, nodeName, leaseStatus); err != nil {
 		return fmt.Errorf("unable to register uncordoning controller: %w", err)
 	}
 
 	if nodeDelegate != nil {
-		if err := registerUncordoning(logger, mgr, unCordoningEventFilter, nodeDelegate, types.NodeName(hostname), leaseStatus); err != nil {
+		if err := registerUncordoning(logger, mgr, unCordoningEventFilter, nodeDelegate, nodeName, leaseStatus); err != nil {
 			return fmt.Errorf("unable to register uncordoning node controller: %w", err)
 		}
 	}
