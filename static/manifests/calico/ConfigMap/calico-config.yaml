@@ -1,5 +1,5 @@
 ---
-# Source: https://github.com/projectcalico/calico/blob/v3.32.1/charts/calico/templates/calico-config.yaml
+# Source: https://github.com/projectcalico/calico/blob/v3.32.2/charts/calico/templates/calico-config.yaml
 # This ConfigMap is used to configure a self-hosted Calico installation.
 {{/* Prefer to inject those variables directly, so changing them will trigger rolling updates.
 kind: ConfigMap
@@ -23,7 +23,7 @@ data:
   cni_network_config: |-
     {
       "name": "k8s-pod-network",
-      "cniVersion": "0.3.1",
+      "cniVersion": "1.0.0",
       "plugins": [
         {
           "type": "calico",
