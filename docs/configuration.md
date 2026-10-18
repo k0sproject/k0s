@@ -423,16 +423,17 @@ Configuration options required for using VRRP to configure VIPs in control plane
 
 ##### `spec.network.controlPlaneLoadBalancing.bgp`
 
-| Element                    | Description                                                                                |
-| -------------------------- | ------------------------------------------------------------------------------------------ |
-| `virtualIPs`               | The VIPs as `/32` or `/128` prefixes, each needs a peer of the same IP family.             |
-| `as`                       | The autonomous system number of the controllers.                                           |
-| `routerID`                 | The BGP router ID, an IPv4 address. Default: `spec.api.address` if that's an IPv4 address. |
-| `sourceIP`                 | The local address of the BGP sessions.                                                     |
-| `sourceInterface`          | The interface the BGP sessions are bound to, can't be combined with `sourceIP`.            |
-| `holdTimeSeconds`          | The BGP hold time, at least `3`. Default: `90`.                                            |
-| `keepaliveIntervalSeconds` | The BGP keepalive interval, shorter than the hold time. Default: `30`.                     |
-| `peers`                    | The BGP peers, at least one.                                                               |
+| Element                    | Description                                                                                                                                                                    |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `virtualIPs`               | The VIPs as `/32` or `/128` prefixes, each needs a peer of the same IP family.                                                                                                 |
+| `communities`              | Communities added to the VIP routes, standard (`65000:100`), large (`65000:1:100`) or well-known (`no-export`, `no-advertise`, `no-export-subconfed`, `no-peer`, `blackhole`). |
+| `as`                       | The autonomous system number of the controllers.                                                                                                                               |
+| `routerID`                 | The BGP router ID, an IPv4 address. Default: `spec.api.address` if that's an IPv4 address.                                                                                     |
+| `sourceIP`                 | The local address of the BGP sessions.                                                                                                                                         |
+| `sourceInterface`          | The interface the BGP sessions are bound to, can't be combined with `sourceIP`.                                                                                                |
+| `holdTimeSeconds`          | The BGP hold time, at least `3`. Default: `90`.                                                                                                                                |
+| `keepaliveIntervalSeconds` | The BGP keepalive interval, shorter than the hold time. Default: `30`.                                                                                                         |
+| `peers`                    | The BGP peers, at least one.                                                                                                                                                   |
 
 ##### `spec.network.controlPlaneLoadBalancing.bgp.peers`
 

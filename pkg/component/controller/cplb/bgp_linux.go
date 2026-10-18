@@ -12,6 +12,8 @@ import (
 	"math"
 	"net"
 	"net/netip"
+	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -232,7 +234,7 @@ func (b *BGP) setAdvertised(advertised bool) {
 		// A preferred lifetime of zero marks the address deprecated, which keeps it from being
 		// picked as the node address, or as a source address for IPv6.
 		addr := &netlink.Addr{IPNet: &net.IPNet{IP: prefix.Addr().AsSlice(), Mask: net.CIDRMask(prefix.Bits(), prefix.Addr().BitLen())}, ValidLft: math.MaxInt}
-		path, err := hostRoute(prefix.Addr())
+		path, err := hostRoute(prefix.Addr(), b.Config.Communities)
 		if err != nil {
 			b.log.WithError(err).Errorf("Failed to build the route of %s", vip)
 			continue
@@ -257,31 +259,48 @@ func (b *BGP) setAdvertised(advertised bool) {
 }
 
 // hostRoute leaves the next hop unspecified, so that gobgp sets it to the session address.
-func hostRoute(addr netip.Addr) (*apiutil.Path, error) {
+func hostRoute(addr netip.Addr, communities []string) (*apiutil.Path, error) {
 	prefix, err := bgp.NewIPAddrPrefix(netip.PrefixFrom(addr, addr.BitLen()))
 	if err != nil {
 		return nil, err
 	}
 
+	path := &apiutil.Path{Family: bgp.RF_IPv6_UC, Nlri: prefix, Attrs: []bgp.PathAttributeInterface{bgp.NewPathAttributeOrigin(0)}}
+	var nextHop bgp.PathAttributeInterface
 	if addr.Is4() {
-		var nextHop *bgp.PathAttributeNextHop
-		if nextHop, err = bgp.NewPathAttributeNextHop(netip.IPv4Unspecified()); err != nil {
-			return nil, err
-		}
-		return &apiutil.Path{
-			Family: bgp.RF_IPv4_UC,
-			Nlri:   prefix,
-			Attrs:  []bgp.PathAttributeInterface{bgp.NewPathAttributeOrigin(0), nextHop},
-		}, nil
+		path.Family = bgp.RF_IPv4_UC
+		nextHop, err = bgp.NewPathAttributeNextHop(netip.IPv4Unspecified())
+	} else {
+		nextHop, err = bgp.NewPathAttributeMpReachNLRI(bgp.RF_IPv6_UC, []bgp.PathNLRI{{NLRI: prefix}}, netip.IPv6Unspecified())
 	}
-
-	reach, err := bgp.NewPathAttributeMpReachNLRI(bgp.RF_IPv6_UC, []bgp.PathNLRI{{NLRI: prefix}}, netip.IPv6Unspecified())
 	if err != nil {
 		return nil, err
 	}
-	return &apiutil.Path{
-		Family: bgp.RF_IPv6_UC,
-		Nlri:   prefix,
-		Attrs:  []bgp.PathAttributeInterface{bgp.NewPathAttributeOrigin(0), reach},
-	}, nil
+	path.Attrs = append(path.Attrs, nextHop)
+
+	var standard []uint32
+	var large []*bgp.LargeCommunity
+	for _, community := range communities {
+		if wellKnown, ok := bgp.WellKnownCommunityValueMap[community]; ok {
+			standard = append(standard, uint32(wellKnown))
+		} else if l, largeErr := bgp.ParseLargeCommunity(community); largeErr == nil {
+			large = append(large, l)
+		} else {
+			asn, value, _ := strings.Cut(community, ":")
+			high, highErr := strconv.ParseUint(asn, 10, 16)
+			low, lowErr := strconv.ParseUint(value, 10, 16)
+			if err = errors.Join(highErr, lowErr); err != nil {
+				return nil, fmt.Errorf("invalid community %q: %w", community, err)
+			}
+			standard = append(standard, uint32(high)<<16|uint32(low))
+		}
+	}
+	if len(standard) > 0 {
+		path.Attrs = append(path.Attrs, bgp.NewPathAttributeCommunities(standard))
+	}
+	if len(large) > 0 {
+		path.Attrs = append(path.Attrs, bgp.NewPathAttributeLargeCommunities(large))
+	}
+
+	return path, nil
 }

@@ -43,6 +43,12 @@ func TestBGPSpec_Validate(t *testing.T) {
 		assert.Empty(t, c.Validate(field.NewPath("cplb")), "validating again should succeed")
 	})
 
+	t.Run("communities", func(t *testing.T) {
+		c := bgpCPLB()
+		c.BGP.Communities = []string{"65000:100", "65535:65535", "4200000000:1:2", "no-export"}
+		assert.Empty(t, c.Validate(field.NewPath("cplb")))
+	})
+
 	t.Run("iBGP", func(t *testing.T) {
 		c := bgpCPLB()
 		c.BGP.AS = c.BGP.Peers[0].AS
@@ -75,6 +81,12 @@ func TestBGPSpec_Validate(t *testing.T) {
 		{"invalid peer address", func(c *ControlPlaneLoadBalancingSpec) { c.BGP.Peers[0].Address = "router" }, "cplb.bgp.peers[0].address: Invalid value"},
 		{"link-local peer address", func(c *ControlPlaneLoadBalancingSpec) { c.BGP.Peers[0].Address = "fe80::1" }, "must not be a link-local address"},
 		{"missing peer AS", func(c *ControlPlaneLoadBalancingSpec) { c.BGP.Peers[0].AS = 0 }, "cplb.bgp.peers[0].as: Required value"},
+		{"standard community out of range", func(c *ControlPlaneLoadBalancingSpec) {
+			c.BGP.Communities = []string{"65536:1"}
+		}, "cplb.bgp.communities[0]: Invalid value"},
+		{"unknown community", func(c *ControlPlaneLoadBalancingSpec) {
+			c.BGP.Communities = []string{"no-export-ever"}
+		}, "cplb.bgp.communities[0]: Invalid value"},
 		{"no virtual IPs", func(c *ControlPlaneLoadBalancingSpec) { c.BGP.VirtualIPs = nil }, "cplb.bgp.virtualIPs: Required value"},
 		{"not a host prefix", func(c *ControlPlaneLoadBalancingSpec) {
 			c.BGP.VirtualIPs = []string{"192.168.10.1/24"}

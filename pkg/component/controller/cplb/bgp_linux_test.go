@@ -25,15 +25,23 @@ import (
 )
 
 func TestHostRoute(t *testing.T) {
-	path, err := hostRoute(netip.MustParseAddr("203.0.113.10"))
+	path, err := hostRoute(netip.MustParseAddr("203.0.113.10"), nil)
 	require.NoError(t, err)
 	assert.Equal(t, bgp.RF_IPv4_UC, path.Family)
 	assert.Equal(t, "203.0.113.10/32", path.Nlri.String())
 
-	path, err = hostRoute(netip.MustParseAddr("2001:db8::10"))
+	path, err = hostRoute(netip.MustParseAddr("2001:db8::10"), nil)
 	require.NoError(t, err)
 	assert.Equal(t, bgp.RF_IPv6_UC, path.Family)
 	assert.Equal(t, "2001:db8::10/128", path.Nlri.String())
+
+	path, err = hostRoute(netip.MustParseAddr("203.0.113.10"), []string{"65000:100", "no-export", "65000:1:2"})
+	require.NoError(t, err)
+	assert.Contains(t, path.Attrs, bgp.NewPathAttributeCommunities([]uint32{65000<<16 | 100, uint32(bgp.COMMUNITY_NO_EXPORT)}))
+	assert.Contains(t, path.Attrs, bgp.NewPathAttributeLargeCommunities([]*bgp.LargeCommunity{bgp.NewLargeCommunity(65000, 1, 2)}))
+
+	_, err = hostRoute(netip.MustParseAddr("203.0.113.10"), []string{"65536:1"})
+	assert.ErrorContains(t, err, "invalid community")
 }
 
 func TestBGPServer(t *testing.T) {
@@ -85,7 +93,7 @@ func TestBGPServer(t *testing.T) {
 				return hops
 			}
 
-			path, err := hostRoute(netip.MustParseAddr("203.0.113.10"))
+			path, err := hostRoute(netip.MustParseAddr("203.0.113.10"), []string{"65000:100", "65000:1:2"})
 			require.NoError(t, err)
 			_, err = b.server.AddPath(apiutil.AddPathRequest{Paths: []*apiutil.Path{path}})
 			require.NoError(t, err)
@@ -93,12 +101,22 @@ func TestBGPServer(t *testing.T) {
 				hops := nextHops()
 				return len(hops) == 1 && hops[0] == netip.MustParseAddr("127.0.0.2")
 			}, time.Minute, 100*time.Millisecond, "the peer should receive the host route with the controller as next hop")
+			var communities []bgp.PathAttributeInterface
+			assert.NoError(t, peer.ListPath(apiutil.ListPathRequest{TableType: api.TableType_TABLE_TYPE_GLOBAL, Family: bgp.RF_IPv4_UC},
+				func(_ bgp.NLRI, paths []*apiutil.Path) {
+					for _, attr := range paths[0].Attrs {
+						if attr.GetType() == bgp.BGP_ATTR_TYPE_COMMUNITIES || attr.GetType() == bgp.BGP_ATTR_TYPE_LARGE_COMMUNITY {
+							communities = append(communities, attr)
+						}
+					}
+				}))
+			assert.Len(t, communities, 2, "the peer should receive the standard and large communities")
 
 			require.NoError(t, b.server.DeletePath(apiutil.DeletePathRequest{Paths: []*apiutil.Path{path}}))
 			assert.Eventually(t, func() bool { return len(nextHops()) == 0 }, 10*time.Second, 100*time.Millisecond,
 				"the peer should drop the withdrawn route")
 
-			received, err := hostRoute(netip.MustParseAddr("198.51.100.10"))
+			received, err := hostRoute(netip.MustParseAddr("198.51.100.10"), nil)
 			require.NoError(t, err)
 			received.Attrs[1], err = bgp.NewPathAttributeNextHop(netip.MustParseAddr("127.0.0.1"))
 			require.NoError(t, err)

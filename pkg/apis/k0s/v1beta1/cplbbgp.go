@@ -5,6 +5,9 @@ package v1beta1
 
 import (
 	"net"
+	"slices"
+	"strconv"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -15,6 +18,10 @@ type BGPSpec struct {
 	// VirtualIPs are the host prefixes advertised by every ready controller.
 	// +kubebuilder:validation:MinItems=1
 	VirtualIPs []string `json:"virtualIPs"`
+
+	// Communities are added to the routes of the virtual IPs, as standard (a:b) or
+	// large (a:b:c) communities, or well-known ones such as no-export.
+	Communities []string `json:"communities,omitempty"`
 
 	// RouterID is the BGP router ID, an IPv4 address.
 	// Defaults to spec.api.address if that's an IPv4 address.
@@ -177,6 +184,21 @@ func (b *BGPSpec) Validate(path *field.Path) (errs field.ErrorList) {
 		}
 		if peersValid && !families[ip.To4() == nil] {
 			errs = append(errs, field.Invalid(path.Child("virtualIPs").Index(i), address, "no BGP peer of the same IP family"))
+		}
+	}
+
+	for i, community := range b.Communities {
+		valid := slices.Contains([]string{"no-export", "no-advertise", "no-export-subconfed", "no-peer", "blackhole"}, community)
+		if parts := strings.Split(community, ":"); len(parts) == 2 || len(parts) == 3 {
+			valid = true
+			for _, part := range parts {
+				if _, err := strconv.ParseUint(part, 10, 16*(len(parts)-1)); err != nil {
+					valid = false
+				}
+			}
+		}
+		if !valid {
+			errs = append(errs, field.Invalid(path.Child("communities").Index(i), community, "must be a:b, a:b:c or a well-known community"))
 		}
 	}
 

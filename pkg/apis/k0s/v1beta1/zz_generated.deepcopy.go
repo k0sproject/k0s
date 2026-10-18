@@ -91,6 +91,11 @@ func (in *BGPSpec) DeepCopyInto(out *BGPSpec) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.Communities != nil {
+		in, out := &in.Communities, &out.Communities
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	if in.Peers != nil {
 		in, out := &in.Peers, &out.Peers
 		*out = make([]BGPPeer, len(*in))

@@ -705,6 +705,13 @@ spec:
                             format: int32
                             minimum: 1
                             type: integer
+                          communities:
+                            description: |-
+                              Communities are added to the routes of the virtual IPs, as standard (a:b) or
+                              large (a:b:c) communities, or well-known ones such as no-export.
+                            items:
+                              type: string
+                            type: array
                           holdTimeSeconds:
                             default: 90
                             description: HoldTimeSeconds is the BGP hold time, at
