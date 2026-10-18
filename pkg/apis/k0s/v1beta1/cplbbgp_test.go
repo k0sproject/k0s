@@ -49,6 +49,12 @@ func TestBGPSpec_Validate(t *testing.T) {
 		assert.Empty(t, c.Validate(field.NewPath("cplb")))
 	})
 
+	t.Run("IPv4 virtual IP over an IPv6 peer", func(t *testing.T) {
+		c := bgpCPLB()
+		c.BGP.Peers[0] = BGPPeer{Address: "fd00::1", AS: 65000, ExtendedNextHop: true}
+		assert.Empty(t, c.Validate(field.NewPath("cplb")))
+	})
+
 	t.Run("iBGP", func(t *testing.T) {
 		c := bgpCPLB()
 		c.BGP.AS = c.BGP.Peers[0].AS
@@ -87,6 +93,9 @@ func TestBGPSpec_Validate(t *testing.T) {
 		{"unknown community", func(c *ControlPlaneLoadBalancingSpec) {
 			c.BGP.Communities = []string{"no-export-ever"}
 		}, "cplb.bgp.communities[0]: Invalid value"},
+		{"extended next hop with an IPv4 peer", func(c *ControlPlaneLoadBalancingSpec) {
+			c.BGP.Peers[0].ExtendedNextHop = true
+		}, "cplb.bgp.peers[0].extendedNextHop: Invalid value"},
 		{"no virtual IPs", func(c *ControlPlaneLoadBalancingSpec) { c.BGP.VirtualIPs = nil }, "cplb.bgp.virtualIPs: Required value"},
 		{"not a host prefix", func(c *ControlPlaneLoadBalancingSpec) {
 			c.BGP.VirtualIPs = []string{"192.168.10.1/24"}

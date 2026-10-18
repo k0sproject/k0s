@@ -261,6 +261,10 @@ router bgp 65000
 With BFD, enable `bfdd` in FRR. FRR doesn't bring up BFD for `bgp listen range` neighbors, so list the controllers
 as neighbors.
 
+IPv4 VIPs can also be advertised to IPv6 peers that set `extendedNextHop`. FRR then needs
+`neighbor controllers capability extended-nexthop`, which also makes it send router advertisements. Set
+`ipv6 nd prefix <node prefix> no-autoconfig` on the interface, unless the nodes should configure addresses from them.
+
 ## Full example using `k0sctl`
 
 The following example shows a full `k0sctl` configuration file featuring three

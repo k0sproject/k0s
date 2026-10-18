@@ -75,6 +75,10 @@ type BGPPeer struct {
 
 	// Multihop allows the peer to be more than one hop away.
 	Multihop bool `json:"multihop,omitempty"`
+
+	// ExtendedNextHop advertises the IPv4 virtual IPs to this IPv6 peer, with an IPv6
+	// next hop as defined in RFC 8950.
+	ExtendedNextHop bool `json:"extendedNextHop,omitempty"`
 }
 
 // BFDSpec configures BFD for a BGP peer.
@@ -144,6 +148,12 @@ func (b *BGPSpec) Validate(path *field.Path) (errs field.ErrorList) {
 			peersValid = false
 		} else {
 			families[ip.To4() == nil] = true
+			if p.ExtendedNextHop {
+				if ip.To4() != nil {
+					errs = append(errs, field.Invalid(peerPath.Child("extendedNextHop"), p.ExtendedNextHop, "requires an IPv6 peer"))
+				}
+				families[false] = true
+			}
 		}
 		if p.AS == 0 {
 			errs = append(errs, field.Required(peerPath.Child("as"), ""))

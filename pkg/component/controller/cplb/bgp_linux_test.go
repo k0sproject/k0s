@@ -138,6 +138,56 @@ func TestBGPServer(t *testing.T) {
 	}
 }
 
+func TestBGPServerExtendedNextHop(t *testing.T) {
+	listener, err := (&net.ListenConfig{}).Listen(t.Context(), "tcp", "[::1]:0")
+	if err != nil {
+		t.Skip("no IPv6 loopback:", err)
+	}
+	addr, err := netip.ParseAddrPort(listener.Addr().String())
+	require.NoError(t, err)
+	port := addr.Port()
+	require.NoError(t, listener.Close())
+
+	peer := server.NewBgpServer()
+	go peer.Serve()
+	t.Cleanup(peer.Stop)
+	require.NoError(t, peer.StartBgp(t.Context(), &api.StartBgpRequest{Global: &api.Global{
+		Asn: 65000, RouterId: "127.0.0.1", ListenPort: int32(port), ListenAddresses: []string{"::1"},
+	}}))
+	require.NoError(t, peer.AddPeer(t.Context(), &api.AddPeerRequest{Peer: &api.Peer{
+		Conf:      &api.PeerConf{NeighborAddress: "::1", PeerAsn: 65001},
+		Transport: &api.Transport{PassiveMode: true},
+		AfiSafis: []*api.AfiSafi{
+			{Config: &api.AfiSafiConfig{Family: &api.Family{Afi: api.Family_AFI_IP6, Safi: api.Family_SAFI_UNICAST}, Enabled: true}},
+			{Config: &api.AfiSafiConfig{Family: &api.Family{Afi: api.Family_AFI_IP, Safi: api.Family_SAFI_UNICAST}, Enabled: true}},
+		},
+	}}))
+
+	b := &BGP{log: logrus.WithField("test", t.Name()), Config: &k0sAPI.BGPSpec{
+		AS: 65001, HoldTimeSeconds: 9, KeepaliveIntervalSeconds: 3,
+		Peers: []k0sAPI.BGPPeer{{Address: "::1", AS: 65000, Port: uint32(port), ExtendedNextHop: true}},
+	}}
+	require.NoError(t, b.startServer(t.Context(), "127.0.0.2"))
+	t.Cleanup(b.server.Stop)
+
+	path, err := hostRoute(netip.MustParseAddr("203.0.113.10"), nil)
+	require.NoError(t, err)
+	_, err = b.server.AddPath(apiutil.AddPathRequest{Paths: []*apiutil.Path{path}})
+	require.NoError(t, err)
+	assert.Eventually(t, func() bool {
+		var hop netip.Addr
+		assert.NoError(t, peer.ListPath(apiutil.ListPathRequest{TableType: api.TableType_TABLE_TYPE_GLOBAL, Family: bgp.RF_IPv4_UC},
+			func(_ bgp.NLRI, paths []*apiutil.Path) {
+				for _, attr := range paths[0].Attrs {
+					if reach, ok := attr.(*bgp.PathAttributeMpReachNLRI); ok {
+						hop = reach.Nexthop
+					}
+				}
+			}))
+		return hop == netip.MustParseAddr("::1")
+	}, time.Minute, 100*time.Millisecond, "the IPv6 peer should receive the IPv4 route with an IPv6 next hop")
+}
+
 func TestAdvertiseWhileReady(t *testing.T) {
 	var ready, advertised atomic.Bool
 	var mu sync.Mutex

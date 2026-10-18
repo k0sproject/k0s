@@ -425,7 +425,7 @@ Configuration options required for using VRRP to configure VIPs in control plane
 
 | Element                    | Description                                                                                                                                                                    |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `virtualIPs`               | The VIPs as `/32` or `/128` prefixes, each needs a peer of the same IP family.                                                                                                 |
+| `virtualIPs`               | The VIPs as `/32` or `/128` prefixes, each needs a peer of the same IP family, or for IPv4 an IPv6 peer with `extendedNextHop`.                                                |
 | `communities`              | Communities added to the VIP routes, standard (`65000:100`), large (`65000:1:100`) or well-known (`no-export`, `no-advertise`, `no-export-subconfed`, `no-peer`, `blackhole`). |
 | `as`                       | The autonomous system number of the controllers.                                                                                                                               |
 | `routerID`                 | The BGP router ID, an IPv4 address. Default: `spec.api.address` if that's an IPv4 address.                                                                                     |
@@ -437,14 +437,15 @@ Configuration options required for using VRRP to configure VIPs in control plane
 
 ##### `spec.network.controlPlaneLoadBalancing.bgp.peers`
 
-| Element    | Description                                                                                                                                                                                        |
-| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `address`  | The IP address of the peer, not a link-local one.                                                                                                                                                  |
-| `as`       | The autonomous system number of the peer, the same as the controllers' for iBGP.                                                                                                                   |
-| `port`     | The BGP port of the peer. Default: `179`.                                                                                                                                                          |
-| `password` | The TCP MD5 password of the session.                                                                                                                                                               |
-| `multihop` | Allows an eBGP peer to be more than one hop away. Default: `false`.                                                                                                                                |
-| `bfd`      | Enables BFD, `{}` uses the defaults `minimumReceiveMilliseconds: 300`, `minimumTransmitMilliseconds: 300` and `multiplier: 3`. Needs a directly connected peer, can't be combined with `multihop`. |
+| Element           | Description                                                                                                                                                                                        |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `address`         | The IP address of the peer, not a link-local one.                                                                                                                                                  |
+| `as`              | The autonomous system number of the peer, the same as the controllers' for iBGP.                                                                                                                   |
+| `port`            | The BGP port of the peer. Default: `179`.                                                                                                                                                          |
+| `password`        | The TCP MD5 password of the session.                                                                                                                                                               |
+| `multihop`        | Allows an eBGP peer to be more than one hop away. Default: `false`.                                                                                                                                |
+| `extendedNextHop` | Advertises the IPv4 VIPs to this IPv6 peer with an IPv6 next hop (RFC 8950). Default: `false`.                                                                                                     |
+| `bfd`             | Enables BFD, `{}` uses the defaults `minimumReceiveMilliseconds: 300`, `minimumTransmitMilliseconds: 300` and `multiplier: 3`. Needs a directly connected peer, can't be combined with `multihop`. |
 
 ### `spec.controllerManager`
 

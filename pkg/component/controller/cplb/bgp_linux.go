@@ -159,6 +159,13 @@ func (b *BGP) startServer(ctx context.Context, routerID string) (err error) {
 		if p.Multihop {
 			peer.EbgpMultihop = &api.EbgpMultihop{Enabled: true, MultihopTtl: 255}
 		}
+		if p.ExtendedNextHop {
+			for _, afi := range []api.Family_Afi{api.Family_AFI_IP6, api.Family_AFI_IP} {
+				peer.AfiSafis = append(peer.AfiSafis, &api.AfiSafi{Config: &api.AfiSafiConfig{
+					Family: &api.Family{Afi: afi, Safi: api.Family_SAFI_UNICAST}, Enabled: true,
+				}})
+			}
+		}
 		if p.BFD != nil {
 			peer.Bfd = &api.BfdPeerConfig{
 				Enabled:                  true,
