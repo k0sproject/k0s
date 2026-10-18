@@ -694,6 +694,119 @@ spec:
                       ControlPlaneLoadBalancing defines the configuration options related to k0s's
                       control plane load balancing feature.
                     properties:
+                      bgp:
+                        description: |-
+                          BGP contains configuration options related to the "BGP" type of load
+                          balancing.
+                        properties:
+                          as:
+                            description: AS is the autonomous system number of the
+                              controllers.
+                            format: int32
+                            minimum: 1
+                            type: integer
+                          holdTimeSeconds:
+                            default: 90
+                            description: HoldTimeSeconds is the BGP hold time, at
+                              least 3 seconds. Defaults to 90 seconds.
+                            format: int32
+                            minimum: 3
+                            type: integer
+                          keepaliveIntervalSeconds:
+                            default: 30
+                            description: |-
+                              KeepaliveIntervalSeconds is the BGP keepalive interval, it must be
+                              shorter than the hold time. Defaults to 30 seconds.
+                            format: int32
+                            type: integer
+                          peers:
+                            description: Peers are the BGP peers that the virtual
+                              IPs are advertised to.
+                            items:
+                              description: BGPPeer is a BGP peer of the controllers.
+                              properties:
+                                address:
+                                  description: Address is the IP address of the peer.
+                                  type: string
+                                as:
+                                  description: AS is the autonomous system number
+                                    of the peer.
+                                  format: int32
+                                  minimum: 1
+                                  type: integer
+                                bfd:
+                                  description: BFD enables BFD for the peer, which
+                                    can't be combined with multihop.
+                                  properties:
+                                    minimumReceiveMilliseconds:
+                                      default: 300
+                                      description: |-
+                                        MinimumReceiveMilliseconds is the minimum interval between received
+                                        BFD packets. Defaults to 300 milliseconds.
+                                      format: int32
+                                      type: integer
+                                    minimumTransmitMilliseconds:
+                                      default: 300
+                                      description: |-
+                                        MinimumTransmitMilliseconds is the desired minimum interval between sent
+                                        BFD packets. Defaults to 300 milliseconds.
+                                      format: int32
+                                      type: integer
+                                    multiplier:
+                                      default: 3
+                                      description: |-
+                                        Multiplier is the number of missed BFD packets after which the peer is
+                                        considered down. Defaults to 3.
+                                      format: int32
+                                      type: integer
+                                  type: object
+                                multihop:
+                                  description: Multihop allows the peer to be more
+                                    than one hop away.
+                                  type: boolean
+                                password:
+                                  description: Password is the TCP MD5 password of
+                                    the session.
+                                  type: string
+                                port:
+                                  default: 179
+                                  description: Port is the BGP port of the peer. Defaults
+                                    to 179.
+                                  format: int32
+                                  maximum: 65535
+                                  minimum: 1
+                                  type: integer
+                              required:
+                              - address
+                              - as
+                              type: object
+                            minItems: 1
+                            type: array
+                          routerID:
+                            description: |-
+                              RouterID is the BGP router ID, an IPv4 address.
+                              Defaults to spec.api.address if that's an IPv4 address.
+                            type: string
+                          sourceIP:
+                            description: SourceIP is the local address of the BGP
+                              sessions.
+                            type: string
+                          sourceInterface:
+                            description: SourceInterface is the interface the BGP
+                              sessions are bound to.
+                            type: string
+                          virtualIPs:
+                            description: VirtualIPs are the host prefixes advertised
+                              by every ready controller.
+                            items:
+                              type: string
+                            minItems: 1
+                            type: array
+                        required:
+                        - as
+                        - peers
+                        - virtualIPs
+                        type: object
                       enabled:
                         default: false
                         description: |-
@@ -877,9 +990,10 @@ spec:
                         default: Keepalived
                         description: |-
                           type indicates the type of the control plane load balancer to deploy on
-                          controller nodes. Currently, the only supported type is "Keepalived".
+                          controller nodes, either "Keepalived" or "BGP".
                         enum:
                         - Keepalived
+                        - BGP
                         type: string
                     type: object
                   coreDNS:
