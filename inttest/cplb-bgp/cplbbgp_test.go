@@ -54,14 +54,19 @@ spec:
 {{- if .RouterID }}
         routerID: {{ .RouterID }}
 {{- end }}
+{{- if .IPv6 }}
         peers:
         - address: {{ .Router }}
           as: 65000
-{{- if .IPv6 }}
           extendedNextHop: true
           bfd: {}
 {{- else }}
-          password: k0s-test
+        listen:
+          port: 1790
+          neighbors:
+          - prefix: {{ .RouterPrefix }}
+            as: 65000
+            password: k0s-test
 {{- end }}
 `
 
@@ -77,15 +82,18 @@ router bgp 65000
  bgp bestpath as-path multipath-relax
  neighbor controllers peer-group
  neighbor controllers remote-as {{ .AS }}
- neighbor controllers passive
  neighbor controllers capability extended-nexthop
 {{- if eq .Family "ipv6" }}
+ neighbor controllers passive
  neighbor controllers bfd
 {{- else }}
  neighbor controllers password k0s-test
 {{- end }}
 {{- range .Controllers }}
  neighbor {{ . }} peer-group controllers
+{{- if ne $.Family "ipv6" }}
+ neighbor {{ . }} port 1790
+{{- end }}
 {{- end }}
  address-family {{ .Family }} unicast
   neighbor controllers activate
@@ -126,10 +134,10 @@ func (s *cplbBGPSuite) TestK0sGetsUp() {
 		nodes = append(nodes, s.ControllerNode(idx))
 	}
 	// The extended next hop capability makes FRR send router advertisements, which mustn't add addresses to the nodes.
-	prefix, err := netip.ParseAddr(routerAddress)
+	routerIP, err := netip.ParseAddr(routerAddress)
 	s.Require().NoError(err)
 	s.PutFileTemplate(router, "/etc/frr/frr.conf", routerConfig, map[string]any{
-		"AS": as, "Controllers": controllers, "Family": family, "Prefix": netip.PrefixFrom(prefix, 64).Masked(),
+		"AS": as, "Controllers": controllers, "Family": family, "Prefix": netip.PrefixFrom(routerIP, 64).Masked(),
 	})
 	s.exec(ctx, router, strings.Join([]string{
 		"sed -i -e s/^bgpd=no/bgpd=yes/ -e s/^bfdd=no/bfdd=yes/ /etc/frr/daemons",
@@ -159,6 +167,7 @@ func (s *cplbBGPSuite) TestK0sGetsUp() {
 		}
 		s.PutFileTemplate(s.ControllerNode(idx), "/tmp/k0s.yaml", controllerConfig, map[string]any{
 			"VIP": vip, "Bits": bits, "AS": as, "RouterID": routerID, "Router": routerAddress, "IPv6": s.isIPv6Only,
+			"RouterPrefix": netip.PrefixFrom(routerIP, 24).Masked(),
 		})
 		args := append([]string{"--config=/tmp/k0s.yaml", featureGates}, extraArgs...)
 		s.Require().NoError(s.InitController(idx, append(args, joinToken)...))
