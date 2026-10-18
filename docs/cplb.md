@@ -15,10 +15,10 @@ recommended to use both together if you don't have an external load balancer.
 Load balancing means that an IP address will forward the traffic to every control plane node, Virtual IPs mean that
 this IP address will be present on at least one node at a time.
 
-CPLB relies on [keepalived](https://www.keepalived.org) for highly available VIPs. Internally, Keepalived uses the
-[VRRP protocol](https://datatracker.ietf.org/doc/html/rfc3768). Load Balancing can be done through either userspace
-reverse proxy implemented in k0s (recommended for simplicity), or it can use Keepalived's virtual servers feature,
-which ultimately relies on IPVS.
+By default, CPLB relies on [keepalived](https://www.keepalived.org) for highly available VIPs. Internally, Keepalived
+uses the [VRRP protocol](https://datatracker.ietf.org/doc/html/rfc3768). Load Balancing can be done through either
+userspace reverse proxy implemented in k0s (recommended for simplicity), or it can use Keepalived's virtual servers
+feature, which ultimately relies on IPVS. The [BGP](#bgp) type uses BGP routers instead.
 
 ## Compatibility
 
@@ -195,6 +195,71 @@ spec:
         virtualServers:
         - ipAddress: "<VIP address without netmask>" # for instance 172.16.0.100
 ```
+
+## BGP
+
+With `type: BGP`, k0s doesn't use keepalived or layer 2. Every controller adds the VIPs to its loopback interface
+and advertises them as host routes to BGP routers while its local API server is ready, and the routers spread the
+traffic over all of them with ECMP. This allows controllers in different layer 2 segments, for instance in
+different racks. It requires the `ControlPlaneLoadBalancingBGP` [feature gate](feature-gates.md) on all
+controllers.
+
+* Each VIP is a `/32` or `/128` outside of the controllers' subnets, k0s refuses to start otherwise.
+* A controller withdraws its routes after three consecutive failed `/readyz` checks of its API server, and right away
+  when it stops gracefully. For crashed or unreachable controllers, the hold time or BFD applies.
+* There's no userspace proxy or iptables rule, and `spec.api.onlyBindToAddress` isn't supported.
+* The controllers initiate the BGP sessions and never accept them. BFD needs directly connected peers and UDP port
+  3784 open on the controllers.
+
+Setting `spec.api.externalAddress` to a VIP makes it the address of the control plane for clients, join tokens,
+kubelets and konnectivity agents:
+
+```yaml
+spec:
+  api:
+    externalAddress: <VIP address> # for instance 10.200.0.10
+  network:
+    controlPlaneLoadBalancing:
+      enabled: true
+      type: BGP
+      bgp:
+        virtualIPs: ["<VIP address>/32"]
+        as: 65000
+        peers:
+        - address: <router address>
+          as: 65000
+          bfd: {}
+```
+
+For this, the routers must hash on the transport layer and must not send ICMP redirects for the VIP (for instance
+`net.ipv4.fib_multipath_hash_policy=1`, `net.ipv6.fib_multipath_hash_policy=1` and
+`net.ipv4.conf.all.send_redirects=0` on Linux), as each konnectivity agent needs connections to all controllers
+through the VIP. Workers and joining controllers need a route to the VIP through the routers, as the controllers
+don't install the routes they receive.
+
+The router ID defaults to `spec.api.address`. If that's not an IPv4 address, set `routerID` to a unique IPv4
+address on each controller. The peers can be in the same AS as the controllers (iBGP) or in another one (eBGP). In
+the FRR example below, `router bgp` is the AS of the routers and `remote-as` the AS of the controllers. The routers
+need multipath for the VIP routes:
+
+```text
+router bgp 65000
+ no bgp ebgp-requires-policy
+ bgp bestpath as-path multipath-relax
+ neighbor controllers peer-group
+ neighbor controllers remote-as 65000
+ neighbor controllers passive
+ neighbor controllers bfd
+ neighbor <controller address> peer-group controllers
+ address-family ipv4 unicast
+  neighbor controllers activate
+  maximum-paths 8
+  maximum-paths ibgp 8
+ exit-address-family
+```
+
+With BFD, enable `bfdd` in FRR. FRR doesn't bring up BFD for `bgp listen range` neighbors, so list the controllers
+as neighbors.
 
 ## Full example using `k0sctl`
 
@@ -565,6 +630,22 @@ SHA1 Fingerprint=B7:90:E6:E4:E1:EE:5B:19:72:99:02:28:54:36:D9:84:D5:39:67:8B
 
 Note: You can't query the port 6444 on the localhost address, there is an iptables conflict. You are expected to
 be able to reach the port 6443 on any address and the port 6444 on any address except localhost.
+
+### Troubleshooting BGP
+
+The VIPs are on the loopback interface of every controller that advertises them:
+
+```console
+controller0:/# ip -o addr show dev lo | grep 10.200.0.10
+1: lo    inet 10.200.0.10/32 scope global deprecated lo\       valid_lft forever preferred_lft 0sec
+```
+
+k0s logs the BGP sessions with `component=cplb-bgp`. On the router, each advertising controller should be a next
+hop of the VIP route, for instance with FRR:
+
+```console
+router# show ip route 10.200.0.10/32
+```
 
 ### Troubleshooting Keepalived Virtual Servers
 

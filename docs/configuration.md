@@ -372,11 +372,12 @@ for node-local load balancing.
 
 Configuration options related to k0s's [control plane load balancing] feature
 
-| Element      | Description                                                                                                                    |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------ |
-| `enabled`    | Indicates if control plane load balancing should be enabled. Default: `false`.                                                 |
-| `type`       | The type of the control plane load balancer to deploy on controller nodes. Currently, the only supported type is `Keepalived`. |
-| `keepalived` | Contains the keepalived configuration.                                                                                         |
+| Element      | Description                                                                                                              |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| `enabled`    | Indicates if control plane load balancing should be enabled. Default: `false`.                                           |
+| `type`       | The type of the control plane load balancer to deploy on controller nodes, `Keepalived` or `BGP`. Default: `Keepalived`. |
+| `keepalived` | Contains the keepalived configuration, can't be combined with `type: BGP`.                                               |
+| `bgp`        | Contains the [BGP](cplb.md#bgp) configuration, required with `type: BGP` and forbidden otherwise.                        |
 
 [control plane load balancing]: cplb.md
 
@@ -419,6 +420,30 @@ Configuration options required for using VRRP to configure VIPs in control plane
 | `lbAlgo`                    | Algorithm used by keepalived. Supported algorithms: `rr`, `wrr`, `lc`, `wlc`, `lblc`, `dh`, `sh`, `sed`, `nq`. Default: `rr`.              |
 | `lbKind`                    | Kind of IPVS load balancer. Supported values: `NAT`, `DR`, `TUN`. Default: `DR`.                                                           |
 | `persistenceTimeoutSeconds` | Timeout for persistent connections in seconds. Must be in the range of 1-2678400 (31 days). If not specified, defaults to 360 (6 minutes). |
+
+##### `spec.network.controlPlaneLoadBalancing.bgp`
+
+| Element                    | Description                                                                                |
+| -------------------------- | ------------------------------------------------------------------------------------------ |
+| `virtualIPs`               | The VIPs as `/32` or `/128` prefixes, each needs a peer of the same IP family.             |
+| `as`                       | The autonomous system number of the controllers.                                           |
+| `routerID`                 | The BGP router ID, an IPv4 address. Default: `spec.api.address` if that's an IPv4 address. |
+| `sourceIP`                 | The local address of the BGP sessions.                                                     |
+| `sourceInterface`          | The interface the BGP sessions are bound to, can't be combined with `sourceIP`.            |
+| `holdTimeSeconds`          | The BGP hold time, at least `3`. Default: `90`.                                            |
+| `keepaliveIntervalSeconds` | The BGP keepalive interval, shorter than the hold time. Default: `30`.                     |
+| `peers`                    | The BGP peers, at least one.                                                               |
+
+##### `spec.network.controlPlaneLoadBalancing.bgp.peers`
+
+| Element    | Description                                                                                                                                                                                        |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `address`  | The IP address of the peer, not a link-local one.                                                                                                                                                  |
+| `as`       | The autonomous system number of the peer, the same as the controllers' for iBGP.                                                                                                                   |
+| `port`     | The BGP port of the peer. Default: `179`.                                                                                                                                                          |
+| `password` | The TCP MD5 password of the session.                                                                                                                                                               |
+| `multihop` | Allows an eBGP peer to be more than one hop away. Default: `false`.                                                                                                                                |
+| `bfd`      | Enables BFD, `{}` uses the defaults `minimumReceiveMilliseconds: 300`, `minimumTransmitMilliseconds: 300` and `multiplier: 3`. Needs a directly connected peer, can't be combined with `multihop`. |
 
 ### `spec.controllerManager`
 
