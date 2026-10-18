@@ -8,8 +8,6 @@ const (
 	IPv6SingleStack Feature = "IPv6SingleStack"
 )
 
-var defaultFeatureGates *FeatureGates
-
 func defaultFeatureMap() map[Feature]FeatureGate {
 	return map[Feature]FeatureGate{
 		IPv6SingleStack: {Stage: Alpha},

@@ -454,6 +454,18 @@ func (s *NetworkSuite) TestValidation() {
 		}
 	})
 
+	s.Run("invalid_single_stack_ipv6_unset_feature_gates", func() {
+		featuregate.FlushDefaultFeatureGates(s.T())
+
+		n := DefaultNetwork()
+		n.PodCIDR = "fd00::/108"
+		n.ServiceCIDR = "fd01::/108"
+		errors := n.Validate()
+		if s.Len(errors, 1) {
+			s.ErrorContains(errors[0], "feature gate IPv6SingleStack must be explicitly enabled to use IPv6 single stack")
+		}
+	})
+
 	s.Run("invalid_dual_stack_ipv6_dualstack_CIDRs", func() {
 		n := DefaultNetwork()
 		n.DualStack = DefaultDualStack()

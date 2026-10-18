@@ -154,27 +154,28 @@ func TestParseFeatureGateFlags(t *testing.T) {
 
 func TestNewFeatureGates(t *testing.T) {
 	t.Run("Singleton", func(t *testing.T) {
-		t.Cleanup(func() { defaultFeatureGates = nil })
+		t.Cleanup(func() { FlushDefaultFeatureGates(t) })
 		fg := FeatureGates{}
 
-		require.Nil(t, defaultFeatureGates)
-		err := fg.Set("")
+		err := fg.Set("IPv6SingleStack=true")
 		require.NoError(t, err, "expected first call to succeed")
+		assert.True(t, IsEnabled(IPv6SingleStack))
 
 		err = fg.Set("")
 		require.Error(t, err, "expected error on second call")
 		assert.EqualError(t, err, "feature gates already initialized")
+		assert.True(t, IsEnabled(IPv6SingleStack), "expected the failed call to keep the configuration")
 	})
 }
 
 func TestIsEnabled(t *testing.T) {
-	t.Run("PanicsIfNotInitialized", func(t *testing.T) {
-		t.Cleanup(func() { defaultFeatureGates = nil })
+	t.Run("DefaultsIfNotSet", func(t *testing.T) {
+		FlushDefaultFeatureGates(t)
+		t.Cleanup(func() { FlushDefaultFeatureGates(t) })
 
-		require.Nil(t, defaultFeatureGates)
-		assert.Panics(t, func() {
-			_ = IsEnabled(IPv6SingleStack)
-		}, "expected panic when defaultFeatureGates is nil")
+		for feature, gate := range defaultFeatureMap() {
+			assert.Equal(t, gate.Stage != Alpha, IsEnabled(feature), "expected the default state of %s", feature)
+		}
 	})
 }
 

@@ -113,18 +113,27 @@ func parseFeatureGateFlags(flag string) (map[string]bool, error) {
 	return featureMap, nil
 }
 
-// IsEnabled checks if a feature is enabled in the defaultFeatureGates singleton
-// This function expects that defaultFeatureGates has been initialized and otherwise
-// will panic.
+// defaultFeatureGates holds the feature gates of the process. It starts with
+// the default state of every feature, which Set overrides.
+var defaultFeatureGates = newDefaultFeatureGates()
+
+func newDefaultFeatureGates() *FeatureGates {
+	fg := &FeatureGates{featureMap: defaultFeatureMap()}
+	fg.setDefaults()
+	return fg
+}
+
+// IsEnabled checks if a feature is enabled in the defaultFeatureGates singleton.
+// Features have their default state unless Set configured them.
 func IsEnabled(feature Feature) bool {
 	return defaultFeatureGates.isEnabled(feature)
 }
 
-// Set initializes the default feature gates with the provided val string.
+// Set configures the default feature gates with the provided val string.
 // This function must be called only once during the initialization phase
 // by spf13/pflag while parsing command line flags.
 func (fg *FeatureGates) Set(val string) error {
-	if defaultFeatureGates != nil {
+	if defaultFeatureGates == fg {
 		return errors.New("feature gates already initialized")
 	}
 	fg.featureMap = defaultFeatureMap()
@@ -162,11 +171,12 @@ func (fg *FeatureGates) Type() string {
 	return "mapStringBool"
 }
 
-// FlushDefaultFeatureGates clears the default feature gates singleton.
+// FlushDefaultFeatureGates resets the default feature gates singleton to the
+// default state of every feature.
 // This is useful for tests to ensure a clean state before each test run
 func FlushDefaultFeatureGates(t *testing.T) {
 	if t == nil {
 		panic("testing.T is nil, cannot flush default feature gates")
 	}
-	defaultFeatureGates = nil
+	defaultFeatureGates = newDefaultFeatureGates()
 }

@@ -17,12 +17,6 @@ func NewConfigCmd() *cobra.Command {
 		Short: "Configuration related sub-commands",
 		Args:  cobra.NoArgs,
 		RunE:  func(*cobra.Command, []string) error { return pflag.ErrHelp }, // Enforce arg validation
-		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			if !cmd.Flags().Changed("feature-gates") {
-				return featureGates.Set("")
-			}
-			return nil
-		},
 	}
 
 	cmd.PersistentFlags().Var(&featureGates, "feature-gates", "feature gates to enable (comma separated list of key=value pairs)")
