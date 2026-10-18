@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"net/netip"
 	"os"
 	"slices"
 	"strconv"
@@ -47,7 +48,8 @@ spec:
       enabled: true
       type: BGP
       bgp:
-        virtualIPs: ["{{ .VIP }}/{{ .Bits }}"]
+        virtualIPs: ["{{ .VIP }}/{{ .Bits }}"{{ if .IPv6 }}, "10.254.254.20/32"{{ end }}]
+        communities: ["65000:100", "65000:1:100"]
         as: {{ .AS }}
 {{- if .RouterID }}
         routerID: {{ .RouterID }}
@@ -55,9 +57,20 @@ spec:
         peers:
         - address: {{ .Router }}
           as: 65000
+{{- if .IPv6 }}
+          extendedNextHop: true
+          bfd: {}
+{{- else }}
+          password: k0s-test
+{{- end }}
 `
 
 const routerConfig = `frr defaults datacenter
+{{- if eq .Family "ipv6" }}
+interface eth0
+ ipv6 nd prefix {{ .Prefix }} no-autoconfig
+exit
+{{- end }}
 router bgp 65000
  bgp router-id 192.0.2.254
  no bgp ebgp-requires-policy
@@ -65,6 +78,12 @@ router bgp 65000
  neighbor controllers peer-group
  neighbor controllers remote-as {{ .AS }}
  neighbor controllers passive
+ neighbor controllers capability extended-nexthop
+{{- if eq .Family "ipv6" }}
+ neighbor controllers bfd
+{{- else }}
+ neighbor controllers password k0s-test
+{{- end }}
 {{- range .Controllers }}
  neighbor {{ . }} peer-group controllers
 {{- end }}
@@ -73,6 +92,12 @@ router bgp 65000
   maximum-paths 8
   maximum-paths ibgp 8
  exit-address-family
+{{- if eq .Family "ipv6" }}
+ address-family ipv4 unicast
+  neighbor controllers activate
+  maximum-paths 8
+ exit-address-family
+{{- end }}
 `
 
 func (s *cplbBGPSuite) address(node string) string {
@@ -100,11 +125,14 @@ func (s *cplbBGPSuite) TestK0sGetsUp() {
 		controllers = append(controllers, s.address(s.ControllerNode(idx)))
 		nodes = append(nodes, s.ControllerNode(idx))
 	}
+	// The extended next hop capability makes FRR send router advertisements, which mustn't add addresses to the nodes.
+	prefix, err := netip.ParseAddr(routerAddress)
+	s.Require().NoError(err)
 	s.PutFileTemplate(router, "/etc/frr/frr.conf", routerConfig, map[string]any{
-		"AS": as, "Controllers": controllers, "Family": family,
+		"AS": as, "Controllers": controllers, "Family": family, "Prefix": netip.PrefixFrom(prefix, 64).Masked(),
 	})
 	s.exec(ctx, router, strings.Join([]string{
-		"sed -i s/^bgpd=no/bgpd=yes/ /etc/frr/daemons",
+		"sed -i -e s/^bgpd=no/bgpd=yes/ -e s/^bfdd=no/bfdd=yes/ /etc/frr/daemons",
 		"sysctl -w net.ipv4.fib_multipath_hash_policy=1 net.ipv6.fib_multipath_hash_policy=1",
 		"sysctl -w net.ipv4.ip_forward=1 net.ipv6.conf.all.forwarding=1 net.ipv4.conf.all.send_redirects=0 net.ipv4.conf.eth0.send_redirects=0",
 		"rc-service frr start </dev/null >/dev/null 2>&1",
@@ -136,9 +164,8 @@ func (s *cplbBGPSuite) TestK0sGetsUp() {
 		s.Require().NoError(s.InitController(idx, append(args, joinToken)...))
 		s.Require().NoError(s.WaitJoinAPI(s.ControllerNode(idx)))
 		if idx == 0 {
-			t, err := s.GetJoinToken(token.RoleController)
+			joinToken, err = s.GetJoinToken(token.RoleController)
 			s.Require().NoError(err)
-			joinToken = t
 		}
 	}
 
@@ -146,6 +173,48 @@ func (s *cplbBGPSuite) TestK0sGetsUp() {
 	s.Require().EventuallyWithT(func(c *assert.CollectT) {
 		assert.Equal(c, slices.Sorted(slices.Values(controllers)), s.nextHops(ctx, family, vip, bits), "Every controller should be a next hop of the VIP")
 	}, 3*time.Minute, time.Second)
+
+	s.T().Log("Testing that the VIP is only on lo, without a proxy")
+	for idx := range s.ControllerCount {
+		node := s.ControllerNode(idx)
+		s.Contains(s.exec(ctx, node, "ip -o addr show dev lo"), fmt.Sprintf(" %s/%d ", vip, bits))
+		s.NotContains(s.exec(ctx, node, "ip -o addr show dev eth0"), " "+vip+"/")
+		s.NotContains(s.exec(ctx, node, "netstat -tln"), ":6444 ")
+	}
+
+	if s.isIPv6Only {
+		s.T().Log("Waiting for the BFD sessions")
+		s.Require().EventuallyWithT(func(c *assert.CollectT) {
+			assert.Equal(c, strconv.Itoa(s.ControllerCount), strings.TrimSpace(s.exec(ctx, router, "vtysh -c 'show bfd peers brief' | grep -c ' up ' || true")))
+		}, time.Minute, time.Second)
+	}
+
+	frozen := s.ControllerNode(1)
+	s.T().Logf("Testing that %s withdraws its route while its API server isn't ready", frozen)
+	s.exec(ctx, frozen, "pkill -STOP kube-apiserver")
+	s.Require().EventuallyWithT(func(c *assert.CollectT) {
+		assert.Equal(c, slices.Sorted(slices.Values([]string{controllers[0], controllers[2]})), s.nextHops(ctx, family, vip, bits))
+	}, time.Minute, time.Second)
+	s.Contains(s.exec(ctx, router, fmt.Sprintf("vtysh -c 'show bgp neighbors %s json'", controllers[1])), `"bgpState":"Established"`,
+		"The BGP session should stay up")
+	s.NotContains(s.exec(ctx, frozen, "ip -o addr show dev lo"), " "+vip+"/")
+	s.exec(ctx, frozen, "pkill -CONT kube-apiserver")
+	s.Require().EventuallyWithT(func(c *assert.CollectT) {
+		assert.Equal(c, slices.Sorted(slices.Values(controllers)), s.nextHops(ctx, family, vip, bits))
+	}, time.Minute, time.Second)
+
+	s.T().Log("Testing that the VIP route carries the configured communities")
+	route := s.exec(ctx, router, fmt.Sprintf("vtysh -c 'show bgp %s unicast %s/%d json'", family, vip, bits))
+	s.Contains(route, `"65000:100"`, "The VIP route should carry the standard community")
+	s.Contains(route, `"65000:1:100"`, "The VIP route should carry the large community")
+
+	if s.isIPv6Only {
+		s.T().Log("Waiting for every controller to advertise the IPv4 VIP over its IPv6 session")
+		s.Require().EventuallyWithT(func(c *assert.CollectT) {
+			assert.Equal(c, slices.Sorted(slices.Values(controllers)), s.nextHops(ctx, "ipv4", "10.254.254.20", 32),
+				"Every controller should be an IPv6 next hop of the IPv4 VIP")
+		}, time.Minute, time.Second)
+	}
 
 	s.T().Log("Testing that requests routed to the VIP reach every controller")
 	// The second worker machine's connections are forwarded by the router, which hashes them with their ports.
@@ -197,6 +266,12 @@ func (s *cplbBGPSuite) TestK0sGetsUp() {
 	s.Require().EventuallyWithT(func(c *assert.CollectT) {
 		assert.Equal(c, slices.Sorted(slices.Values(controllers[:2])), s.nextHops(ctx, family, vip, bits), "The stopped controller should withdraw its route")
 	}, time.Minute, time.Second)
+
+	s.T().Logf("Starting %s again", stopped)
+	s.Require().NoError(s.StartController(stopped))
+	s.Require().EventuallyWithT(func(c *assert.CollectT) {
+		assert.Equal(c, slices.Sorted(slices.Values(controllers)), s.nextHops(ctx, family, vip, bits), "The restarted controller should advertise the VIP again")
+	}, 3*time.Minute, time.Second)
 }
 
 func (s *cplbBGPSuite) exec(ctx context.Context, node, cmd string) string {
