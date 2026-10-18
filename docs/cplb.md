@@ -265,6 +265,60 @@ IPv4 VIPs can also be advertised to IPv6 peers that set `extendedNextHop`. FRR t
 `neighbor controllers capability extended-nexthop`, which also makes it send router advertisements. Set
 `ipv6 nd prefix <node prefix> no-autoconfig` on the interface, unless the nodes should configure addresses from them.
 
+### Peering with Calico or kube-router
+
+Without routers, the BGP speakers of the workers' network provider can learn the VIP routes, so that workers and pods
+reach the VIPs. External clients still need routers or another way to reach the controllers. With `listen`, the
+controllers accept sessions from a prefix instead of listing every worker as a peer:
+
+```yaml
+bgp:
+  virtualIPs: ["<VIP address>/32"]
+  as: 65001
+  listen:
+    port: 1790
+    neighbors:
+    - prefix: <worker subnet> # for instance 10.0.0.0/24
+      as: 64512
+      password: <password>
+```
+
+Use a port other than 179 if controllers also run as workers, as the network provider listens on 179 there. Workers
+still join the cluster through a controller address, since the routes only exist once the network provider runs.
+
+With Calico in BIRD mode, add a `BGPPeer` for each controller, and set `net.ipv4.fib_multipath_hash_policy=1` on
+the workers so that their connections spread over all controllers. Calico reads the password from a Secret that the
+`calico-node` service account must be allowed to read, see the [Calico
+documentation](https://docs.tigera.io/calico/latest/reference/resources/bgppeer):
+
+```yaml
+apiVersion: crd.projectcalico.org/v1
+kind: BGPPeer
+metadata:
+  name: k0s-controller-1
+spec:
+  peerIP: <controller address>:1790
+  asNumber: 65001
+  password:
+    secretKeyRef:
+      name: bgp-password
+      key: password
+```
+
+With kube-router, add the controllers as peers. kube-router only installs one of the routes, so each worker uses a
+single controller and moves to another one when it withdraws its route:
+
+```yaml
+spec:
+  network:
+    kuberouter:
+      extraArgs:
+        peer-router-ips: <controller address>,...
+        peer-router-asns: 65001,...
+        peer-router-ports: 1790,...
+        peer-router-passwords: <base64 encoded password>,...
+```
+
 ## Full example using `k0sctl`
 
 The following example shows a full `k0sctl` configuration file featuring three

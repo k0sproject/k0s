@@ -50,12 +50,7 @@ func TestBGPServer(t *testing.T) {
 		as   uint32
 	}{{"eBGP", 65001}, {"iBGP", 65000}} {
 		t.Run(test.name, func(t *testing.T) {
-			listener, err := (&net.ListenConfig{}).Listen(t.Context(), "tcp", "127.0.0.1:0")
-			require.NoError(t, err)
-			addr, err := netip.ParseAddrPort(listener.Addr().String())
-			require.NoError(t, err)
-			port := addr.Port()
-			require.NoError(t, listener.Close())
+			port := freePort(t, "127.0.0.1")
 
 			peer := server.NewBgpServer()
 			go peer.Serve()
@@ -139,14 +134,7 @@ func TestBGPServer(t *testing.T) {
 }
 
 func TestBGPServerExtendedNextHop(t *testing.T) {
-	listener, err := (&net.ListenConfig{}).Listen(t.Context(), "tcp", "[::1]:0")
-	if err != nil {
-		t.Skip("no IPv6 loopback:", err)
-	}
-	addr, err := netip.ParseAddrPort(listener.Addr().String())
-	require.NoError(t, err)
-	port := addr.Port()
-	require.NoError(t, listener.Close())
+	port := freePort(t, "::1")
 
 	peer := server.NewBgpServer()
 	go peer.Serve()
@@ -186,6 +174,67 @@ func TestBGPServerExtendedNextHop(t *testing.T) {
 			}))
 		return hop == netip.MustParseAddr("::1")
 	}, time.Minute, 100*time.Millisecond, "the IPv6 peer should receive the IPv4 route with an IPv6 next hop")
+}
+
+func TestBGPListen(t *testing.T) {
+	for _, test := range []struct {
+		name, source, password string
+		accepted               bool
+	}{
+		{"inside the prefix", "127.0.0.2", "secret", true},
+		{"wrong password", "127.0.0.2", "wrong", false},
+		{"outside the prefix", "127.0.0.3", "secret", false},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			port := freePort(t, "127.0.0.1")
+			b := &BGP{log: logrus.WithField("test", t.Name()), Config: &k0sAPI.BGPSpec{
+				AS: 65001, HoldTimeSeconds: 9, KeepaliveIntervalSeconds: 3,
+				Listen: &k0sAPI.BGPListen{Port: port, Addresses: []string{"127.0.0.1"}, Neighbors: []k0sAPI.BGPNeighbor{
+					{Prefix: "127.0.0.2/32", AS: 65000, Password: "secret"},
+				}},
+			}}
+			require.NoError(t, b.startServer(t.Context(), "127.0.0.1"))
+			t.Cleanup(b.server.Stop)
+			path, err := hostRoute(netip.MustParseAddr("203.0.113.10"), nil)
+			require.NoError(t, err)
+			_, err = b.server.AddPath(apiutil.AddPathRequest{Paths: []*apiutil.Path{path}})
+			require.NoError(t, err)
+
+			peer := server.NewBgpServer()
+			go peer.Serve()
+			t.Cleanup(peer.Stop)
+			require.NoError(t, peer.StartBgp(t.Context(), &api.StartBgpRequest{Global: &api.Global{Asn: 65000, RouterId: test.source, ListenPort: -1}}))
+			require.NoError(t, peer.AddPeer(t.Context(), &api.AddPeerRequest{Peer: &api.Peer{
+				Conf:      &api.PeerConf{NeighborAddress: "127.0.0.1", PeerAsn: 65001, AuthPassword: test.password},
+				Timers:    &api.Timers{Config: &api.TimersConfig{ConnectRetry: 1}},
+				Transport: &api.Transport{RemotePort: uint32(port), LocalAddress: test.source},
+			}}))
+
+			received := func() bool {
+				var found bool
+				assert.NoError(t, peer.ListPath(apiutil.ListPathRequest{TableType: api.TableType_TABLE_TYPE_GLOBAL, Family: bgp.RF_IPv4_UC},
+					func(prefix bgp.NLRI, _ []*apiutil.Path) { found = found || prefix.String() == "203.0.113.10/32" }))
+				return found
+			}
+			if test.accepted {
+				assert.Eventually(t, received, time.Minute, 100*time.Millisecond, "the neighbor should receive the host route")
+			} else {
+				assert.Never(t, received, 5*time.Second, 100*time.Millisecond, "the neighbor shouldn't get a session")
+			}
+		})
+	}
+}
+
+func freePort(t *testing.T, address string) uint16 {
+	t.Helper()
+	listener, err := (&net.ListenConfig{}).Listen(t.Context(), "tcp", net.JoinHostPort(address, "0"))
+	if err != nil {
+		t.Skip("can't listen on", address, err)
+	}
+	addr, err := netip.ParseAddrPort(listener.Addr().String())
+	require.NoError(t, err)
+	require.NoError(t, listener.Close())
+	return addr.Port()
 }
 
 func TestAdvertiseWhileReady(t *testing.T) {

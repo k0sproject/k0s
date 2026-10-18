@@ -433,7 +433,8 @@ Configuration options required for using VRRP to configure VIPs in control plane
 | `sourceInterface`          | The interface the BGP sessions are bound to, can't be combined with `sourceIP`.                                                                                                |
 | `holdTimeSeconds`          | The BGP hold time, at least `3`. Default: `90`.                                                                                                                                |
 | `keepaliveIntervalSeconds` | The BGP keepalive interval, shorter than the hold time. Default: `30`.                                                                                                         |
-| `peers`                    | The BGP peers, at least one.                                                                                                                                                   |
+| `peers`                    | The BGP peers, at least one unless `listen` has neighbors.                                                                                                                     |
+| `listen`                   | Accepts BGP sessions from [neighbors](cplb.md#peering-with-calico-or-kube-router) within prefixes.                                                                             |
 
 ##### `spec.network.controlPlaneLoadBalancing.bgp.peers`
 
@@ -446,6 +447,25 @@ Configuration options required for using VRRP to configure VIPs in control plane
 | `multihop`        | Allows an eBGP peer to be more than one hop away. Default: `false`.                                                                                                                                |
 | `extendedNextHop` | Advertises the IPv4 VIPs to this IPv6 peer with an IPv6 next hop (RFC 8950). Default: `false`.                                                                                                     |
 | `bfd`             | Enables BFD, `{}` uses the defaults `minimumReceiveMilliseconds: 300`, `minimumTransmitMilliseconds: 300` and `multiplier: 3`. Needs a directly connected peer, can't be combined with `multihop`. |
+
+##### `spec.network.controlPlaneLoadBalancing.bgp.listen`
+
+| Element     | Description                                                 |
+| ----------- | ----------------------------------------------------------- |
+| `port`      | The TCP port to listen on.                                  |
+| `addresses` | The local addresses to listen on. Default: all addresses.   |
+| `neighbors` | The prefixes that sessions are accepted from, at least one. |
+
+##### `spec.network.controlPlaneLoadBalancing.bgp.listen.neighbors`
+
+| Element           | Description                                                                                                     |
+| ----------------- | --------------------------------------------------------------------------------------------------------------- |
+| `prefix`          | The prefix that sessions are accepted from.                                                                     |
+| `as`              | The autonomous system number of the neighbors.                                                                  |
+| `password`        | The TCP MD5 password of the sessions, required. k0s refuses to start BGP if the kernel can't apply it.          |
+| `multihop`        | Allows eBGP neighbors to be more than one hop away. Default: `false`.                                           |
+| `extendedNextHop` | Advertises the IPv4 VIPs to the neighbors of an IPv6 prefix with an IPv6 next hop (RFC 8950). Default: `false`. |
+| `bfd`             | Enables BFD, like for `peers`.                                                                                  |
 
 ### `spec.controllerManager`
 

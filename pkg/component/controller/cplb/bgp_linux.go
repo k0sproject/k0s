@@ -29,6 +29,7 @@ import (
 	"github.com/osrg/gobgp/v4/pkg/server"
 	"github.com/sirupsen/logrus"
 	"github.com/vishvananda/netlink"
+	"golang.org/x/sys/unix"
 )
 
 // BGP advertises the virtual IPs as host routes to the BGP peers while the
@@ -116,11 +117,17 @@ func (b *BGP) startServer(ctx context.Context, routerID string) (err error) {
 	b.server = server.NewBgpServer(server.LoggerOption(logger, &slog.LevelVar{}))
 	go b.server.Serve()
 
-	if err = b.server.StartBgp(ctx, &api.StartBgpRequest{Global: &api.Global{
-		Asn:        b.Config.AS,
-		RouterId:   routerID,
-		ListenPort: -1,
-	}}); err != nil {
+	global := &api.Global{Asn: b.Config.AS, RouterId: routerID, ListenPort: -1}
+	if listen := b.Config.Listen; listen != nil {
+		// gobgp only logs a failure to set the password of a prefix, which would accept unauthenticated sessions.
+		for _, n := range listen.Neighbors {
+			if err = probeTCPMD5(netip.MustParsePrefix(n.Prefix), n.Password); err != nil {
+				return fmt.Errorf("TCP MD5 passwords for prefixes aren't supported: %w", err)
+			}
+		}
+		global.ListenPort, global.ListenAddresses = int32(listen.Port), listen.Addresses
+	}
+	if err = b.server.StartBgp(ctx, &api.StartBgpRequest{Global: global}); err != nil {
 		return fmt.Errorf("failed to start BGP: %w", err)
 	}
 
@@ -141,14 +148,18 @@ func (b *BGP) startServer(ctx context.Context, routerID string) (err error) {
 		return fmt.Errorf("failed to reject received routes: %w", err)
 	}
 
+	timers := func() *api.Timers {
+		return &api.Timers{Config: &api.TimersConfig{
+			ConnectRetry:      10,
+			HoldTime:          uint64(b.Config.HoldTimeSeconds),
+			KeepaliveInterval: uint64(b.Config.KeepaliveIntervalSeconds),
+		}}
+	}
+
 	for _, p := range b.Config.Peers {
 		peer := &api.Peer{
-			Conf: &api.PeerConf{NeighborAddress: p.Address, PeerAsn: p.AS, AuthPassword: p.Password},
-			Timers: &api.Timers{Config: &api.TimersConfig{
-				ConnectRetry:      10,
-				HoldTime:          uint64(b.Config.HoldTimeSeconds),
-				KeepaliveInterval: uint64(b.Config.KeepaliveIntervalSeconds),
-			}},
+			Conf:   &api.PeerConf{NeighborAddress: p.Address, PeerAsn: p.AS, AuthPassword: p.Password},
+			Timers: timers(),
 			Transport: &api.Transport{
 				RemoteAddress: p.Address,
 				RemotePort:    p.Port,
@@ -156,31 +167,82 @@ func (b *BGP) startServer(ctx context.Context, routerID string) (err error) {
 				BindInterface: b.Config.SourceInterface,
 			},
 		}
-		if p.Multihop {
-			peer.EbgpMultihop = &api.EbgpMultihop{Enabled: true, MultihopTtl: 255}
-		}
-		if p.ExtendedNextHop {
-			for _, afi := range []api.Family_Afi{api.Family_AFI_IP6, api.Family_AFI_IP} {
-				peer.AfiSafis = append(peer.AfiSafis, &api.AfiSafi{Config: &api.AfiSafiConfig{
-					Family: &api.Family{Afi: afi, Safi: api.Family_SAFI_UNICAST}, Enabled: true,
-				}})
-			}
-		}
-		if p.BFD != nil {
-			peer.Bfd = &api.BfdPeerConfig{
-				Enabled:                  true,
-				Port:                     server.BfdServerPort,
-				DesiredMinimumTxInterval: p.BFD.MinimumTransmitMilliseconds * 1000,
-				RequiredMinimumReceive:   p.BFD.MinimumReceiveMilliseconds * 1000,
-				DetectionMultiplier:      p.BFD.Multiplier,
-			}
-		}
+		peer.EbgpMultihop, peer.AfiSafis, peer.Bfd = sessionOptions(p.Multihop, p.ExtendedNextHop, p.BFD)
 		if err = b.server.AddPeer(ctx, &api.AddPeerRequest{Peer: peer}); err != nil {
 			return fmt.Errorf("failed to add BGP peer %s: %w", p.Address, err)
 		}
 	}
 
+	if listen := b.Config.Listen; listen != nil {
+		for i, n := range listen.Neighbors {
+			group := &api.PeerGroup{
+				Conf:   &api.PeerGroupConf{PeerGroupName: fmt.Sprintf("k0s-cplb-neighbors-%d", i), PeerAsn: n.AS, AuthPassword: n.Password},
+				Timers: timers(),
+			}
+			group.EbgpMultihop, group.AfiSafis, group.Bfd = sessionOptions(n.Multihop, n.ExtendedNextHop, n.BFD)
+			if err = b.server.AddPeerGroup(ctx, &api.AddPeerGroupRequest{PeerGroup: group}); err == nil {
+				err = b.server.AddDynamicNeighbor(ctx, &api.AddDynamicNeighborRequest{DynamicNeighbor: &api.DynamicNeighbor{
+					Prefix: n.Prefix, PeerGroup: group.Conf.PeerGroupName,
+				}})
+			}
+			if err != nil {
+				return fmt.Errorf("failed to accept BGP neighbors from %s: %w", n.Prefix, err)
+			}
+		}
+	}
+
 	return nil
+}
+
+// sessionOptions maps the options that peers and listen neighbors share.
+func sessionOptions(multihop, extendedNextHop bool, bfd *k0sAPI.BFDSpec) (ebgpMultihop *api.EbgpMultihop, families []*api.AfiSafi, bfdConfig *api.BfdPeerConfig) {
+	if multihop {
+		ebgpMultihop = &api.EbgpMultihop{Enabled: true, MultihopTtl: 255}
+	}
+	if extendedNextHop {
+		for _, afi := range []api.Family_Afi{api.Family_AFI_IP6, api.Family_AFI_IP} {
+			families = append(families, &api.AfiSafi{Config: &api.AfiSafiConfig{
+				Family: &api.Family{Afi: afi, Safi: api.Family_SAFI_UNICAST}, Enabled: true,
+			}})
+		}
+	}
+	if bfd != nil {
+		bfdConfig = &api.BfdPeerConfig{
+			Enabled:                  true,
+			Port:                     server.BfdServerPort,
+			DesiredMinimumTxInterval: bfd.MinimumTransmitMilliseconds * 1000,
+			RequiredMinimumReceive:   bfd.MinimumReceiveMilliseconds * 1000,
+			DetectionMultiplier:      bfd.Multiplier,
+		}
+	}
+	return ebgpMultihop, families, bfdConfig
+}
+
+// probeTCPMD5 sets a password for a prefix on a throwaway socket, the way gobgp does on its listeners.
+func probeTCPMD5(prefix netip.Prefix, password string) error {
+	bits, keylen := prefix.Bits(), len(password)
+	if bits < 0 || bits > 128 || keylen > unix.TCP_MD5SIG_MAXKEYLEN {
+		return fmt.Errorf("invalid prefix %s or password", prefix)
+	}
+	family := unix.AF_INET
+	sig := unix.TCPMD5Sig{Flags: unix.TCP_MD5SIG_FLAG_PREFIX, Prefixlen: uint8(bits), Keylen: uint16(keylen)}
+	if prefix.Addr().Is4() {
+		addr := prefix.Addr().As4()
+		copy(sig.Addr.Data[2:], addr[:])
+	} else {
+		family = unix.AF_INET6
+		addr := prefix.Addr().As16()
+		copy(sig.Addr.Data[6:], addr[:])
+	}
+	sig.Addr.Family = uint16(family)
+	copy(sig.Key[:], password)
+
+	fd, err := unix.Socket(family, unix.SOCK_STREAM, 0)
+	if err != nil {
+		return err
+	}
+	defer unix.Close(fd)
+	return unix.SetsockoptTCPMD5Sig(fd, unix.IPPROTO_TCP, unix.TCP_MD5SIG_EXT, &sig)
 }
 
 // Stop withdraws the routes, and stopping the server tells the peers to drop them right away.

@@ -5,6 +5,7 @@ package v1beta1
 
 import (
 	"net"
+	"net/netip"
 	"slices"
 	"strconv"
 	"strings"
@@ -15,6 +16,9 @@ import (
 
 // BGPSpec configures the BGP type of control plane load balancing.
 type BGPSpec struct {
+	// Listen accepts BGP sessions from peers within the configured prefixes.
+	Listen *BGPListen `json:"listen,omitempty"`
+
 	// VirtualIPs are the host prefixes advertised by every ready controller.
 	// +kubebuilder:validation:MinItems=1
 	VirtualIPs []string `json:"virtualIPs"`
@@ -34,8 +38,7 @@ type BGPSpec struct {
 	SourceInterface string `json:"sourceInterface,omitempty"`
 
 	// Peers are the BGP peers that the virtual IPs are advertised to.
-	// +kubebuilder:validation:MinItems=1
-	Peers []BGPPeer `json:"peers"`
+	Peers []BGPPeer `json:"peers,omitempty"`
 
 	// AS is the autonomous system number of the controllers.
 	// +kubebuilder:validation:Minimum=1
@@ -78,6 +81,43 @@ type BGPPeer struct {
 
 	// ExtendedNextHop advertises the IPv4 virtual IPs to this IPv6 peer, with an IPv6
 	// next hop as defined in RFC 8950.
+	ExtendedNextHop bool `json:"extendedNextHop,omitempty"`
+}
+
+// BGPListen configures the controllers to accept BGP sessions.
+type BGPListen struct {
+	// Addresses are the local addresses to listen on. Defaults to all addresses.
+	Addresses []string `json:"addresses,omitempty"`
+
+	// Neighbors are the prefixes that BGP sessions are accepted from.
+	// +kubebuilder:validation:MinItems=1
+	Neighbors []BGPNeighbor `json:"neighbors"`
+
+	// Port is the TCP port to listen on.
+	// +kubebuilder:validation:Minimum=1
+	Port uint16 `json:"port"`
+}
+
+// BGPNeighbor accepts BGP sessions from the addresses within a prefix.
+type BGPNeighbor struct {
+	// BFD enables BFD for the neighbors, which can't be combined with multihop.
+	BFD *BFDSpec `json:"bfd,omitempty"`
+
+	// Prefix contains the addresses that sessions are accepted from.
+	Prefix string `json:"prefix"`
+
+	// Password is the TCP MD5 password of the sessions.
+	Password string `json:"password"`
+
+	// AS is the autonomous system number of the neighbors.
+	// +kubebuilder:validation:Minimum=1
+	AS uint32 `json:"as"`
+
+	// Multihop allows the neighbors to be more than one hop away.
+	Multihop bool `json:"multihop,omitempty"`
+
+	// ExtendedNextHop advertises the IPv4 virtual IPs to neighbors of an IPv6
+	// prefix, with an IPv6 next hop as defined in RFC 8950.
 	ExtendedNextHop bool `json:"extendedNextHop,omitempty"`
 }
 
@@ -134,10 +174,14 @@ func (b *BGPSpec) Validate(path *field.Path) (errs field.ErrorList) {
 		errs = append(errs, field.Invalid(path.Child("keepaliveIntervalSeconds"), b.KeepaliveIntervalSeconds, "must be shorter than holdTimeSeconds"))
 	}
 
-	if len(b.Peers) == 0 {
-		errs = append(errs, field.Required(path.Child("peers"), ""))
+	neighbors := 0
+	if b.Listen != nil {
+		neighbors = len(b.Listen.Neighbors)
 	}
-	families, peersValid := make(map[bool]bool), len(b.Peers) > 0
+	if len(b.Peers) == 0 && neighbors == 0 {
+		errs = append(errs, field.Required(path.Child("peers"), "unless listen neighbors are set"))
+	}
+	families, peersValid := make(map[bool]bool), len(b.Peers)+neighbors > 0
 	for i := range b.Peers {
 		p, peerPath := &b.Peers[i], path.Child("peers").Index(i)
 		if ipErrs := validation.IsValidIP(peerPath.Child("address"), p.Address); len(ipErrs) > 0 {
@@ -148,12 +192,8 @@ func (b *BGPSpec) Validate(path *field.Path) (errs field.ErrorList) {
 			peersValid = false
 		} else {
 			families[ip.To4() == nil] = true
-			if p.ExtendedNextHop {
-				if ip.To4() != nil {
-					errs = append(errs, field.Invalid(peerPath.Child("extendedNextHop"), p.ExtendedNextHop, "requires an IPv6 peer"))
-				}
-				families[false] = true
-			}
+			families[false] = families[false] || p.ExtendedNextHop
+			errs = append(errs, validateSession(peerPath, p.BFD, p.Multihop, p.ExtendedNextHop, ip.To4() == nil)...)
 		}
 		if p.AS == 0 {
 			errs = append(errs, field.Required(peerPath.Child("as"), ""))
@@ -164,18 +204,50 @@ func (b *BGPSpec) Validate(path *field.Path) (errs field.ErrorList) {
 		for _, msg := range validation.IsValidPortNum(int(p.Port)) {
 			errs = append(errs, field.Invalid(peerPath.Child("port"), p.Port, msg))
 		}
-		if p.BFD != nil {
-			if p.Multihop {
-				errs = append(errs, field.Forbidden(peerPath.Child("bfd"), "cannot be combined with multihop"))
+		if len(p.Password) > 80 {
+			errs = append(errs, field.TooLong(peerPath.Child("password"), "", 80))
+		}
+	}
+
+	if b.Listen != nil {
+		listenPath := path.Child("listen")
+		for _, msg := range validation.IsValidPortNum(int(b.Listen.Port)) {
+			errs = append(errs, field.Invalid(listenPath.Child("port"), b.Listen.Port, msg))
+		}
+		for i, address := range b.Listen.Addresses {
+			errs = append(errs, validation.IsValidIP(listenPath.Child("addresses").Index(i), address)...)
+		}
+		if neighbors == 0 {
+			errs = append(errs, field.Required(listenPath.Child("neighbors"), ""))
+		}
+		seen := make(map[netip.Prefix]bool)
+		for i := range b.Listen.Neighbors {
+			n, neighborPath := &b.Listen.Neighbors[i], listenPath.Child("neighbors").Index(i)
+			switch prefix, err := netip.ParsePrefix(n.Prefix); {
+			case err != nil:
+				errs = append(errs, field.Invalid(neighborPath.Child("prefix"), n.Prefix, "must be a CIDR"))
+				peersValid = false
+			case prefix != prefix.Masked():
+				errs = append(errs, field.Invalid(neighborPath.Child("prefix"), n.Prefix, "must not have host bits set"))
+				peersValid = false
+			case prefix.Addr().IsLinkLocalUnicast():
+				errs = append(errs, field.Invalid(neighborPath.Child("prefix"), n.Prefix, "must not be a link-local prefix"))
+				peersValid = false
+			case seen[prefix]:
+				errs = append(errs, field.Duplicate(neighborPath.Child("prefix"), n.Prefix))
+			default:
+				seen[prefix] = true
+				families[prefix.Addr().Is6()] = true
+				families[false] = families[false] || n.ExtendedNextHop
+				errs = append(errs, validateSession(neighborPath, n.BFD, n.Multihop, n.ExtendedNextHop, prefix.Addr().Is6())...)
 			}
-			if p.BFD.MinimumReceiveMilliseconds == 0 {
-				p.BFD.MinimumReceiveMilliseconds = 300
+			if n.AS == 0 {
+				errs = append(errs, field.Required(neighborPath.Child("as"), ""))
 			}
-			if p.BFD.MinimumTransmitMilliseconds == 0 {
-				p.BFD.MinimumTransmitMilliseconds = 300
-			}
-			if p.BFD.Multiplier == 0 {
-				p.BFD.Multiplier = 3
+			if n.Password == "" {
+				errs = append(errs, field.Required(neighborPath.Child("password"), "sessions accepted from a prefix must be authenticated"))
+			} else if len(n.Password) > 80 {
+				errs = append(errs, field.TooLong(neighborPath.Child("password"), "", 80))
 			}
 		}
 	}
@@ -212,5 +284,27 @@ func (b *BGPSpec) Validate(path *field.Path) (errs field.ErrorList) {
 		}
 	}
 
+	return errs
+}
+
+// validateSession validates the options shared by peers and listen neighbors, and sets their defaults.
+func validateSession(path *field.Path, bfd *BFDSpec, multihop, extendedNextHop, ipv6 bool) (errs field.ErrorList) {
+	if extendedNextHop && !ipv6 {
+		errs = append(errs, field.Invalid(path.Child("extendedNextHop"), extendedNextHop, "requires an IPv6 peer"))
+	}
+	if bfd != nil {
+		if multihop {
+			errs = append(errs, field.Forbidden(path.Child("bfd"), "cannot be combined with multihop"))
+		}
+		if bfd.MinimumReceiveMilliseconds == 0 {
+			bfd.MinimumReceiveMilliseconds = 300
+		}
+		if bfd.MinimumTransmitMilliseconds == 0 {
+			bfd.MinimumTransmitMilliseconds = 300
+		}
+		if bfd.Multiplier == 0 {
+			bfd.Multiplier = 3
+		}
+	}
 	return errs
 }

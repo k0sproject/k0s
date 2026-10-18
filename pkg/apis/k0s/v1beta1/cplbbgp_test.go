@@ -5,6 +5,7 @@ package v1beta1
 
 import (
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/k0sproject/k0s/internal/featuregate"
@@ -55,6 +56,14 @@ func TestBGPSpec_Validate(t *testing.T) {
 		assert.Empty(t, c.Validate(field.NewPath("cplb")))
 	})
 
+	t.Run("listen neighbors instead of peers", func(t *testing.T) {
+		c := bgpCPLB()
+		c.BGP.Peers = nil
+		c.BGP.Listen = &BGPListen{Port: 1790, Neighbors: []BGPNeighbor{{Prefix: "10.0.0.0/24", AS: 64512, Password: "secret", BFD: &BFDSpec{}}}}
+		require.Empty(t, c.Validate(field.NewPath("cplb")))
+		assert.Equal(t, &BFDSpec{MinimumReceiveMilliseconds: 300, MinimumTransmitMilliseconds: 300, Multiplier: 3}, c.BGP.Listen.Neighbors[0].BFD)
+	})
+
 	t.Run("iBGP", func(t *testing.T) {
 		c := bgpCPLB()
 		c.BGP.AS = c.BGP.Peers[0].AS
@@ -96,6 +105,25 @@ func TestBGPSpec_Validate(t *testing.T) {
 		{"extended next hop with an IPv4 peer", func(c *ControlPlaneLoadBalancingSpec) {
 			c.BGP.Peers[0].ExtendedNextHop = true
 		}, "cplb.bgp.peers[0].extendedNextHop: Invalid value"},
+		{"listen without neighbors", func(c *ControlPlaneLoadBalancingSpec) {
+			c.BGP.Listen = &BGPListen{Port: 1790}
+		}, "cplb.bgp.listen.neighbors: Required value"},
+		{"listen without port", func(c *ControlPlaneLoadBalancingSpec) {
+			c.BGP.Listen = &BGPListen{Neighbors: []BGPNeighbor{{Prefix: "10.0.0.0/24", AS: 64512, Password: "secret"}}}
+		}, "cplb.bgp.listen.port: Invalid value"},
+		{"neighbor without password", func(c *ControlPlaneLoadBalancingSpec) {
+			c.BGP.Listen = &BGPListen{Port: 1790, Neighbors: []BGPNeighbor{{Prefix: "10.0.0.0/24", AS: 64512}}}
+		}, "cplb.bgp.listen.neighbors[0].password: Required value"},
+		{"neighbor with host bits", func(c *ControlPlaneLoadBalancingSpec) {
+			c.BGP.Listen = &BGPListen{Port: 1790, Neighbors: []BGPNeighbor{{Prefix: "10.0.0.1/24", AS: 64512, Password: "secret"}}}
+		}, "must not have host bits set"},
+		{"duplicate neighbor prefix", func(c *ControlPlaneLoadBalancingSpec) {
+			n := BGPNeighbor{Prefix: "10.0.0.0/24", AS: 64512, Password: "secret"}
+			c.BGP.Listen = &BGPListen{Port: 1790, Neighbors: []BGPNeighbor{n, n}}
+		}, "cplb.bgp.listen.neighbors[1].prefix: Duplicate value"},
+		{"password too long", func(c *ControlPlaneLoadBalancingSpec) {
+			c.BGP.Peers[0].Password = strings.Repeat("x", 81)
+		}, "cplb.bgp.peers[0].password: Too long"},
 		{"no virtual IPs", func(c *ControlPlaneLoadBalancingSpec) { c.BGP.VirtualIPs = nil }, "cplb.bgp.virtualIPs: Required value"},
 		{"not a host prefix", func(c *ControlPlaneLoadBalancingSpec) {
 			c.BGP.VirtualIPs = []string{"192.168.10.1/24"}
