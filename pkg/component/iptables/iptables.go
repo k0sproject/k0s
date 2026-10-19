@@ -14,7 +14,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/k0sproject/k0s/pkg/assets"
+	"github.com/k0sproject/k0s/internal/assets"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/sirupsen/logrus"
 )
