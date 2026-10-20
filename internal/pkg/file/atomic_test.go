@@ -33,6 +33,38 @@ func TestAtomic_ModificationTime(t *testing.T) {
 	assert.Equal(t, leetTime, stat.ModTime())
 }
 
+func TestAtomic_NoReplace(t *testing.T) {
+	t.Run("creates target", func(t *testing.T) {
+		dir := t.TempDir()
+		file := filepath.Join(dir, "file")
+
+		require.NoError(t, AtomicWithTarget(file).WithPermissions(0o644).WithNoReplace().WriteString("new"))
+
+		content, err := os.ReadFile(file)
+		require.NoError(t, err)
+		assert.Equal(t, "new", string(content))
+		entries, err := os.ReadDir(dir)
+		require.NoError(t, err)
+		assert.Len(t, entries, 1, "temporary file should be gone")
+	})
+
+	t.Run("keeps existing target", func(t *testing.T) {
+		dir := t.TempDir()
+		file := filepath.Join(dir, "file")
+		require.NoError(t, os.WriteFile(file, []byte("old"), 0o644))
+
+		err := AtomicWithTarget(file).WithNoReplace().WriteString("new")
+		require.ErrorIs(t, err, fs.ErrExist)
+
+		content, err := os.ReadFile(file)
+		require.NoError(t, err)
+		assert.Equal(t, "old", string(content))
+		entries, err := os.ReadDir(dir)
+		require.NoError(t, err)
+		assert.Len(t, entries, 1, "temporary file should be gone")
+	})
+}
+
 func TestWriteAtomically(t *testing.T) {
 
 	t.Run("filePermissions", func(t *testing.T) {

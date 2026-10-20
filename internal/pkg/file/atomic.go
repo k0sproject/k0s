@@ -25,6 +25,7 @@ type atomicOpts struct {
 	uid, gid     int
 	mtime        time.Time
 	seLinuxLabel string
+	noReplace    bool
 }
 
 func (o *atomicOpts) wantsChmod() bool {
@@ -76,6 +77,13 @@ func (o *AtomicOpener) WithGroup(gid int) *AtomicOpener {
 // Will only be applied if SELinux is enabled.
 func (o *AtomicOpener) WithSELinuxLabel(label string) *AtomicOpener {
 	o.seLinuxLabel = label
+	return o
+}
+
+// Fail with an error wrapping [fs.ErrExist] if the target exists already,
+// instead of replacing it. Will replace the target if not called.
+func (o *AtomicOpener) WithNoReplace() *AtomicOpener {
+	o.noReplace = true
 	return o
 }
 
@@ -290,6 +298,14 @@ func (f *Atomic) finish(target string) (err error) {
 				return err
 			}
 		}
+	}
+
+	if f.noReplace {
+		// Linking fails if the target exists, whereas renaming replaces it.
+		if err = os.Link(f.fd.Name(), target); err != nil {
+			return err
+		}
+		return remove(f.fd)
 	}
 
 	if err = os.Rename(f.fd.Name(), target); err != nil {
