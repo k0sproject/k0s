@@ -128,6 +128,26 @@ func TestChartNeedsUpgrade(t *testing.T) {
 			true,
 		},
 		{
+			"changed_history_max",
+			v1beta1.Chart{
+				Spec: v1beta1.ChartSpec{
+					ChartName:   "test",
+					ReleaseName: "test-release",
+					Values:      "",
+					Version:     "0.0.1",
+					Namespace:   "ns",
+					HistoryMax:  2,
+				},
+				Status: v1beta1.ChartStatus{
+					ReleaseName: "test-release",
+					Version:     "0.0.1",
+					Namespace:   "ns",
+					ValuesHash:  "41c7250e092d11639c77c823fb34afa232c5ceb316ad546b4df506606ef9b3e4",
+				},
+			},
+			true,
+		},
+		{
 			"no_changes_with_implicit_release_name",
 			v1beta1.Chart{
 				ObjectMeta: metav1.ObjectMeta{
