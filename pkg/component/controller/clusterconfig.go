@@ -240,7 +240,7 @@ func (i *ClusterConfigInitializer) applyAPIConfigStack(ctx context.Context) erro
 	return (&applier.Stack{
 		Name:      ClusterConfigStackName,
 		Resources: []*unstructured.Unstructured{&crd},
-		Clients:   i.clients,
+		Clients:   applier.NewClients(i.clients),
 	}).Apply(ctx, true)
 }
 

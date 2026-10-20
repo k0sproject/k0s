@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
-	"github.com/k0sproject/k0s/pkg/performance"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 )
@@ -73,24 +72,20 @@ func (m *Manager) Init(ctx context.Context) error {
 // Start starts all managed components
 func (m *Manager) Start(ctx context.Context) error {
 	go m.prober.Run(ctx)
-	perfTimer := performance.NewTimer("component-start").Buffer().Start()
 	for _, comp := range m.Components {
 		compName := reflect.TypeOf(comp).Elem().Name()
-		perfTimer.Checkpoint("running-" + compName)
 		logrus.Infof("starting %v", compName)
 		if err := comp.Start(ctx); err != nil {
 			_ = m.Stop()
 			return err
 		}
 		m.started.PushFront(comp)
-		perfTimer.Checkpoint(fmt.Sprintf("running-%s-done", compName))
 		if err := waitForReady(ctx, comp, compName, m.ReadyWaitDuration); err != nil {
 			_ = m.Stop()
 			return err
 		}
 		m.prober.Register(compName, comp)
 	}
-	perfTimer.Output()
 	return nil
 }
 

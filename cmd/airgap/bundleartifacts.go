@@ -103,6 +103,7 @@ instead of in an arbitrary order based on when they finish downloading.
 	flags.Var((*platformFlag)(&platform), "platform", "the platform to export")
 	flags.UintVar(&bundler.Concurrency, "concurrency", 3, "number of concurrent requests to the registry")
 	flags.StringArrayVar(&bundler.RegistriesConfigPaths, "registries-config", nil, "paths to the authentication files for OCI registries (uses the standard Docker config if omitted)")
+	flags.BoolVar(&bundler.RequireMatchingTags, "require-matching-tags", false, "fail if a tag doesn't resolve to the digest given alongside it")
 
 	return cmd
 }

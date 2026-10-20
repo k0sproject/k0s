@@ -21,12 +21,14 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	sc "github.com/vmware-tanzu/sonobuoy/pkg/client"
+	"github.com/vmware-tanzu/sonobuoy/pkg/config"
 	"github.com/vmware-tanzu/sonobuoy/pkg/dynamic"
 	"golang.org/x/mod/semver"
 	"golang.org/x/sync/errgroup"
 	"sigs.k8s.io/yaml"
 
 	"github.com/k0sproject/k0s/inttest/common"
+	"github.com/k0sproject/k0s/inttest/common/ociimages"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -112,9 +114,15 @@ func (s *networkSuite) TestK0sGetsUp() {
 		e2eExtraArgs = "--ginkgo.flake-attempts=2"
 	}
 
+	sonobuoyImage, err := ociimages.Sonobuoy(s.Context())
+	s.Require().NoError(err)
+	sonobuoyConfig := config.New()
+	sonobuoyConfig.WorkerImage = sonobuoyImage
+
 	deadline, _ := s.Context().Deadline()
 	err = client.Run(&sc.RunConfig{
 		GenConfig: sc.GenConfig{
+			Config:         sonobuoyConfig,
 			EnableRBAC:     true,
 			DynamicPlugins: []string{"e2e"},
 			PluginEnvOverrides: map[string]map[string]string{

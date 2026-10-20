@@ -21,6 +21,7 @@ import (
 	syswindows "golang.org/x/sys/windows"
 )
 
+//nolint:revive // This doesn't stutter. The log goes to a log file ¯\_(ツ)_/¯
 type LogFileBackend interface {
 	Backend
 	InitLogFile(func() (*os.File, error)) error

@@ -14,10 +14,8 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/component/prober"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
+
 	"github.com/sirupsen/logrus"
-	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 )
 
 type Stater interface {
@@ -25,16 +23,12 @@ type Stater interface {
 }
 
 type Status struct {
-	StatusInformation K0sStatus
-	Prober            Stater
-	Socket            string
-	L                 *logrus.Entry
-	httpserver        http.Server
-	CertManager       certManager
-}
-
-type certManager interface {
-	GetRestConfig(ctx context.Context) (*rest.Config, error)
+	StatusInformation      K0sStatus
+	Prober                 Stater
+	Socket                 string
+	L                      *logrus.Entry
+	httpserver             http.Server
+	GetWorkerClientFactory func() kubeutil.ClientFactoryInterface
 }
 
 var _ manager.Component = (*Status)(nil)
@@ -92,7 +86,6 @@ func (s *Status) Stop() error {
 
 type statusHandler struct {
 	Status *Status
-	client kubernetes.Interface
 }
 
 // ServerHTTP implementation of handler interface
@@ -105,48 +98,25 @@ func (sh *statusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-const (
-	defaultPollDuration = 1 * time.Second
-	defaultPollTimeout  = 5 * time.Minute
-)
-
 func (sh *statusHandler) getCurrentStatus(ctx context.Context) K0sStatus {
 	status := sh.Status.StatusInformation
 	if !status.Workloads {
 		return status
 	}
 
-	if sh.client == nil {
-		kubeClient, err := sh.buildWorkerSideKubeAPIClient(ctx)
-		if err != nil {
-			status.WorkerToAPIConnectionStatus = ProbeStatus{
-				Message: "failed to create kube-api client required for kube-api status reports, probably kubelet failed to init: " + err.Error(),
-			}
-			return status
+	client, err := sh.Status.GetWorkerClientFactory().GetClient()
+	if err != nil {
+		status.WorkerToAPIConnectionStatus = ProbeStatus{
+			Message: "failed to get client: " + err.Error(),
 		}
-		sh.client = kubeClient
+		return status
 	}
-	_, err := sh.client.Discovery().RESTClient().Get().AbsPath("/version").Do(ctx).Raw()
+
+	_, err = client.Discovery().RESTClient().Get().AbsPath("/version").Do(ctx).Raw()
 	if err != nil {
 		status.WorkerToAPIConnectionStatus = ProbeStatus{Message: err.Error()}
 		return status
 	}
 	status.WorkerToAPIConnectionStatus = ProbeStatus{Success: true}
 	return status
-}
-
-func (sh *statusHandler) buildWorkerSideKubeAPIClient(ctx context.Context) (client kubernetes.Interface, _ error) {
-	timeout, cancel := context.WithTimeout(ctx, defaultPollTimeout)
-	defer cancel()
-	if err := wait.PollUntilWithContext(timeout, defaultPollDuration, func(ctx context.Context) (done bool, err error) {
-		factory := kubeutil.ClientFactory{LoadRESTConfig: func() (*rest.Config, error) {
-			return sh.Status.CertManager.GetRestConfig(ctx)
-		}}
-
-		client, err = factory.GetClient()
-		return err == nil, nil
-	}); err != nil {
-		return nil, err
-	}
-	return client, nil
 }

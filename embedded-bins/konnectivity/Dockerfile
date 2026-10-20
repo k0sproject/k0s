@@ -2,17 +2,26 @@ ARG BUILDIMAGE
 FROM $BUILDIMAGE AS build
 
 RUN if [ ! -z "$(which apt)" ]; then \
-       apt update && apt install -y build-essential make protobuf-compiler git; \
+       apt update && apt install -y git; \
     elif [ ! -z "$(which apk)" ]; then \
-       apk add build-base git make protoc; \
+       apk add git; \
     else \
        echo "unsupported package manager"; \
        exit 1; \
     fi
 
 ARG VERSION
-RUN git -c advice.detachedHead=false clone -b v$VERSION --depth=1 https://github.com/kubernetes-sigs/apiserver-network-proxy.git /apiserver-network-proxy
 WORKDIR /apiserver-network-proxy
+RUN git -c advice.detachedHead=false clone --revision refs/tags/v$VERSION --depth=1 https://github.com/kubernetes-sigs/apiserver-network-proxy.git .
+ARG REVISION
+RUN set -eu \
+  && if [ -n "$REVISION" ]; then \
+    actual=$(git rev-parse HEAD); \
+    [ "$actual" = "$REVISION" ] || { \
+      printf 'error: tag v%s resolves to %s, expected %s\n' "$VERSION" "$actual" "$REVISION" >&2; \
+      exit 1; \
+    }; \
+  fi
 
 ARG TARGET_OS \
   BUILD_GO_TAGS \
@@ -20,13 +29,7 @@ ARG TARGET_OS \
   BUILD_GO_FLAGS \
   BUILD_GO_LDFLAGS
 
-# for mockgen and protoc-gen-* versions, see:
-# https://github.com/kubernetes-sigs/apiserver-network-proxy/blob/v0.36.0/README.md#build
-RUN go install go.uber.org/mock/mockgen@v0.6.0 && \
-    go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.27.1 && \
-    go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2 && \
-    make gen DESIRED_MOCKGEN=v0.6.0 && \
-    CGO_ENABLED=${BUILD_GO_CGO_ENABLED} \
+RUN CGO_ENABLED=${BUILD_GO_CGO_ENABLED} \
     GOOS=linux \
     go build \
         ${BUILD_GO_FLAGS} \

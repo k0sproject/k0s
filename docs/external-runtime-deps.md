@@ -156,12 +156,16 @@ Optional cgroup controllers:
 
 ### No integration with Name Service Switch (NSS) APIs
 
-The k0s Linux binaries are by default statically linked against [musl libc].
-This includes the binaries distributed on the GitHub releases pages. Static
-linking ensures that k0s can run seamlessly across a wide range of Linux
-environments by not requiring a specific standard C library to be installed on
-the host system. However, this design choice means that k0s cannot use [glibc's
-NSS APIs], which require dynamic linking.
+The k0s Linux binaries, including the ones distributed on the GitHub releases
+pages, are by default statically linked and do not depend on the host's
+C&nbsp;library. This ensures that k0s can run seamlessly across a wide range of
+Linux environments. The `k0s` executable and most of the embedded binaries are
+built without [cgo] and use the [pure Go resolver][netdns-go], which only
+consults the `files` and `dns` sources of `/etc/nsswitch.conf`. The Go
+executables that do require cgo, such as `containerd` and `runc`, as well as all
+non-Go executables, are statically linked against [musl libc], which doesn't
+implement NSS at all. In all cases, k0s cannot use [glibc's NSS APIs], which
+require dynamic linking.
 
 This limitation is particularly relevant when a system uses NSS plugins, such as
 [nss-myhostname], for resolving network names like `localhost`. Systems lacking
@@ -175,9 +179,32 @@ to manually add `localhost` entries to the `/etc/hosts` file as shown below:
 ::1 localhost
 ```
 
+The same limitation applies to systems that resolve all names via NSS, such as
+through [nss-resolve] on hosts running `systemd-resolved`. Programs linked
+against glibc can resolve names just fine on such systems, even if
+`/etc/resolv.conf` doesn't list any nameservers. In contrast, k0s and its
+embedded components only ever consult `/etc/resolv.conf`. If that file has no
+nameserver entries, they fall back to querying a nameserver on localhost, which
+usually doesn't exist. This leaves k0s without working name resolution, although
+the host itself appears fine. Make sure that `/etc/resolv.conf` lists reachable
+nameservers. When using `systemd-resolved`, this typically means making
+`/etc/resolv.conf` a symbolic link to `/run/systemd/resolve/stub-resolv.conf`,
+as described in the [systemd-resolved documentation]. Pods can't reach that stub
+resolver on the host's loopback interface, which is why k0s configures the
+kubelet to use systemd-resolved's uplink file `/run/systemd/resolve/resolv.conf`
+for pods instead. The k0s pre-flight checks detect this situation by resolving a
+name under the reserved `invalid` top-level domain, which any working resolver
+answers with NXDOMAIN. If that lookup fails, k0s issues a warning. If
+`/etc/resolv.conf` doesn't list any nameservers on top of that, worker nodes
+refuse to start. Controllers only warn in that case.
+
+[cgo]: https://pkg.go.dev/cmd/cgo
+[netdns-go]: https://pkg.go.dev/net#hdr-Name_Resolution
 [musl libc]: https://musl.libc.org/
 [glibc's NSS APIs]: https://www.gnu.org/software/libc/manual/html_node/Name-Service-Switch.html
 [nss-myhostname]: https://www.freedesktop.org/software/systemd/man/latest/nss-myhostname.html
+[nss-resolve]: https://www.freedesktop.org/software/systemd/man/latest/nss-resolve.html
+[systemd-resolved documentation]: https://www.freedesktop.org/software/systemd/man/latest/systemd-resolved.service.html#/etc/resolv.conf
 
 ### Kernel Parameters
 

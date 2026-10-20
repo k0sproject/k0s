@@ -6,12 +6,12 @@ package internal
 import (
 	"errors"
 	"net/http"
-	_ "net/http/pprof"
+	_ "net/http/pprof" // registers the pprof handlers on the default serve mux
 	"os"
 	"strconv"
 
+	"github.com/k0sproject/k0s/internal/k0scontext"
 	internallog "github.com/k0sproject/k0s/internal/pkg/log"
-	"github.com/k0sproject/k0s/pkg/k0scontext"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"

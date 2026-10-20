@@ -13,7 +13,7 @@ import (
 	"path/filepath"
 
 	"github.com/sirupsen/logrus"
-	_ "modernc.org/sqlite"
+	_ "modernc.org/sqlite" // registers the sqlite database/sql driver
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"

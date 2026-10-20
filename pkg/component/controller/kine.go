@@ -21,10 +21,10 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	"github.com/k0sproject/k0s/internal/assets"
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
 	"github.com/k0sproject/k0s/internal/pkg/users"
-	"github.com/k0sproject/k0s/pkg/assets"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/supervisor"
 )
@@ -109,7 +109,7 @@ func (k *Kine) Start(ctx context.Context) error {
 		"--endpoint": k.Config.DataSource,
 		// NB: kine doesn't parse URLs properly, so construct potentially
 		// invalid URLs that are understood by kine.
-		// https://github.com/k3s-io/kine/blob/v0.17.0/pkg/util/network.go#L5-L13
+		// https://github.com/k3s-io/kine/blob/v0.17.2/pkg/util/network.go#L5-L13
 		"--listen-address": "unix://" + k.K0sVars.KineSocketPath,
 		// Enable metrics on port 2380. The default is 8080, which clashes with kube-router.
 		"--metrics-bind-address": ":2380",

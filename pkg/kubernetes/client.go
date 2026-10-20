@@ -16,6 +16,7 @@ import (
 	"k8s.io/client-go/discovery/cached/memory"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/metadata"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -25,6 +26,7 @@ type ClientFactoryInterface interface {
 	GetClient() (kubernetes.Interface, error)
 	GetDynamicClient() (dynamic.Interface, error)
 	GetDiscoveryClient() (discovery.CachedDiscoveryInterface, error)
+	GetMetadataClient() (metadata.Interface, error)
 	GetAPIExtensionsClient() (apiextensionsclientset.Interface, error)
 	GetK0sClient() (k0sclientset.Interface, error)
 	GetConfigClient() (cfgClient.ClusterConfigInterface, error) // Deprecated: Use [ClientFactoryInterface.GetK0sClient] instead.
@@ -41,6 +43,7 @@ type ClientFactory struct {
 	client              kubernetes.Interface
 	dynamicClient       dynamic.Interface
 	discoveryClient     discovery.CachedDiscoveryInterface
+	metadataClient      metadata.Interface
 	apiExtensionsClient apiextensionsclientset.Interface
 	k0sClient           k0sclientset.Interface
 	restConfig          *rest.Config
@@ -116,6 +119,29 @@ func (c *ClientFactory) GetDiscoveryClient() (discovery.CachedDiscoveryInterface
 	c.discoveryClient = cachedClient
 
 	return cachedClient, nil
+}
+
+func (c *ClientFactory) GetMetadataClient() (metadata.Interface, error) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	if c.metadataClient != nil {
+		return c.metadataClient, nil
+	}
+
+	config, err := c.getRESTConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	client, err := metadata.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
+	c.metadataClient = client
+
+	return client, nil
 }
 
 func (c *ClientFactory) GetAPIExtensionsClient() (apiextensionsclientset.Interface, error) {

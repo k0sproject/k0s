@@ -124,6 +124,18 @@
       "respectLatest": false
     },
     {
+      "description": "Separate Kubernetes patch and minor bumps for the main branch",
+      "matchBaseBranches": [
+        "main"
+      ],
+      "matchPackageNames": [
+        "k8s.io/**",
+        "**/kubernetes",
+        "**/kube-proxy"
+      ],
+      "separateMinorPatch": true
+    },
+    {
       "description": "Ignore some pinned dependencies",
       "enabled": false,
       "matchDatasources": [
@@ -315,6 +327,18 @@
       "allowedVersions": "<=0.16"
     },
     {
+      "description": "Bump konnectivity for release-1.36",
+      "enabled": true,
+      "matchBaseBranches": [
+        "release-1.36"
+      ],
+      "matchDepNames": [
+        "**/apiserver-network-proxy*",
+        "sigs.k8s.io/apiserver-network-proxy/*"
+      ],
+      "allowedVersions": "/^v?0\\.36\\./"
+    },
+    {
       "description": "Bump runc for release-1.36",
       "enabled": true,
       "matchBaseBranches": [
@@ -324,6 +348,18 @@
         "opencontainers/runc"
       ],
       "allowedVersions": "<=1.4"
+    },
+    {
+      "description": "Bump Helm for release-1.36",
+      "enabled": true,
+      "matchBaseBranches": [
+        "release-1.36"
+      ],
+      "matchDepNames": [
+        "helm.sh/helm/**",
+        "helm/helm"
+      ],
+      "allowedVersions": "<=3.21"
     },
     {
       "description": "Bump containerd for release-1.35",
@@ -349,6 +385,18 @@
         "**/kube-proxy"
       ],
       "allowedVersions": "/^v?[01]\\.35\\./"
+    },
+    {
+      "description": "Bump konnectivity for release-1.35",
+      "enabled": true,
+      "matchBaseBranches": [
+        "release-1.35"
+      ],
+      "matchDepNames": [
+        "**/apiserver-network-proxy*",
+        "sigs.k8s.io/apiserver-network-proxy/*"
+      ],
+      "allowedVersions": "/^v?0\\.34\\./"
     },
     {
       "description": "Bump Envoy for release-1.35",
@@ -409,6 +457,18 @@
       "allowedVersions": "/^v?[01]\\.34\\./"
     },
     {
+      "description": "Bump konnectivity for release-1.34",
+      "enabled": true,
+      "matchBaseBranches": [
+        "release-1.34"
+      ],
+      "matchDepNames": [
+        "**/apiserver-network-proxy*",
+        "sigs.k8s.io/apiserver-network-proxy/*"
+      ],
+      "allowedVersions": "/^v?0\\.33\\./"
+    },
+    {
       "description": "Bump runc for release-1.34",
       "enabled": true,
       "matchBaseBranches": [
@@ -451,7 +511,7 @@
     },
     {
       "customType": "regex",
-      "description": "Bump container image tags in non-Dockerfiles",
+      "description": "Bump container image references in non-Dockerfiles",
       "managerFilePatterns": [
         "**/*.go",
         "**/*.md",
@@ -467,10 +527,10 @@
         "**/Makefile*"
       ],
       "matchStrings": [
-        "\\b(?<depName>(docker|k8s\\.gcr|quay|registry\\.k8s)\\.io/(?:[a-z0-9][a-z0-9._-]*/)?[a-z0-9][a-z0-9._-]*)(:|.*\\n.*= \")v?(?<currentValue>[0-9_][\\w.-]{0,127})(?:@(?<currentDigest>sha256:[a-f0-9]{64}))?"
+        "(?:(?://|#) renovate: versioning=(?<versioning>\\S+)\\n[^\\n]*?)?\\b(?<depName>(docker|k8s\\.gcr|quay|registry\\.k8s)\\.io/(?:[a-z0-9][a-z0-9._-]*/)?[a-z0-9][a-z0-9._-]*)(?::|.*\\n.*= \")(?<currentValue>v?[0-9_][\\w.-]{0,127})(?:@(?<currentDigest>sha256:[a-f0-9]{64}))?"
       ],
       "datasourceTemplate": "docker",
-      "extractVersionTemplate": "^v?(?<version>[\\w][\\w.-]{0,127})"
+      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}docker{{/if}}"
     },
     {
       "customType": "regex",

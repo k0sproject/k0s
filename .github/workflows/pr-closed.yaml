@@ -1,4 +1,9 @@
 name: Pull request closed
+
+# This workflow runs with elevated trust on pull requests from forks. It must
+# never check out or execute pull request code. It only deletes the Actions
+# caches that were scoped to the closed pull request.
+
 on:
   pull_request_target:
     types:

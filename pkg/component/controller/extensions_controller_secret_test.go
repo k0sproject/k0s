@@ -4,7 +4,6 @@
 package controller
 
 import (
-	"context"
 	"testing"
 
 	helmv1beta1 "github.com/k0sproject/k0s/pkg/apis/helm/v1beta1"
@@ -410,7 +409,7 @@ func TestLoadAndMergeRepositoryConfig(t *testing.T) {
 				Client: fakeClient,
 			}
 
-			ctx := context.Background()
+			ctx := t.Context()
 			got, err := reconciler.loadAndMergeRepositoryConfig(ctx, tt.chart)
 
 			if tt.wantErr {

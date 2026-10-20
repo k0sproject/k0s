@@ -6,7 +6,10 @@ package worker
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
+
+	"github.com/k0sproject/k0s/internal/pkg/net/resolvconf"
 
 	corev1 "k8s.io/api/core/v1"
 
@@ -70,51 +73,73 @@ func TestParseTaints(t *testing.T) {
 	}
 }
 
-func TestHasSystemdResolvedNameserver(t *testing.T) {
-	t.Run("nonexistent_file", func(t *testing.T) {
-		path := filepath.Join(t.TempDir(), "resolv.conf")
-		detected, err := hasSystemdResolvedNameserver(path)
-		assert.ErrorIs(t, err, os.ErrNotExist)
-		assert.False(t, detected)
+func TestUseSystemdResolvedUplink(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Not used on Windows")
+	}
+
+	writeFile := func(t *testing.T, root, name, content string) {
+		path := filepath.Join(root, name)
+		require.NoError(t, os.MkdirAll(filepath.Dir(path), 0700))
+		require.NoError(t, os.WriteFile(path, []byte(content), 0644))
+	}
+
+	t.Run("without systemd-resolved", func(t *testing.T) {
+		root := t.TempDir()
+		writeFile(t, root, resolvconf.Path, "nameserver 127.0.0.53\n")
+
+		useUplink, err := useSystemdResolvedUplink(root)
+		require.NoError(t, err)
+		assert.False(t, useUplink)
 	})
 
 	for _, test := range []struct {
-		name     string
-		content  string
-		expected bool
+		name, content string
+		expected      bool
 	}{
-		{"empty_file", "", false},
-		{"no_nameservers", "search example.com\n", false},
-		{"whitespace", "  nameserver\t127.0.0.53   ", false}, // no whitespace allowed in front of keywords
-		{"trailing_nonsense", "nameserver\t127.0.0.53  you won't look at me, right?", true},
-		{
-			"multiple_nameservers_systemd_resolved_first",
-			"nameserver 127.0.0.53\nsearch example.com\nnameserver 1.2.3.4",
-			false,
-		},
-		{
-			"multiple_nameservers_systemd_resolved_second",
-			"nameserver 1.2.3.4\nnameserver 127.0.0.53\nsearch example.com",
-			false,
-		},
-		{
-			"commented_nameserver",
-			"search example.com\nnameserver 127.0.0.53\n#nameserver 1.2.3.4",
-			true,
-		},
-		{
-			"comment_after_nameserver",
-			"search example.com\nnameserver 127.0.0.53 # not 1.2.3.4",
-			true,
-		},
+		{"stub", "nameserver 127.0.0.53\n", true},
+		{"no nameservers", "search example.com\n", true},
+		{"other nameservers", "nameserver 1.2.3.4\n", false},
 	} {
-		t.Run(test.name, func(t *testing.T) {
-			path := filepath.Join(t.TempDir(), "resolv.conf")
-			require.NoError(t, os.WriteFile(path, []byte(test.content), 0644))
-			detected, err := hasSystemdResolvedNameserver(path)
-			if assert.NoError(t, err) {
-				assert.Equal(t, test.expected, detected)
-			}
+		t.Run("with systemd-resolved and "+test.name, func(t *testing.T) {
+			root := t.TempDir()
+			writeFile(t, root, resolvconf.SystemdResolvedUplinkPath, "nameserver 1.2.3.4\n")
+			writeFile(t, root, resolvconf.Path, test.content)
+
+			useUplink, err := useSystemdResolvedUplink(root)
+			require.NoError(t, err)
+			assert.Equal(t, test.expected, useUplink)
 		})
 	}
+
+	t.Run("with systemd-resolved and nonexistent resolv.conf", func(t *testing.T) {
+		root := t.TempDir()
+		writeFile(t, root, resolvconf.SystemdResolvedUplinkPath, "nameserver 1.2.3.4\n")
+
+		useUplink, err := useSystemdResolvedUplink(root)
+		require.NoError(t, err)
+		assert.True(t, useUplink)
+	})
+
+	t.Run("with systemd-resolved and resolv.conf being the uplink file", func(t *testing.T) {
+		root := t.TempDir()
+		writeFile(t, root, resolvconf.SystemdResolvedUplinkPath, "nameserver 1.2.3.4\n")
+		resolvConfPath := filepath.Join(root, resolvconf.Path)
+		require.NoError(t, os.MkdirAll(filepath.Dir(resolvConfPath), 0700))
+		require.NoError(t, os.Symlink(filepath.Join(root, resolvconf.SystemdResolvedUplinkPath), resolvConfPath))
+
+		useUplink, err := useSystemdResolvedUplink(root)
+		require.NoError(t, err)
+		assert.False(t, useUplink)
+	})
+
+	t.Run("with systemd-resolved and unreadable resolv.conf", func(t *testing.T) {
+		root := t.TempDir()
+		writeFile(t, root, resolvconf.SystemdResolvedUplinkPath, "nameserver 1.2.3.4\n")
+		require.NoError(t, os.MkdirAll(filepath.Join(root, resolvconf.Path), 0700)) // reading a directory fails
+
+		useUplink, err := useSystemdResolvedUplink(root)
+		assert.ErrorContains(t, err, "is a directory")
+		assert.False(t, useUplink)
+	})
 }

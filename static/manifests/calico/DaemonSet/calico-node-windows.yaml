@@ -152,9 +152,11 @@ spec:
         - name: KUBE_NETWORK
           value: Calico.*
         - name: IP
-          value: {{ .IPAutodetectionMethod }}
+          value: autodetect
+        {{- if ne .IPAutodetectionMethod "" }}
         - name: IP_AUTODETECTION_METHOD
           value: {{ .IPAutodetectionMethod }}
+        {{- end }}
         - name: IP6
           value: none
         - name: FELIX_IPV6SUPPORT
@@ -226,9 +228,11 @@ spec:
         - name: KUBE_NETWORK
           value: Calico.*
         - name: IP
-          value: {{ .IPAutodetectionMethod }}
+          value: autodetect
+        {{- if ne .IPAutodetectionMethod "" }}
         - name: IP_AUTODETECTION_METHOD
           value: {{ .IPAutodetectionMethod }}
+        {{- end }}
         - name: IP6
           value: none
         - name: FELIX_IPV6SUPPORT

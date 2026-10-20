@@ -34,7 +34,7 @@ func TestFindNextPendingRandom(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, node)
 
-		countMap[node.Name] += 1
+		countMap[node.Name]++
 	}
 
 	assert.Contains(t, countMap, "bbb")

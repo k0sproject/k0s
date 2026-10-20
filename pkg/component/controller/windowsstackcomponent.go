@@ -33,12 +33,7 @@ type WindowsStackComponent struct {
 
 // NewWindowsStackComponent creates new WindowsStackComponent reconciler
 func NewWindowsStackComponent(clientFactory k8sutil.ClientFactoryInterface, updateWindowsNodeCount func(*uint)) (*WindowsStackComponent, error) {
-	restConfig, err := clientFactory.GetRESTConfig()
-	if err != nil {
-		return nil, err
-	}
-
-	client, err := metadata.NewForConfig(restConfig)
+	client, err := clientFactory.GetMetadataClient()
 	if err != nil {
 		return nil, err
 	}

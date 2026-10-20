@@ -7,21 +7,20 @@ import (
 	"context"
 	"net"
 	"os"
-	"os/exec"
-	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/yaml"
 
 	"github.com/k0sproject/k0s/inttest/common"
+	"github.com/k0sproject/k0s/inttest/common/ociimages"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 )
 
@@ -99,7 +98,19 @@ func (s *CalicoSuite) TestK0sGetsUp() {
 		TypeMeta:   metav1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{Name: "nginx"},
 		Spec: corev1.PodSpec{
-			Containers: []corev1.Container{{Name: "nginx", Image: "docker.io/library/nginx:1.31.5-alpine"}},
+			Containers: []corev1.Container{{
+				Name:  "nginx",
+				Image: ociimages.Nginx,
+				ReadinessProbe: &corev1.Probe{
+					ProbeHandler: corev1.ProbeHandler{
+						HTTPGet: &corev1.HTTPGetAction{
+							Path:   "/",
+							Port:   intstr.FromInt(80),
+							Scheme: corev1.URISchemeHTTP,
+						},
+					},
+				},
+			}},
 			NodeSelector: map[string]string{
 				"kubernetes.io/hostname": "worker0",
 			},
@@ -111,13 +122,15 @@ func (s *CalicoSuite) TestK0sGetsUp() {
 	targetPod, err := kc.CoreV1().Pods(createdTargetPod.Namespace).Get(ctx, createdTargetPod.Name, metav1.GetOptions{})
 	s.Require().NoError(err)
 
+	alpineImage, err := ociimages.Alpine(ctx)
+	s.Require().NoError(err)
 	sourcePod, err := kc.CoreV1().Pods(metav1.NamespaceDefault).Create(ctx, &corev1.Pod{
 		TypeMeta:   metav1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{Name: "alpine"},
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{{
 				Name:    "alpine",
-				Image:   "docker.io/library/alpine:" + getAlpineVersion(s.T()),
+				Image:   alpineImage,
 				Command: []string{"sleep", "infinity"},
 			}},
 			NodeSelector: map[string]string{
@@ -132,7 +145,8 @@ func (s *CalicoSuite) TestK0sGetsUp() {
 		out, err := common.PodExecCmdOutput(kc, restConfig, sourcePod.Name, sourcePod.Namespace,
 			"/usr/bin/wget -qO- "+net.JoinHostPort(targetPod.Status.PodIP, "80"))
 		if err != nil {
-			return false, err
+			s.T().Log("Error calling nginx pod:", err)
+			return false, nil
 		}
 		s.T().Log("server response", out)
 		return strings.Contains(out, "Welcome to nginx"), nil
@@ -143,16 +157,6 @@ func (s *CalicoSuite) TestK0sGetsUp() {
 	for _, err := range common.VerifyNoRestartedPods(ctx, kc) {
 		s.NoError(err)
 	}
-}
-
-func getAlpineVersion(t *testing.T) string {
-	cmd := exec.Command("."+string(filepath.Separator)+"vars.sh", "alpine_patch_version")
-	cmd.Dir = filepath.Join("..", "..")
-	out, err := cmd.Output()
-	require.NoError(t, err)
-	version, _, _ := strings.Cut(string(out), "\n")
-	require.NotEmpty(t, version, "Failed to get Alpine version")
-	return version
 }
 
 func TestCalicoSuite(t *testing.T) {

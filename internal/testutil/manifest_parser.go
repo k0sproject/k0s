@@ -4,27 +4,29 @@
 package testutil
 
 import (
-	"bytes"
+	"io"
+	"iter"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/yaml"
 )
 
-func ParseManifests(data []byte) ([]*unstructured.Unstructured, error) {
-	var resources []*unstructured.Unstructured
-
-	decoder := yaml.NewYAMLOrJSONDecoder(bytes.NewReader(data), 4096)
-	var resource map[string]any
-	for decoder.Decode(&resource) == nil {
-		item := &unstructured.Unstructured{
-			Object: resource,
-		}
-		if item.GetAPIVersion() != "" && item.GetKind() != "" {
-			resources = append(resources, item)
-			resource = nil
+func ParseObjects(scheme *runtime.Scheme, r io.Reader) iter.Seq2[runtime.Object, error] {
+	return func(yield func(runtime.Object, error) bool) {
+		decoder := yaml.NewYAMLOrJSONDecoder(r, 4096)
+		for {
+			var resource unstructured.Unstructured
+			if err := decoder.Decode(&resource.Object); err != nil {
+				if err != io.EOF { //nolint:errorlint
+					yield(nil, err)
+				}
+				return
+			}
+			gv := resource.GroupVersionKind().GroupVersion()
+			if !yield(scheme.ConvertToVersion(&resource, gv)) {
+				return
+			}
 		}
 	}
-
-	return resources, nil
-
 }

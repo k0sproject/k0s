@@ -121,7 +121,7 @@ func (a *Autopilot) applyManifests(ctx context.Context) {
 		stack := applier.Stack{
 			Name:      AutopilotStackName,
 			Resources: slices.Concat(crdResources, stackResources),
-			Clients:   a.AdminClientFactory,
+			Clients:   applier.NewClients(a.AdminClientFactory),
 		}
 
 		for {

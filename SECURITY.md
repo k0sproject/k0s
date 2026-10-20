@@ -21,10 +21,10 @@ We follow the upstream Kubernetes [EOL policy] which means the following version
 
 | Version   | Supported |
 |-----------|-----------|
+| v1.36.x   | ✅        |
+| v1.35.x   | ✅        |
 | v1.34.x   | ✅        |
-| v1.33.x   | ✅        |
-| v1.32.x   | ✅        |
-| < v1.32.x | ❌        |
+| < v1.34.x | ❌        |
 
 [EOL policy]: https://kubernetes.io/releases/patch-releases/
 
@@ -39,7 +39,7 @@ To report a vulnerability, either:
    * Navigate to the [Security tab] on the repository
    * Click on 'Advisories'
    * Click on 'Report a vulnerability'
-   * Detail the issue, see below for some expamples of info that might be useful including.
+   * Detail the issue, see below for some examples of info that might be useful including.
 
 2. Send an email to cncf-k0s-maintainers@lists.cncf.io detailing the issue, see below for some examples of info that might be useful including.
 
@@ -78,7 +78,7 @@ can request to be updated regularly via email.
 
 If the vulnerability is accepted, a timeline for developing a patch, public
 disclosure, and patch release will be determined in coordination with the maintainers and reporter(s).
-The reporter(s) are expectedto participate in the discussion of the timeline and abide by agreed upon dates
+The reporter(s) are expected to participate in the discussion of the timeline and abide by agreed upon dates
 for public disclosure.
 
 ## Public Disclosure Process

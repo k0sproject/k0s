@@ -4,28 +4,27 @@
 package v1beta1
 
 import (
-	"errors"
+	"math"
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/suite"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/validation/field"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-type CPLBSuite struct {
-	suite.Suite
-}
-
-func (s *CPLBSuite) TestValidateVRRPInstances() {
+func TestValidateVRRPInstances(t *testing.T) {
 	tests := []struct {
 		name          string
-		vrrps         []VRRPInstance
-		expectedVRRPs []VRRPInstance
-		wantErr       bool
+		vrrps         VRRPInstances
+		expectedVRRPs VRRPInstances
+		wantErr       string
 	}{
 		{
 			name: "Set expected defaults",
-			vrrps: []VRRPInstance{
+			vrrps: VRRPInstances{
 				{
 					VirtualIPs: []string{"192.168.1.1/24"},
 					AuthPass:   "123456",
@@ -35,7 +34,7 @@ func (s *CPLBSuite) TestValidateVRRPInstances() {
 					AuthPass:   "12345678",
 				},
 			},
-			expectedVRRPs: []VRRPInstance{
+			expectedVRRPs: VRRPInstances{
 				{
 					VirtualRouterID:       defaultVirtualRouterID,
 					Interface:             "fake-nic-0",
@@ -51,11 +50,10 @@ func (s *CPLBSuite) TestValidateVRRPInstances() {
 					AuthPass:              "12345678",
 				},
 			},
-			wantErr: false,
 		},
 		{
 			name: "valid instance no overrides",
-			vrrps: []VRRPInstance{
+			vrrps: VRRPInstances{
 				{
 					VirtualRouterID:       1,
 					Interface:             "eth0",
@@ -66,7 +64,7 @@ func (s *CPLBSuite) TestValidateVRRPInstances() {
 					UnicastPeers:          []string{"192.168.1.2", "192.168.1.3"},
 				},
 			},
-			expectedVRRPs: []VRRPInstance{
+			expectedVRRPs: VRRPInstances{
 				{
 					VirtualRouterID:       1,
 					Interface:             "eth0",
@@ -77,10 +75,62 @@ func (s *CPLBSuite) TestValidateVRRPInstances() {
 					UnicastPeers:          []string{"192.168.1.2", "192.168.1.3"},
 				},
 			},
-			wantErr: false,
+		}, {
+			name: "Lowest and highest virtual router IDs",
+			vrrps: VRRPInstances{{
+				VirtualRouterID: 1,
+				Interface:       "eth0",
+				VirtualIPs:      []string{"192.168.1.1/24"},
+				AuthPass:        "123456",
+			}, {
+				VirtualRouterID: 255,
+				Interface:       "eth0",
+				VirtualIPs:      []string{"192.168.2.1/24"},
+				AuthPass:        "123456",
+			}},
+			expectedVRRPs: VRRPInstances{{
+				VirtualRouterID:       1,
+				Interface:             "eth0",
+				AdvertIntervalSeconds: defaultAdvertIntervalSeconds,
+			}, {
+				VirtualRouterID:       255,
+				Interface:             "eth0",
+				AdvertIntervalSeconds: defaultAdvertIntervalSeconds,
+			}},
+		}, {
+			name: "Virtual router ID too high",
+			vrrps: VRRPInstances{{
+				Interface:  "eth0",
+				VirtualIPs: []string{"192.168.1.1/24"},
+				AuthPass:   "123456",
+			}, {
+				VirtualRouterID: 256,
+				Interface:       "eth0",
+				VirtualIPs:      []string{"192.168.2.1/24"},
+				AuthPass:        "123456",
+			}},
+			wantErr: `vrrpInstances[1].virtualRouterID: Invalid value: 256: must be between 1 and 255, inclusive`,
+		}, {
+			name: "Negative virtual router ID",
+			vrrps: VRRPInstances{{
+				VirtualRouterID: -1,
+				Interface:       "eth0",
+				VirtualIPs:      []string{"192.168.1.1/24"},
+				AuthPass:        "123456",
+			}},
+			wantErr: `vrrpInstances[0].virtualRouterID: Invalid value: -1: must be between 1 and 255, inclusive`,
+		}, {
+			name: "Reserved address label",
+			vrrps: VRRPInstances{{
+				Interface:    "eth0",
+				VirtualIPs:   []string{"192.168.1.1/24"},
+				AuthPass:     "123456",
+				AddressLabel: math.MaxUint32,
+			}},
+			wantErr: `vrrpInstances[0].addressLabel: Invalid value: 4294967295: 0xffffffff is reserved`,
 		}, {
 			name: "No password",
-			vrrps: []VRRPInstance{
+			vrrps: VRRPInstances{
 				{
 					VirtualRouterID:       1,
 					Interface:             "eth0",
@@ -88,28 +138,35 @@ func (s *CPLBSuite) TestValidateVRRPInstances() {
 					AdvertIntervalSeconds: 1,
 				},
 			},
-			wantErr: true,
+			wantErr: `vrrpInstances[0].authPass: Required value`,
 		}, {
 			name: "Password too long",
-			vrrps: []VRRPInstance{
+			vrrps: VRRPInstances{
 				{
 					VirtualIPs: []string{"192.168.1.1/24"},
 					AuthPass:   "012345678",
 				},
 			},
-			wantErr: true,
+			wantErr: `vrrpInstances[0].authPass: Too long: may not be more than 8 bytes`,
+		}, {
+			name: "No virtual IPs",
+			vrrps: VRRPInstances{{
+				Interface: "eth0",
+				AuthPass:  "123456",
+			}},
+			wantErr: `vrrpInstances[0].virtualIPs: Required value`,
 		}, {
 			name: "Invalid CIDR",
-			vrrps: []VRRPInstance{
+			vrrps: VRRPInstances{
 				{
-					VirtualIPs: []string{"192.168.1.1"},
+					VirtualIPs: []string{"192.168.1.1/24", "192.168.1.1"},
 					AuthPass:   "123456",
 				},
 			},
-			wantErr: true,
+			wantErr: `vrrpInstances[0].virtualIPs[1]: Invalid value: "192.168.1.1": must be a valid address in CIDR form, (e.g. 10.9.8.7/24 or 2001:db8::1/64)`,
 		}, {
 			name: "Unicast Peers without unicast source",
-			vrrps: []VRRPInstance{
+			vrrps: VRRPInstances{
 				{
 					VirtualRouterID:       1,
 					Interface:             "eth0",
@@ -119,23 +176,24 @@ func (s *CPLBSuite) TestValidateVRRPInstances() {
 					UnicastPeers:          []string{"192.168.1.2", "192.168.1.3"},
 				},
 			},
-			wantErr: true,
+			wantErr: `vrrpInstances[0].unicastSourceIP: Required value: when unicastPeers are specified`,
 		}, {
 			name: "Invalid unicast peers",
-			vrrps: []VRRPInstance{
+			vrrps: VRRPInstances{
 				{
 					VirtualRouterID:       1,
 					Interface:             "eth0",
 					VirtualIPs:            []string{"192.168.1.100/24"},
 					AdvertIntervalSeconds: 1,
 					AuthPass:              "123456",
-					UnicastPeers:          []string{"example.com", "192.168.1.3"},
+					UnicastSourceIP:       "192.168.1.1",
+					UnicastPeers:          []string{"192.168.1.2", "example.com"},
 				},
 			},
-			wantErr: true,
+			wantErr: `vrrpInstances[0].unicastPeers[1]: Invalid value: "example.com": must be a valid IP address, (e.g. 10.9.8.7 or 2001:db8::ffff)`,
 		}, {
 			name: "Invalid unicast source",
-			vrrps: []VRRPInstance{
+			vrrps: VRRPInstances{
 				{
 					VirtualRouterID:       1,
 					Interface:             "eth0",
@@ -146,10 +204,10 @@ func (s *CPLBSuite) TestValidateVRRPInstances() {
 					UnicastPeers:          []string{"192.168.1.2", "192.168.1.3"},
 				},
 			},
-			wantErr: true,
+			wantErr: `vrrpInstances[0].unicastSourceIP: Invalid value: "example.com": must be a valid IP address, (e.g. 10.9.8.7 or 2001:db8::ffff)`,
 		}, {
 			name: "Unicast peers includes unicast source",
-			vrrps: []VRRPInstance{
+			vrrps: VRRPInstances{
 				{
 					VirtualRouterID:       1,
 					Interface:             "eth0",
@@ -160,46 +218,69 @@ func (s *CPLBSuite) TestValidateVRRPInstances() {
 					UnicastPeers:          []string{"192.168.1.1", "192.168.1.2", "192.168.1.3"},
 				},
 			},
-			wantErr: true,
+			wantErr: `vrrpInstances[0].unicastPeers[0]: Invalid value: "192.168.1.1": must not be the same as unicastSourceIP`,
 		},
 	}
 
 	for _, tt := range tests {
-		s.Run(tt.name, func() {
-			k := &KeepalivedSpec{
-				VRRPInstances: tt.vrrps,
-			}
-			errs := k.validateVRRPInstances(returnNIC)
-			if tt.wantErr {
-				s.Require().Error(errors.Join(errs...))
+		t.Run(tt.name, func(t *testing.T) {
+			underTest := tt.vrrps.DeepCopy()
+			errs := underTest.validate(field.NewPath("vrrpInstances"), returnNIC)
+			if tt.wantErr != "" {
+				if assert.Len(t, errs, 1) {
+					assert.ErrorContains(t, errs[0], tt.wantErr)
+				}
 			} else {
-				s.Require().Empty(errs)
-				s.T().Log(k.VRRPInstances)
-				s.Require().Len(k.VRRPInstances, len(tt.expectedVRRPs), "Expected and actual VRRPInstances length mismatch")
+				require.Empty(t, errs)
+				t.Log(underTest)
+				require.Len(t, underTest, len(tt.expectedVRRPs), "Expected and actual VRRPInstances length mismatch")
 				for i := range tt.expectedVRRPs {
-					s.Require().Equal(tt.expectedVRRPs[i].Interface, k.VRRPInstances[i].Interface, "Interface mismatch")
-					s.Require().Equal(tt.expectedVRRPs[i].VirtualRouterID, k.VRRPInstances[i].VirtualRouterID, "Virtual router ID mismatch")
-					s.Require().Equal(tt.expectedVRRPs[i].AdvertIntervalSeconds, k.VRRPInstances[i].AdvertIntervalSeconds, "Advertisement interval mismatch")
+					require.Equal(t, tt.expectedVRRPs[i].Interface, underTest[i].Interface, "Interface mismatch")
+					require.Equal(t, tt.expectedVRRPs[i].VirtualRouterID, underTest[i].VirtualRouterID, "Virtual router ID mismatch")
+					require.Equal(t, tt.expectedVRRPs[i].AdvertIntervalSeconds, underTest[i].AdvertIntervalSeconds, "Advertisement interval mismatch")
 				}
 			}
 		})
 	}
+
+	t.Run("automatic virtualRouterIDs exhausted", func(t *testing.T) {
+		// The automatic IDs start at the default one, so this many instances
+		// makes the last one exceed the maximum by one.
+		var underTest [255 - defaultVirtualRouterID + 2]VRRPInstance
+		for i := range underTest {
+			underTest[i] = VRRPInstance{
+				Interface:  "eth0",
+				VirtualIPs: []string{"192.168.1.1/24"},
+				AuthPass:   "123456",
+			}
+		}
+
+		errs := VRRPInstances(underTest[:]).validate(field.NewPath("vrrpInstances"), returnNIC)
+
+		if assert.Lenf(t, errs, 1, "Expected exactly one error") {
+			assert.ErrorContains(t, errs[0],
+				`vrrpInstances[205].virtualRouterID: Internal error: automatic virtualRouterIDs exceeded, specify them explicitly`,
+			)
+		}
+		assert.EqualValues(t, 255, underTest[len(underTest)-2].VirtualRouterID)
+		assert.Zero(t, underTest[len(underTest)-1].VirtualRouterID)
+	})
 }
 
 func returnNIC() (string, error) {
 	return "fake-nic-0", nil
 }
 
-func (s *CPLBSuite) TestValidateVirtualServers() {
+func TestValidateVirtualServers(t *testing.T) {
 	tests := []struct {
 		name        string
-		vss         []VirtualServer
-		expectedVSS []VirtualServer
-		wantErr     bool
+		vss         VirtualServers
+		expectedVSS VirtualServers
+		wantErr     string
 	}{
 		{
 			name: "Set expected defaults",
-			vss: []VirtualServer{
+			vss: VirtualServers{
 				{
 					IPAddress: "1.2.3.4",
 				},
@@ -207,7 +288,7 @@ func (s *CPLBSuite) TestValidateVirtualServers() {
 					IPAddress: "1.2.3.5",
 				},
 			},
-			expectedVSS: []VirtualServer{
+			expectedVSS: VirtualServers{
 				{
 					IPAddress:                 "1.2.3.4",
 					DelayLoop:                 metav1.Duration{Duration: time.Minute},
@@ -223,11 +304,10 @@ func (s *CPLBSuite) TestValidateVirtualServers() {
 					PersistenceTimeoutSeconds: 360,
 				},
 			},
-			wantErr: false,
 		},
 		{
 			name: "valid instance no overrides",
-			vss: []VirtualServer{
+			vss: VirtualServers{
 				{
 					IPAddress:                 "1.2.3.4",
 					DelayLoop:                 metav1.Duration{Duration: 1 * time.Second},
@@ -236,7 +316,7 @@ func (s *CPLBSuite) TestValidateVirtualServers() {
 					PersistenceTimeoutSeconds: 100,
 				},
 			},
-			expectedVSS: []VirtualServer{
+			expectedVSS: VirtualServers{
 				{
 					IPAddress:                 "1.2.3.4",
 					DelayLoop:                 metav1.Duration{Duration: 1 * time.Second},
@@ -245,17 +325,16 @@ func (s *CPLBSuite) TestValidateVirtualServers() {
 					PersistenceTimeoutSeconds: 100,
 				},
 			},
-			wantErr: false,
 		},
 		{
 			name: "truncate DelayLoop",
-			vss: []VirtualServer{
+			vss: VirtualServers{
 				{
 					IPAddress: "1.2.3.4",
 					DelayLoop: metav1.Duration{Duration: 1234567 * time.Nanosecond},
 				},
 			},
-			expectedVSS: []VirtualServer{
+			expectedVSS: VirtualServers{
 				{
 					IPAddress:                 "1.2.3.4",
 					DelayLoop:                 metav1.Duration{Duration: 1234 * time.Microsecond},
@@ -264,69 +343,122 @@ func (s *CPLBSuite) TestValidateVirtualServers() {
 					PersistenceTimeoutSeconds: 360,
 				},
 			},
-			wantErr: false,
 		},
 		{
 			name:    "empty ip address",
-			vss:     []VirtualServer{{}},
-			wantErr: true,
+			vss:     VirtualServers{{IPAddress: "1.2.3.4"}, {}},
+			wantErr: `virtualServers[1].ipAddress: Required value`,
 		},
 		{
 			name: "invalid IP address",
-			vss: []VirtualServer{{
+			vss: VirtualServers{{
 				IPAddress: "INVALID",
 			}},
-			wantErr: true,
+			wantErr: `virtualServers[0].ipAddress: Invalid value: "INVALID": must be a valid IP address, (e.g. 10.9.8.7 or 2001:db8::ffff)`,
 		},
 		{
 			name: "invalid LBAlgo",
-			vss: []VirtualServer{{
-				LBAlgo: "invalid",
+			vss: VirtualServers{{
+				IPAddress: "1.2.3.4",
+				LBAlgo:    "invalid",
 			}},
-			wantErr: true,
+			wantErr: `virtualServers[0].lbAlgo: Unsupported value: "invalid": supported values: "rr", "wrr", "lc", "wlc", "lblc", "dh", "sh", "sed", "nq"`,
 		},
 		{
 			name: "invalid LBKind",
-			vss: []VirtualServer{{
-				LBKind: "invalid",
+			vss: VirtualServers{{
+				IPAddress: "1.2.3.4",
+				LBKind:    "invalid",
 			}},
-			wantErr: true,
+			wantErr: `virtualServers[0].lbKind: Unsupported value: "invalid": supported values: "NAT", "DR", "TUN"`,
 		},
 		{
-			name: "invalid persistencee timeout",
-			vss: []VirtualServer{{
+			name: "negative persistence timeout",
+			vss: VirtualServers{{
+				IPAddress:                 "1.2.3.4",
 				PersistenceTimeoutSeconds: -1,
 			}},
-			wantErr: true,
+			wantErr: `virtualServers[0].persistenceTimeoutSeconds: Invalid value: -1: must be between 1 and 2678400, inclusive`,
 		},
 		{
-			name: "invalid delay loop",
-			vss: []VirtualServer{{
-				DelayLoop: metav1.Duration{Duration: -1},
+			name: "persistence timeout too long",
+			vss: VirtualServers{{
+				IPAddress:                 "1.2.3.4",
+				PersistenceTimeoutSeconds: 2678401,
 			}},
-			wantErr: true,
+			wantErr: `virtualServers[0].persistenceTimeoutSeconds: Invalid value: 2678401: must be between 1 and 2678400, inclusive`,
+		},
+		{
+			name: "negative delay loop",
+			vss: VirtualServers{{
+				IPAddress: "1.2.3.4",
+				DelayLoop: metav1.Duration{Duration: -1 * time.Second},
+			}},
+			wantErr: `virtualServers[0].delayLoop: Invalid value: "-1s": must be positive`,
+		},
+		{
+			name: "sub-microsecond delay loop",
+			vss: VirtualServers{{
+				IPAddress: "1.2.3.4",
+				DelayLoop: metav1.Duration{Duration: 999 * time.Nanosecond},
+			}},
+			wantErr: `virtualServers[0].delayLoop: Invalid value: "0s": must be positive`,
 		},
 	}
 	for _, tt := range tests {
-		s.Run(tt.name, func() {
-			k := &KeepalivedSpec{VirtualServers: tt.vss}
-			errs := k.validateVirtualServers()
-			if tt.wantErr {
-				s.Require().Error(errors.Join(errs...))
+		t.Run(tt.name, func(t *testing.T) {
+			underTest := tt.vss.DeepCopy()
+			errs := underTest.validate(field.NewPath("virtualServers"))
+			if tt.wantErr != "" {
+				if assert.Len(t, errs, 1) {
+					assert.ErrorContains(t, errs[0], tt.wantErr)
+				}
 			} else {
-				s.Require().Empty(errs)
+				require.Empty(t, errs)
 				for i := range tt.expectedVSS {
-					s.Require().Equal(tt.expectedVSS[i].DelayLoop, k.VirtualServers[i].DelayLoop, "DelayLoop mismatch")
-					s.Require().Equal(tt.expectedVSS[i].LBAlgo, k.VirtualServers[i].LBAlgo, "LBalgo mismatch")
-					s.Require().Equal(tt.expectedVSS[i].LBKind, k.VirtualServers[i].LBKind, "LBKind mismatch")
-					s.Require().Equal(tt.expectedVSS[i].PersistenceTimeoutSeconds, k.VirtualServers[i].PersistenceTimeoutSeconds, "PersistenceTimeout mismatch")
+					require.Equal(t, tt.expectedVSS[i].DelayLoop, underTest[i].DelayLoop, "DelayLoop mismatch")
+					require.Equal(t, tt.expectedVSS[i].LBAlgo, underTest[i].LBAlgo, "LBalgo mismatch")
+					require.Equal(t, tt.expectedVSS[i].LBKind, underTest[i].LBKind, "LBKind mismatch")
+					require.Equal(t, tt.expectedVSS[i].PersistenceTimeoutSeconds, underTest[i].PersistenceTimeoutSeconds, "PersistenceTimeout mismatch")
 				}
 			}
 		})
 	}
 }
-func TestCPLBSuite(t *testing.T) {
-	cplbSuite := &CPLBSuite{}
 
-	suite.Run(t, cplbSuite)
+func TestKeepalivedSpec_Validate(t *testing.T) {
+	// userSpaceProxyBindPort
+	for _, tt := range []struct {
+		name     string
+		port     int
+		wantPort int
+		wantErr  string
+	}{
+		{
+			name:     "defaults to 6444",
+			wantPort: 6444,
+		},
+		{
+			name:     "accepts custom port",
+			port:     7000,
+			wantPort: 7000,
+		},
+		{
+			name:    "rejects out of range port",
+			port:    70000,
+			wantErr: "userSpaceProxyBindPort: Invalid value: 70000: must be between 1 and 65535, inclusive",
+		},
+	} {
+		t.Run("userSpaceProxyBindPort "+tt.name, func(t *testing.T) {
+			k := &KeepalivedSpec{UserSpaceProxyPort: tt.port}
+			errs := k.Validate(nil)
+			if tt.wantErr != "" {
+				require.Len(t, errs, 1)
+				assert.ErrorContains(t, errs[0], tt.wantErr)
+			} else {
+				require.Empty(t, errs)
+				require.Equal(t, tt.wantPort, k.UserSpaceProxyPort)
+			}
+		})
+	}
 }

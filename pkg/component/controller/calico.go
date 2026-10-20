@@ -6,7 +6,6 @@ package controller
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io/fs"
 	"path"
@@ -73,6 +72,8 @@ type calicoConfig struct {
 type calicoNodeConfig struct {
 	APIServer       *k0snet.HostPort
 	ServiceCIDRIPv4 string
+	ClusterCIDRIPv4 string
+	ClusterCIDRIPv6 string
 	ClusterDNSIP    string
 }
 
@@ -81,8 +82,6 @@ type calicoClusterConfig struct {
 	Mode                 calicoMode
 	VxlanPort            int
 	VxlanVNI             int
-	ClusterCIDRIPv4      string
-	ClusterCIDRIPv6      string
 	EnableWireguard      bool
 	FlexVolumeDriverPath string
 	EnableIPv4           bool
@@ -112,14 +111,25 @@ func NewCalico(nodeConfig *v1beta1.ClusterConfig, manifestsDir string, hasWindow
 		return nil, err
 	}
 
+	calicoNodeConfig := calicoNodeConfig{
+		APIServer:       apiServer,
+		ServiceCIDRIPv4: nodeConfig.Spec.Network.ServiceCIDR,
+		ClusterDNSIP:    dnsAddress,
+	}
+	primaryAddressFamily := nodeConfig.Spec.PrimaryAddressFamily()
+	if nodeConfig.Spec.Network.DualStack.Enabled {
+		calicoNodeConfig.ClusterCIDRIPv4 = nodeConfig.Spec.Network.PodCIDR
+		calicoNodeConfig.ClusterCIDRIPv6 = nodeConfig.Spec.Network.DualStack.IPv6PodCIDR
+	} else if primaryAddressFamily == v1beta1.PrimaryFamilyIPv4 {
+		calicoNodeConfig.ClusterCIDRIPv4 = nodeConfig.Spec.Network.PodCIDR
+	} else {
+		calicoNodeConfig.ClusterCIDRIPv6 = nodeConfig.Spec.Network.PodCIDR
+	}
+
 	return &Calico{
-		log: logrus.WithFields(logrus.Fields{"component": "calico"}),
-		nodeConfig: calicoNodeConfig{
-			APIServer:       apiServer,
-			ServiceCIDRIPv4: nodeConfig.Spec.Network.ServiceCIDR,
-			ClusterDNSIP:    dnsAddress,
-		},
-		primaryAddressFamily: nodeConfig.Spec.PrimaryAddressFamily(),
+		log:                  logrus.WithFields(logrus.Fields{"component": "calico"}),
+		nodeConfig:           calicoNodeConfig,
+		primaryAddressFamily: primaryAddressFamily,
 		manifestsDir:         manifestsDir,
 		hasWindowsNodes:      hasWindowsNodes,
 	}, nil
@@ -127,10 +137,7 @@ func NewCalico(nodeConfig *v1beta1.ClusterConfig, manifestsDir string, hasWindow
 
 // Init implements [manager.Component].
 func (c *Calico) Init(context.Context) error {
-	return errors.Join(
-		dir.Init(filepath.Join(c.manifestsDir, "calico_init"), constant.ManifestsDirMode),
-		dir.Init(filepath.Join(c.manifestsDir, "calico"), constant.ManifestsDirMode),
-	)
+	return nil
 }
 
 // Start implements [manager.Component].
@@ -207,6 +214,10 @@ func (c *Calico) Start(context.Context) error {
 func (c *Calico) dumpCRDs(patches v1beta1.Patches) error {
 	var emptyStruct struct{}
 
+	if err := dir.Init(filepath.Join(c.manifestsDir, "calico_init"), constant.ManifestsDirMode); err != nil {
+		return err
+	}
+
 	// Write the CRD definitions only at "boot", they do not change during runtime
 	crds, err := fs.ReadDir(static.CalicoManifests, "CustomResourceDefinition")
 	if err != nil {
@@ -245,6 +256,10 @@ func (c *Calico) dumpCRDs(patches v1beta1.Patches) error {
 }
 
 func (c *Calico) processConfigChanges(newConfig *calicoConfig, patches v1beta1.Patches) error {
+	if err := dir.Init(filepath.Join(c.manifestsDir, "calico"), constant.ManifestsDirMode); err != nil {
+		return err
+	}
+
 	manifestDirectories, err := fs.ReadDir(static.CalicoManifests, ".")
 	if err != nil {
 		return fmt.Errorf("error retrieving calico manifests: %w, will retry", err)
@@ -329,14 +344,6 @@ func (c *Calico) getConfig(clusterConfig *v1beta1.ClusterConfig) (*calicoCluster
 		return nil, fmt.Errorf("unsupported mode: %q", clusterConfig.Spec.Network.Calico.Mode)
 	}
 
-	if isDualStack {
-		config.ClusterCIDRIPv4 = clusterConfig.Spec.Network.PodCIDR
-		config.ClusterCIDRIPv6 = clusterConfig.Spec.Network.DualStack.IPv6PodCIDR
-	} else if primaryAFIPv4 {
-		config.ClusterCIDRIPv4 = clusterConfig.Spec.Network.PodCIDR
-	} else {
-		config.ClusterCIDRIPv6 = clusterConfig.Spec.Network.PodCIDR
-	}
 	return &config, nil
 }
 

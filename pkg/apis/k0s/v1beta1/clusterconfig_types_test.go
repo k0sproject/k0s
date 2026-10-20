@@ -270,6 +270,43 @@ spec:
 	assert.Equal(t, DefaultExtensions(), e.Spec.Extensions)
 }
 
+func TestConfigFromBytes_NullValuesAndPSP(t *testing.T) {
+	yamlData := []byte(`
+apiVersion: k0s.k0sproject.io/v1beta1
+kind: ClusterConfig
+metadata:
+  name: foobar
+spec:
+  installConfig: null
+  podSecurityPolicy:
+    defaultPolicy: 00-k0s-privileged
+`)
+
+	c, err := ConfigFromBytes(yamlData)
+	require.NoError(t, err)
+	assert.Equal(t, DefaultInstallSpec(), c.Spec.Install)
+	require.NotNil(t, c.Spec.Install)
+	require.NotNil(t, c.Spec.Install.SystemUsers)
+}
+
+func TestConfigFromBytes_TelemetryIgnoresInterval(t *testing.T) {
+	yamlData := []byte(`
+apiVersion: k0s.k0sproject.io/v1beta1
+kind: ClusterConfig
+metadata:
+  name: foobar
+spec:
+  telemetry:
+    enabled: true
+    interval: 10m
+`)
+
+	c, err := ConfigFromBytes(yamlData)
+	require.NoError(t, err)
+	require.NotNil(t, c.Spec.Telemetry)
+	assert.True(t, c.Spec.Telemetry.IsEnabled())
+}
+
 func TestWorkerProfileConfig(t *testing.T) {
 	yamlData := []byte(`
 apiVersion: k0s.k0sproject.io/v1beta1

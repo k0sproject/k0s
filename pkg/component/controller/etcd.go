@@ -15,12 +15,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/k0sproject/k0s/internal/assets"
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
 	"github.com/k0sproject/k0s/internal/pkg/users"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
-	"github.com/k0sproject/k0s/pkg/assets"
 	"github.com/k0sproject/k0s/pkg/certificate"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/config"
@@ -521,7 +521,7 @@ func (e *Etcd) Ready() error {
 }
 
 func detectUnsupportedEtcdArch() error {
-	// https://github.com/etcd-io/etcd/blob/v3.7.1/server/etcdmain/etcd.go#L232-L253
+	// https://github.com/etcd-io/etcd/blob/v3.7.2/server/etcdmain/etcd.go#L232-L253
 	switch runtime.GOARCH {
 	case "amd64", "arm64", "ppc64le", "s390x", os.Getenv("ETCD_UNSUPPORTED_ARCH"):
 		return nil

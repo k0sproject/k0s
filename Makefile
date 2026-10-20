@@ -340,12 +340,10 @@ ipv6-test-images-linux-amd64.txt ipv6-test-image-bundle-linux-amd64.tar: TARGET_
 ipv6-test-images-linux-arm64.txt ipv6-test-image-bundle-linux-arm64.tar: TARGET_PLATFORM := linux/arm64
 
 ipv6-test-images-linux-amd64.txt \
-ipv6-test-images-linux-arm64.txt: $(GO_ENV_REQUISITES) embedded-bins/Makefile.variables hack/gen-test-images-list/main.go
+ipv6-test-images-linux-arm64.txt: $(GO_ENV_REQUISITES) embedded-bins/Makefile.variables inttest/Makefile.variables hack/gen-test-images-list/main.go inttest/common/ociimages/images.go
 	{ \
-	  echo "docker.io/library/nginx:1.31.5-alpine"; \
-	  echo "docker.io/curlimages/curl:8.22.0"; \
-	  echo "docker.io/library/alpine:$(alpine_patch_version)"; \
-	  echo "docker.io/sonobuoy/sonobuoy:v$(sonobuoy_version)"; \
+	  echo "$(alpine_image)"; \
+	  echo "$(sonobuoy_image)"; \
 	  echo "registry.k8s.io/conformance:v$(kubernetes_version)"; \
 	  $(GO) run -tags=hack ./hack/gen-test-images-list; \
 	} >'$@'
@@ -380,6 +378,10 @@ ifneq (, $(filter $(HOST_ARCH), arm riscv64))
 check-unit: GO_TEST_RACE ?=
 else
 check-unit: GO_TEST_RACE ?= -race
+endif
+ifeq ($(HOST_ARCH), arm)
+# Externally linked arm test binaries hit a Go-vs-ld branch veneer bug
+check-unit: export CGO_ENABLED ?= 0
 endif
 check-unit: BUILD_GO_TAGS += hack
 check-unit: $(GO_ENV_REQUISITES) go.sum
@@ -436,6 +438,6 @@ spdx.json: syft.yaml go.mod .bins.$(TARGET_OS).stamp
 	  -v '$(CURDIR)/go.mod':/k0s/go.mod:ro \
 	  -v '$(CURDIR)/embedded-bins/staging/$(TARGET_OS)/bin':/k0s/bin:ro \
 	  -w /k0s \
-	  $(DOCKER_RUN_OPTS) docker.io/anchore/syft:v1.51.1 \
+	  $(DOCKER_RUN_OPTS) docker.io/anchore/syft:v1.55.0@sha256:4cc92b64ca74ffca4c94d4c8fcc01f217731375300be14d0b6eeb2e82eaa110a \
 	  --source-name k0s --source-version '$(VERSION)' \
 	  -c syft.yaml -o spdx-json@2.2 . >'$@'

@@ -1,5 +1,9 @@
 name: Check for merge conflicts
 
+# This workflow runs with elevated trust on pull requests from forks. It must
+# never check out or execute pull request code. The action only reads pull
+# request metadata and updates labels and comments.
+
 on:
   push:
     branches:
@@ -23,7 +27,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Check for merge conflicts
-        uses: eps1lon/actions-label-merge-conflict@1df065ebe6e3310545d4f4c4e862e43bdca146f0 # v3.0.3
+        uses: eps1lon/actions-label-merge-conflict@0273be72a0bbd58fcd71d0d6c02c209b50d1e5e1 # v3.1.0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           dirtyLabel: merge-conflict

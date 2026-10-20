@@ -80,7 +80,7 @@ func (c *CRDStack) Start(context.Context) error {
 			stack := applier.Stack{
 				Name:      c.stackName,
 				Resources: resources,
-				Clients:   c.clients,
+				Clients:   applier.NewClients(c.clients),
 			}
 
 			for {

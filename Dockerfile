@@ -1,6 +1,5 @@
-ARG ARCH
-ARG ALPINE_VERSION
-FROM docker.io/library/${ARCH}alpine:$ALPINE_VERSION
+ARG ALPINE_IMAGE
+FROM $ALPINE_IMAGE
 ARG TARGETARCH
 
 RUN apk add --no-cache iptables tini \

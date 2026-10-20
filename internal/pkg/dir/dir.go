@@ -12,7 +12,7 @@ import (
 	"github.com/opencontainers/selinux/go-selinux"
 )
 
-type DirOptions struct {
+type DirOptions struct { //nolint:revive // TODO rename to Options
 	path         string
 	perm         os.FileMode
 	seLinuxLabel string

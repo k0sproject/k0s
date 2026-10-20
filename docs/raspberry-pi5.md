@@ -106,6 +106,7 @@ setup, you can invoke `k0s sysinfo`:
   File system of /var/lib/k0s: ext4 (pass)
   Disk space available for /var/lib/k0s: 44.3 GiB (pass)
   Relative disk space available for /var/lib/k0s: 79% (pass)
+  Network resolver configuration: OK (pass)
   Name resolution: localhost: [::1 127.0.0.1] (pass)
   Operating system: Linux (pass)
     Linux kernel release: 6.6.51+rpt-rpi-2712 (pass)

@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/k0sproject/k0s/pkg/k0scontext"
+	"github.com/k0sproject/k0s/internal/k0scontext"
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
 
 	appsv1 "k8s.io/api/apps/v1"

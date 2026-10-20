@@ -37,17 +37,16 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/controller/clusterconfig"
 	"github.com/k0sproject/k0s/pkg/component/controller/cplb"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
+	"github.com/k0sproject/k0s/pkg/component/controller/leasecounter"
 	"github.com/k0sproject/k0s/pkg/component/controller/workerconfig"
 	"github.com/k0sproject/k0s/pkg/component/iptables"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/component/prober"
 	"github.com/k0sproject/k0s/pkg/component/status"
-	"github.com/k0sproject/k0s/pkg/component/worker"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/leaderelection"
-	"github.com/k0sproject/k0s/pkg/performance"
 	"github.com/k0sproject/k0s/pkg/telemetry"
 	"github.com/k0sproject/k0s/pkg/token"
 
@@ -199,8 +198,6 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 	ctx, cancel := context.WithCancelCause(ctx)
 	defer cancel(nil)
 
-	perfTimer := performance.NewTimer("controller-start").Buffer().Start()
-
 	nodeComponents := manager.New(prober.DefaultProber)
 	clusterComponents := manager.New(prober.DefaultProber)
 
@@ -345,7 +342,7 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 	}
 
 	if !singleController {
-		nodeComponents.Add(ctx, &controller.K0sControllersLeaseCounter{
+		nodeComponents.Add(ctx, &leasecounter.Component{
 			NodeName:              nodeName,
 			InvocationID:          c.K0sVars.InvocationID,
 			KubeClientFactory:     adminClientFactory,
@@ -402,7 +399,7 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 	}
 
 	if !slices.Contains(flags.DisableComponents, constant.CsrApproverComponentName) {
-		nodeComponents.Add(ctx, controller.NewCSRApprover(leaderElector, adminClientFactory))
+		nodeComponents.Add(ctx, controller.NewCSRApprover(leaderElector, adminClientFactory, nodeConfig.Spec.Network))
 	}
 
 	if flags.EnableK0sCloudProvider {
@@ -429,16 +426,17 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 		Socket: c.K0sVars.StatusSocketPath,
 	}
 	if controllerMode.WorkloadsEnabled() {
-		// The status component must use the same Kubernetes client configuration as
-		// the embedded kubelet, otherwise the API connectivity check would be
-		// inaccurate. For embedded workers, this is always the "direct"
-		// configuration.
+		// The worker installs the real factory once it starts.
+		workerInterface.workerClientFactory.Store(new(kubernetes.ClientFactoryInterface(&kubernetes.ClientFactory{
+			LoadRESTConfig: func() (*rest.Config, error) { return nil, errors.New("worker not started yet") },
+		})))
 		statusComponent.StatusInformation.Workloads = true
-		statusComponent.CertManager = worker.NewCertificateManager(worker.DirectKubeletKubeconfigPath(c.K0sVars))
+		statusComponent.GetWorkerClientFactory = func() kubernetes.ClientFactoryInterface {
+			return *workerInterface.workerClientFactory.Load()
+		}
 	}
 	nodeComponents.Add(ctx, &statusComponent)
 
-	perfTimer.Checkpoint("starting-certificates-init")
 	certs := &Certificates{
 		ClusterSpec:         nodeConfig.Spec,
 		CertManager:         certificateManager,
@@ -449,14 +447,10 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 		return err
 	}
 
-	perfTimer.Checkpoint("starting-node-component-init")
 	// init Node components
 	if err := nodeComponents.Init(ctx); err != nil {
 		return err
 	}
-	perfTimer.Checkpoint("finished-node-component-init")
-
-	perfTimer.Checkpoint("starting-node-components")
 
 	if flags.InitOnly {
 		return errInitOnly
@@ -464,7 +458,6 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 
 	// Start components
 	err = nodeComponents.Start(ctx)
-	perfTimer.Checkpoint("finished-starting-node-components")
 	if err != nil {
 		return fmt.Errorf("failed to start controller node components: %w", err)
 	}
@@ -486,7 +479,7 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 			nodeConfig,
 		))
 
-		configSource, err = clusterconfig.NewAPIConfigSource(adminClientFactory)
+		configSource, err = clusterconfig.NewAPIConfigSource(adminClientFactory, leaderElector.CurrentStatus)
 		if err != nil {
 			return err
 		}
@@ -553,7 +546,13 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 			return fmt.Errorf("failed to create Calico component: %w", err)
 		}
 		clusterComponents.Add(ctx, calico)
-		clusterComponents.Add(ctx, controller.NewKubeRouter(c.K0sVars, nodeConfig.Spec.PrimaryAddressFamily(), nodeConfig.Spec.Network.BuildServiceCIDR(nodeConfig.Spec.PrimaryAddressFamily())))
+		primaryAddressFamily := nodeConfig.Spec.PrimaryAddressFamily()
+		clusterComponents.Add(ctx, controller.NewKubeRouter(
+			c.K0sVars,
+			primaryAddressFamily,
+			nodeConfig.Spec.Network.BuildServiceCIDR(primaryAddressFamily),
+			nodeConfig.Spec.Network.IsSingleStackIPv6(),
+		))
 	}
 
 	if !slices.Contains(flags.DisableComponents, constant.MetricsServerComponentName) {
@@ -621,7 +620,8 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 			K0sVars:               c.K0sVars,
 			DisableLeaderElection: singleController,
 			ServiceClusterIPRange: nodeConfig.Spec.Network.BuildServiceCIDR(nodeConfig.Spec.PrimaryAddressFamily()),
-			PrimaryAddressFamily:  nodeConfig.Spec.PrimaryAddressFamily(),
+			ClusterCIDR:           nodeConfig.Spec.Network.BuildPodCIDR(nodeConfig.Spec.PrimaryAddressFamily()),
+			SingleStackIPv6:       nodeConfig.Spec.Network.IsSingleStackIPv6(),
 			ExtraArgs:             flags.KubeControllerManagerExtraArgs,
 		})
 	}
@@ -696,18 +696,15 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 	// starts after all other components have been started.
 	clusterComponents.Add(ctx, configSource)
 
-	perfTimer.Checkpoint("starting-cluster-components-init")
 	// init Cluster components
 	if err := clusterComponents.Init(ctx); err != nil {
 		return err
 	}
-	perfTimer.Checkpoint("finished cluster-component-init")
 
 	err = clusterComponents.Start(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to start cluster components: %w", err)
 	}
-	perfTimer.Checkpoint("finished-starting-cluster-components")
 	defer func() {
 		// Stop Cluster components
 		if err := clusterComponents.Stop(); err != nil {
@@ -716,8 +713,6 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 			logrus.Info("All cluster components stopped")
 		}
 	}()
-
-	perfTimer.Output()
 
 	if controllerMode.WorkloadsEnabled() {
 		return c.startWorker(ctx, nodeName, kubeletExtraArgs, &workerInterface)
@@ -748,8 +743,9 @@ func (c *command) startWorker(ctx context.Context, nodeName apitypes.NodeName, k
 }
 
 type embeddingController struct {
-	opts         *config.ControllerOptions
-	usesIPTables bool
+	opts                *config.ControllerOptions
+	usesIPTables        bool
+	workerClientFactory atomic.Pointer[kubernetes.ClientFactoryInterface]
 }
 
 // IsSingleNode implements [workercmd.EmbeddingController].
@@ -760,6 +756,14 @@ func (c *embeddingController) IsSingleNode() bool {
 // UsesIPTables implements [worker.EmbeddingController].
 func (c *embeddingController) UsesIPTables() bool {
 	return c.usesIPTables
+}
+
+// SetWorkerClientFactory implements [worker.EmbeddingController].
+func (c *embeddingController) SetWorkerClientFactory(cf kubernetes.ClientFactoryInterface) {
+	if cf == nil {
+		panic("can't set a nil worker client factory")
+	}
+	c.workerClientFactory.Store(&cf)
 }
 
 // If we've got an etcd data directory in place for embedded etcd, or a ca for

@@ -69,6 +69,56 @@ profiles](./configuration.md#configuration-examples) and the [list of possible
 Kubelet configuration
 fields](https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/).
 
+### Kubelet serving certificates
+
+By default, k0s configures kubelets to request their serving certificates from
+the Kubernetes API via [Certificate Signing Requests] (CSRs), by enabling
+`serverTLSBootstrap` in the generated kubelet configuration. The kubelet then
+requests a certificate from the `kubernetes.io/kubelet-serving` signer and uses
+it to serve its own API. Clients of that API verify the certificate against the
+cluster CA. The Kubernetes API server verifies it, for example, when serving
+`kubectl logs` and `kubectl exec` requests. Similarly, k0s's `metrics-server`
+component, which bundles the [Kubernetes Metrics Server], verifies it when
+scraping the kubelet's resource metrics. Other properly configured monitoring
+systems do the same.
+
+Kubernetes doesn't approve these CSRs automatically. k0s ships a controller
+component called `csr-approver` that does so, provided the request meets all of
+the following conditions:
+
+- The PEM-encoded certificate request size doesn't exceed 512 KiB.
+- It is a well-formed kubelet serving certificate request, according to
+  Kubernetes' validation rules.
+- The certificate request has no more than 4096 SANs, counting DNS names and IP
+  addresses together.
+- It was created by the very node it requests the certificate for. The
+  requesting user must have the `system:node:<nodeName>` name and be a member of
+  the `system:nodes` group, and the certificate's common name must be identical
+  to the requesting user name.
+- The requested DNS names and IP addresses don't identify the cluster's control
+  plane or other in-cluster services: no IP address may be inside the service
+  CIDR(s), and no DNS name may be `kubernetes`, `kubernetes.default`, or a name
+  within the `svc` or cluster domains.
+- The node exists in the cluster.
+- The node's `status.addresses` contains no more than 4096 entries.
+- The requested DNS names and IP addresses are all listed in the node's
+  `status.addresses`.
+
+Requests that don't meet these conditions are left pending, and the reason is
+logged by the k0s controller. Note that a node's addresses are reported by its
+kubelet, so flags like `--node-ip` directly influence which addresses a
+certificate may be issued for.
+
+The CSR approver checks for pending requests periodically. It only considers the
+newest pending request of each node per pass, so that a node can't hold up
+others by creating large numbers of requests. It can be turned off via `k0s
+controller --disable-components csr-approver`. In that case, kubelet serving
+certificates need to be approved by some other means, otherwise the affected
+kubelet APIs remain unavailable.
+
+[Certificate Signing Requests]: https://kubernetes.io/docs/reference/access-authn-authz/certificate-signing-requests/
+[Kubernetes Metrics Server]: https://github.com/kubernetes-sigs/metrics-server
+
 ## IPTables Mode
 
 k0s detects the iptables backend automatically based on the existing records. On a brand-new setup, `iptables-nft` will be used.

@@ -16,6 +16,8 @@ import (
 	apsigv2 "github.com/k0sproject/k0s/pkg/autopilot/signaling/v2"
 	"github.com/k0sproject/k0s/pkg/component/status"
 
+	apitypes "k8s.io/apimachinery/pkg/types"
+
 	"github.com/sirupsen/logrus"
 	cr "sigs.k8s.io/controller-runtime"
 	crcli "sigs.k8s.io/controller-runtime/pkg/client"
@@ -33,9 +35,9 @@ type restarted struct {
 
 // restartedEventFilter creates a controller-runtime predicate that governs which
 // objects will make it into reconciliation, and which will be ignored.
-func restartedEventFilter(hostname string, handler apsigpred.ErrorHandler) crpred.Predicate {
+func restartedEventFilter(nodeName apitypes.NodeName, handler apsigpred.ErrorHandler) crpred.Predicate {
 	return crpred.And(
-		apsigpred.SignalNamePredicate(hostname),
+		apsigpred.SignalNamePredicate(nodeName),
 		apsigpred.NewSignalDataPredicateAdapter(handler).And(
 			signalDataUpdateCommandK0sPredicate(),
 			apsigpred.SignalDataStatusPredicate(Restart),
