@@ -22,7 +22,7 @@ func TestActiveLeases(t *testing.T) {
 
 	for _, tt := range []struct {
 		name     string
-		expected uint
+		expected int
 		leases   []runtime.Object
 	}{
 		{
@@ -34,7 +34,7 @@ func TestActiveLeases(t *testing.T) {
 			1, []runtime.Object{makeLease(withoutControllerLabel, withName("k0s-ctrl-foo"))},
 		},
 		{
-			"returns zero when there are no leases",
+			"returns no leases when there are none",
 			0, nil,
 		},
 		{
@@ -73,9 +73,9 @@ func TestActiveLeases(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			c := fake.NewSimpleClientset(tt.leases...)
-			count, err := ActiveLeases(t.Context(), c)
+			leases, err := ActiveLeases(t.Context(), c)
 			assert.NoError(t, err)
-			assert.Equal(t, tt.expected, count)
+			assert.Len(t, leases, tt.expected)
 		})
 	}
 }
