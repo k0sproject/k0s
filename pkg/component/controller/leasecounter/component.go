@@ -28,14 +28,38 @@ const (
 	leaseTypeLabelValueController = "controller"
 )
 
+// A snapshot of an observed controller lease.
+type Lease struct {
+	Name   string
+	Active bool // lease held and not expired
+}
+
+// The controller leases as observed by the lease counter.
+type Leases struct {
+	// The number of active controllers. Always includes this controller, as
+	// it's running, so it counts even while its own lease isn't active, e.g.
+	// right after startup. As a consequence, this might be one greater than
+	// the number of active leases in [Leases.All].
+	ActiveCount uint
+
+	// This controller's own lease as observed, active or not.
+	// Nil if it doesn't exist.
+	Own *Lease
+
+	// All controller leases, active or not.
+	All []Lease
+}
+
 // Implements a component that manages a lease per controller. The
 // per-controller leases are used to determine the amount of currently running
 // controllers
 type Component struct {
-	NodeName              apitypes.NodeName
-	InvocationID          string
-	KubeClientFactory     kubeutil.ClientFactoryInterface
-	UpdateControllerCount func(uint)
+	NodeName          apitypes.NodeName
+	InvocationID      string
+	KubeClientFactory kubeutil.ClientFactoryInterface
+
+	// Called whenever a change to the controller leases was observed. Not deduplicated.
+	UpdateLeases func(Leases)
 
 	log  logrus.FieldLogger
 	stop func()
@@ -78,7 +102,7 @@ func (c *Component) Start(context.Context) error {
 
 	wg.Add(2)
 	go func() { defer wg.Done(); c.runLeaderElection(ctx, client) }()
-	go func() { defer wg.Done(); c.runLeaseCounter(ctx, kubeClient) }()
+	go func() { defer wg.Done(); c.runLeaseCounter(ctx, kubeClient, leaseName) }()
 	c.stop = func() { cancel(); wg.Wait() }
 
 	return nil
@@ -103,20 +127,52 @@ func (c *Component) runLeaderElection(ctx context.Context, client *leaderelectio
 	})
 }
 
-// Updates the number of active controller leases every 10 secs.
-func (c *Component) runLeaseCounter(ctx context.Context, clients kubernetes.Interface) {
+// Updates the controller leases every 10 secs.
+func (c *Component) runLeaseCounter(ctx context.Context, clients kubernetes.Interface, ownLeaseName string) {
 	c.log.Debug("Starting controller lease counter every 10 secs")
 
+	var ownLeaseInactive bool
 	wait.UntilWithContext(ctx, func(ctx context.Context) {
 		c.log.Debug("Counting active controller leases")
 		ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 		defer cancel()
-		activeLeases, err := ActiveLeases(ctx, clients)
+
+		leases, err := controllerLeases(ctx, clients)
 		if err != nil {
 			c.log.WithError(err).Error("Failed to count controller lease holders")
 			return
 		}
 
-		c.UpdateControllerCount(uint(len(activeLeases)))
+		var (
+			own   *Lease
+			count uint
+		)
+		all := make([]Lease, len(leases))
+		for i := range leases {
+			l := &leases[i]
+			all[i] = Lease{Name: l.Name, Active: isActive(l)}
+			if l.Name == ownLeaseName {
+				own = &all[i]
+			}
+			if all[i].Active {
+				count++
+			}
+		}
+
+		inactive := own == nil || !own.Active
+		if inactive {
+			// This controller is running, so it counts even while its lease isn't active.
+			count++
+		}
+		if inactive != ownLeaseInactive {
+			ownLeaseInactive = inactive
+			if inactive {
+				c.log.Info("Counting this controller although its lease isn't active")
+			} else {
+				c.log.Info("This controller's lease is active")
+			}
+		}
+
+		c.UpdateLeases(Leases{ActiveCount: count, Own: own, All: all})
 	}, 10*time.Second)
 }

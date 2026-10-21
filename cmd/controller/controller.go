@@ -343,10 +343,12 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 
 	if !singleController {
 		nodeComponents.Add(ctx, &leasecounter.Component{
-			NodeName:              nodeName,
-			InvocationID:          c.K0sVars.InvocationID,
-			KubeClientFactory:     adminClientFactory,
-			UpdateControllerCount: numActiveControllers.Set,
+			NodeName:          nodeName,
+			InvocationID:      c.K0sVars.InvocationID,
+			KubeClientFactory: adminClientFactory,
+			UpdateLeases: func(leases leasecounter.Leases) {
+				numActiveControllers.Set(leases.ActiveCount)
+			},
 		})
 	}
 
