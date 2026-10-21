@@ -279,8 +279,7 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 	// Will the cluster support multiple controllers, or just a single one?
 	singleController := controllerMode == config.SingleNodeMode || !nodeConfig.Spec.Storage.IsJoinable()
 
-	// Assume a single active controller during startup
-	numActiveControllers := value.NewLatest[uint](1)
+	var numActiveControllers value.Latest[uint]
 
 	workerInterface := embeddingController{opts: flags}
 
@@ -341,7 +340,9 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 		return fmt.Errorf("failed to determine node name: %w", err)
 	}
 
-	if !singleController {
+	if singleController {
+		numActiveControllers.Set(1)
+	} else {
 		nodeComponents.Add(ctx, &leasecounter.Component{
 			NodeName:          nodeName,
 			InvocationID:      c.K0sVars.InvocationID,
