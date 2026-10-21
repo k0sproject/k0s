@@ -110,10 +110,11 @@ func CollectData(ctx context.Context, kc kubernetes.Interface) (*ClusterInfo, er
 	}
 
 	// Collect control plane node count
-	ci.ControlPlaneNodesCount, err = leasecounter.ActiveLeases(ctx, kc)
+	activeLeases, err := leasecounter.ActiveLeases(ctx, kc)
 	if err != nil {
 		return ci, fmt.Errorf("can't collect control plane nodes count: %w", err)
 	}
+	ci.ControlPlaneNodesCount = uint(len(activeLeases))
 
 	return ci, nil
 }

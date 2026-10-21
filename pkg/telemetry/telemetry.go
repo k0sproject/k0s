@@ -68,10 +68,11 @@ func (c *Component) collectTelemetry(ctx context.Context, clients kubernetes.Int
 	data.WorkerData = wds
 	data.MEMTotal = sums.memTotal
 	data.CPUTotal = sums.cpuTotal
-	data.ControlPlaneNodesCount, err = leasecounter.ActiveLeases(ctx, clients)
+	activeLeases, err := leasecounter.ActiveLeases(ctx, clients)
 	if err != nil {
 		return data, fmt.Errorf("can't collect control plane nodes count: %w", err)
 	}
+	data.ControlPlaneNodesCount = uint(len(activeLeases))
 	return data, nil
 }
 
