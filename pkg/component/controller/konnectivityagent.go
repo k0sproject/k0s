@@ -57,8 +57,7 @@ func (k *KonnectivityAgent) Start(ctx context.Context) error {
 			case <-serverCountChanged:
 				prevServerCount := serverCount
 				serverCount, serverCountChanged = k.ServerCount()
-				// Never drop below one server: the agent treats zero as one internally anyways.
-				serverCount = max(1, serverCount)
+
 				// write only if the server count actually changed
 				if serverCount == prevServerCount {
 					continue
@@ -75,6 +74,10 @@ func (k *KonnectivityAgent) Start(ctx context.Context) error {
 
 			if clusterConfig == nil {
 				k.log.Info("Cluster configuration has not yet been reconciled")
+				continue
+			}
+			if serverCount == 0 {
+				k.log.Info("Konnectivity server count is currently unknown")
 				continue
 			}
 

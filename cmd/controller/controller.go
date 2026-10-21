@@ -277,8 +277,7 @@ func (c *command) start(ctx context.Context, rtc *config.RuntimeConfig, nodeConf
 	// Will the cluster support multiple controllers, or just a single one?
 	singleController := controllerMode == config.SingleNodeMode || !nodeConfig.Spec.Storage.IsJoinable()
 
-	// Assume a single active controller during startup
-	numActiveControllers := value.NewLatest[uint](1)
+	var numActiveControllers value.Latest[uint]
 
 	nodeComponents.Add(ctx, &iptables.Component{
 		IPTablesMode: c.IPTablesMode,
@@ -336,7 +335,9 @@ func (c *command) start(ctx context.Context, rtc *config.RuntimeConfig, nodeConf
 		return fmt.Errorf("failed to determine node name: %w", err)
 	}
 
-	if !singleController {
+	if singleController {
+		numActiveControllers.Set(1)
+	} else {
 		nodeComponents.Add(ctx, &leasecounter.Component{
 			NodeName:          nodeName,
 			InvocationID:      c.K0sVars.InvocationID,
