@@ -1,11 +1,13 @@
 // SPDX-FileCopyrightText: 2026 k0s authors
 // SPDX-License-Identifier: Apache-2.0
 
-package leasecounter
+package leasecounter_test
 
 import (
 	"testing"
 	"time"
+
+	"github.com/k0sproject/k0s/pkg/component/controller/leasecounter"
 
 	coordinationv1 "k8s.io/api/coordination/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -66,7 +68,7 @@ func TestActiveLeases(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			c := fake.NewSimpleClientset(tt.leases...)
-			leases, err := ActiveLeases(t.Context(), c)
+			leases, err := leasecounter.ActiveLeases(t.Context(), c)
 			assert.NoError(t, err)
 			assert.Len(t, leases, tt.expected)
 		})
