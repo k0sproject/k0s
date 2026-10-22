@@ -11,13 +11,16 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/k0sproject/k0s/internal/assets"
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
 	"github.com/k0sproject/k0s/internal/pkg/users"
+	"github.com/k0sproject/k0s/internal/sync/value"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
+	"github.com/k0sproject/k0s/pkg/component/controller/leasecounter"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/component/prober"
 	"github.com/k0sproject/k0s/pkg/config"
@@ -28,6 +31,85 @@ import (
 
 	"github.com/sirupsen/logrus"
 )
+
+// Derives the konnectivity server count to be advertised from the observed
+// controller leases, and distributes it to interested parties.
+//
+// Debounces count drops for one minute to reduce churn on the konnectivity mesh
+// due to potentially intermittent dips, such as controller restarts or data
+// store hiccups. All other changes are distributed without delay.
+type KonnectivityServerCountDebouncer struct {
+	advertised value.Latest[uint]
+
+	mu          sync.Mutex
+	pendingDrop *uint
+	timer       *time.Timer
+}
+
+// Returns the server count to advertise. Same semantics as [value.Latest.Peek].
+func (c *KonnectivityServerCountDebouncer) Peek() (uint, <-chan struct{}) {
+	return c.advertised.Peek()
+}
+
+// Derives a new konnectivity server count from leases.
+func (c *KonnectivityServerCountDebouncer) Update(leases leasecounter.Leases) {
+	log := logrus.WithField("component", "konnectivity")
+
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	advertised, _ := c.advertised.Peek()
+
+	switch {
+	case leases.ActiveCount < advertised:
+		// A drop is withheld for the debounce period.
+		if c.pendingDrop == nil {
+			log.WithFields(logrus.Fields{
+				"advertised": advertised,
+				"observed":   leases.ActiveCount,
+			}).Info("Observed a server count drop, withholding it for one minute")
+			var timer *time.Timer
+			timer = time.AfterFunc(time.Minute, func() {
+				c.mu.Lock()
+				defer c.mu.Unlock()
+				if c.pendingDrop != nil {
+					log.WithField("observed", *c.pendingDrop).Info("Advertising a new server count")
+					c.advertised.Set(*c.pendingDrop)
+					c.pendingDrop = nil
+				}
+				if c.timer == timer {
+					c.timer = nil
+				}
+			})
+			c.timer = timer
+		} else if leases.ActiveCount != *c.pendingDrop {
+			log.WithFields(logrus.Fields{
+				"advertised": advertised,
+				"observed":   leases.ActiveCount,
+			}).Info("Server count changed during the debounce period")
+		}
+		c.pendingDrop = new(leases.ActiveCount)
+
+	case leases.ActiveCount > advertised:
+		log.WithField("observed", leases.ActiveCount).Info("Advertising a new server count")
+		c.advertised.Set(leases.ActiveCount)
+		fallthrough // discard a drop
+
+	default:
+		if c.pendingDrop != nil {
+			log.WithFields(logrus.Fields{
+				"advertised": advertised,
+				"observed":   leases.ActiveCount,
+				"pending":    *c.pendingDrop,
+			}).Debug("Discarding an outdated pending server count drop")
+			c.pendingDrop = nil
+			if c.timer != nil {
+				c.timer.Stop()
+				c.timer = nil
+			}
+		}
+	}
+}
 
 // Konnectivity implements the component interface for konnectivity server
 type Konnectivity struct {
