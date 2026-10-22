@@ -270,11 +270,6 @@ spec:
           name: konnectivity-agent
           command: ["/proxy-agent"]
           env:
-              # the variable is not in a use
-              # we need it to have agent restarted on server count change
-              - name: K0S_CONTROLLER_COUNT
-                value: "{{ .ServerCount.Count }}"
-
               - name: NODE_IP
                 valueFrom:
                   fieldRef:

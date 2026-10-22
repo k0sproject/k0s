@@ -100,8 +100,6 @@ func TestKonnectivityAgent_ManifestEmbedsServerCountGeneration(t *testing.T) {
 		"1337", template.Annotations["k0s.k0sproject.io/konnectivity-server-count-generation"],
 		"Expected the pod template to carry the server count generation, so that a rise rolls the agents",
 	)
-	require.Len(t, template.Spec.Containers, 1)
-	assert.Contains(t, template.Spec.Containers[0].Env, corev1.EnvVar{Name: "K0S_CONTROLLER_COUNT", Value: "3"})
 }
 
 func loadDaemonSet(t *testing.T, manifestsDir string) *appsv1.DaemonSet {
