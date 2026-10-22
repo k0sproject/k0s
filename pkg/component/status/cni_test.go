@@ -221,7 +221,7 @@ func TestEvaluateCNI_Calico(t *testing.T) {
 			calicoNodeDS(1, 1),
 			calicoWindowsDS(1, 0),
 			calicoControllers(corev1.ConditionTrue),
-			windowsNode("win-1"),
+			windowsNode(),
 		)
 		got, ok := evaluateCNI(t.Context(), client, calicoNet(""))
 		require.True(t, ok)
@@ -236,7 +236,7 @@ func TestEvaluateCNI_Calico(t *testing.T) {
 			calicoNodeDS(1, 1),
 			calicoWindowsDS(1, 1),
 			calicoControllers(corev1.ConditionTrue),
-			windowsNode("win-1"),
+			windowsNode(),
 		)
 		got, ok := evaluateCNI(t.Context(), client, calicoNet(""))
 		require.True(t, ok)
@@ -259,7 +259,7 @@ func TestEvaluateCNI_Calico(t *testing.T) {
 		client := fake.NewSimpleClientset(
 			calicoNodeDS(1, 1),
 			calicoControllers(corev1.ConditionTrue),
-			windowsNode("win-1"),
+			windowsNode(),
 		)
 		got, ok := evaluateCNI(t.Context(), client, calicoNet(""))
 		require.True(t, ok)
@@ -273,7 +273,7 @@ func TestEvaluateCNI_Calico(t *testing.T) {
 		client := fake.NewSimpleClientset(
 			calicoNodeDS(1, 1),
 			calicoControllers(corev1.ConditionTrue),
-			windowsNode("win-1"),
+			windowsNode(),
 		)
 		got, ok := evaluateCNI(t.Context(), client, calicoNet(v1beta1.CalicoModeBIRD))
 		require.True(t, ok)
@@ -403,7 +403,7 @@ func TestAppendCNICondition(t *testing.T) {
 			AdminClientFactory: &stubFactory{client: fake.NewSimpleClientset(
 				calicoNodeDS(1, 1),
 				calicoControllers(corev1.ConditionTrue),
-				windowsNode("win-1"),
+				windowsNode(),
 			)},
 		}
 		sh := &statusHandler{Status: st}
@@ -510,10 +510,10 @@ func calicoNet(mode v1beta1.CalicoMode) *v1beta1.Network {
 	return n
 }
 
-func windowsNode(name string) *corev1.Node {
+func windowsNode() *corev1.Node {
 	return &corev1.Node{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:   name,
+			Name:   "win-1",
 			Labels: map[string]string{corev1.LabelOSStable: string(corev1.Windows)},
 		},
 	}
