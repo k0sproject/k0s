@@ -25,7 +25,7 @@ import (
 type KonnectivityAgent struct {
 	K0sVars       *config.CfgVars
 	APIServerHost string
-	ServerCount   func() (uint, <-chan struct{})
+	ServerCount   KonnectivityServerCounter
 
 	configChangeChan chan *v1beta1.ClusterConfig
 	log              *logrus.Entry
@@ -78,7 +78,7 @@ func (k *KonnectivityAgent) Start(ctx context.Context) error {
 				k.log.Info("Cluster configuration has not yet been reconciled")
 				continue
 			}
-			if serverCount == 0 {
+			if serverCount.Count == 0 {
 				k.log.Info("Konnectivity server count is currently unknown")
 				continue
 			}
@@ -105,7 +105,7 @@ func (k *KonnectivityAgent) Stop() error {
 	return nil
 }
 
-func (k *KonnectivityAgent) writeKonnectivityAgent(clusterConfig *v1beta1.ClusterConfig, serverCount uint) error {
+func (k *KonnectivityAgent) writeKonnectivityAgent(clusterConfig *v1beta1.ClusterConfig, count KonnectivityServerCount) error {
 	konnectivityDir := filepath.Join(k.K0sVars.ManifestsDir, "konnectivity")
 	err := dir.Init(konnectivityDir, constant.ManifestsDirMode)
 	if err != nil {
@@ -132,7 +132,7 @@ func (k *KonnectivityAgent) writeKonnectivityAgent(clusterConfig *v1beta1.Cluste
 		ProxyServerHost: proxyServerHost,
 		ProxyServerPort: uint16(proxyServerPort),
 		Image:           clusterConfig.Spec.Images.Konnectivity.URI(),
-		ServerCount:     serverCount,
+		ServerCount:     count,
 		PullPolicy:      clusterConfig.Spec.Images.DefaultPullPolicy,
 	}
 
@@ -202,7 +202,7 @@ type konnectivityAgentConfig struct {
 	ProxyServerPort uint16
 	AgentPort       uint16
 	Image           string
-	ServerCount     uint
+	ServerCount     KonnectivityServerCount
 	PullPolicy      string
 	HostNetwork     bool
 }
@@ -251,6 +251,7 @@ spec:
       annotations:
         prometheus.io/scrape: 'true'
         prometheus.io/port: '8093'
+        k0s.k0sproject.io/konnectivity-server-count-generation: "{{ .ServerCount.Rises }}"
     spec:
       securityContext:
         runAsNonRoot: true
@@ -272,7 +273,7 @@ spec:
               # the variable is not in a use
               # we need it to have agent restarted on server count change
               - name: K0S_CONTROLLER_COUNT
-                value: "{{ .ServerCount }}"
+                value: "{{ .ServerCount.Count }}"
 
               - name: NODE_IP
                 valueFrom:
