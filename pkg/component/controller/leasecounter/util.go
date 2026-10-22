@@ -9,26 +9,46 @@ import (
 
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 
+	coordinationv1 "k8s.io/api/coordination/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
 
-// Counts the active controller leases.
-func ActiveLeases(ctx context.Context, kubeClient kubernetes.Interface) (count uint, _ error) {
-	leases, err := kubeClient.CoordinationV1().Leases(corev1.NamespaceNodeLease).List(ctx, metav1.ListOptions{})
+// Returns the active controller leases.
+func ActiveLeases(ctx context.Context, kubeClient kubernetes.Interface) (activeLeases []coordinationv1.Lease, _ error) {
+	allLeases, err := controllerLeases(ctx, kubeClient)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
-	for _, l := range leases.Items {
-		switch {
-		// FIXME: Remove the name prefix check in k0s 1.38+.
-		case l.Labels[leaseTypeLabel] != leaseTypeLabelValueController && !strings.HasPrefix(l.Name, "k0s-ctrl-"):
-		case l.Spec.HolderIdentity == nil || *l.Spec.HolderIdentity == "":
-		case kubeutil.IsValidLease(l):
-			count++
+
+	for _, l := range allLeases {
+		if isActive(&l) {
+			activeLeases = append(activeLeases, l)
 		}
 	}
 
-	return count, nil
+	return
+}
+
+// Returns all controller leases, active or not.
+func controllerLeases(ctx context.Context, kubeClient kubernetes.Interface) (leases []coordinationv1.Lease, _ error) {
+	allLeases, err := kubeClient.CoordinationV1().Leases(corev1.NamespaceNodeLease).List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	for _, l := range allLeases.Items {
+		// FIXME: Remove the name prefix check in k0s 1.38+.
+		if l.Labels[leaseTypeLabel] == leaseTypeLabelValueController || strings.HasPrefix(l.Name, "k0s-ctrl-") {
+			leases = append(leases, l)
+		}
+	}
+
+	return
+}
+
+// Indicates if the lease is held and hasn't expired.
+func isActive(l *coordinationv1.Lease) bool {
+	return l.Spec.HolderIdentity != nil && *l.Spec.HolderIdentity != "" && kubeutil.IsValidLease(*l)
 }

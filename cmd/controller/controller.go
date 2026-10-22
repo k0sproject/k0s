@@ -279,8 +279,7 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 	// Will the cluster support multiple controllers, or just a single one?
 	singleController := controllerMode == config.SingleNodeMode || !nodeConfig.Spec.Storage.IsJoinable()
 
-	// Assume a single active controller during startup
-	numActiveControllers := value.NewLatest[uint](1)
+	var numActiveControllers value.Latest[uint]
 
 	workerInterface := embeddingController{opts: flags}
 
@@ -313,6 +312,7 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 		})
 	}
 
+	var konnectivityServerCount controller.KonnectivityServerCounter
 	enableKonnectivity := controllerMode != config.SingleNodeMode && !slices.Contains(flags.DisableComponents, constant.KonnectivityServerComponentName)
 
 	if enableKonnectivity {
@@ -321,7 +321,10 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 			K0sVars:      c.K0sVars,
 			LogLevel:     c.LogLevels.Konnectivity,
 			EventEmitter: prober.NewEventEmitter(),
-			ServerCount:  numActiveControllers.Peek,
+			ServerCount: func() (uint, <-chan struct{}) {
+				count, changed := konnectivityServerCount()
+				return count.Count, changed
+			},
 		})
 	}
 
@@ -341,13 +344,33 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 		return fmt.Errorf("failed to determine node name: %w", err)
 	}
 
-	if !singleController {
-		nodeComponents.Add(ctx, &leasecounter.Component{
-			NodeName:              nodeName,
-			InvocationID:          c.K0sVars.InvocationID,
-			KubeClientFactory:     adminClientFactory,
-			UpdateControllerCount: numActiveControllers.Set,
-		})
+	if singleController {
+		numActiveControllers.Set(1)
+		//nolint:unparam // The count never changes, a nil channel never fires.
+		konnectivityServerCount = func() (controller.KonnectivityServerCount, <-chan struct{}) {
+			return controller.KonnectivityServerCount{Count: 1}, nil
+		}
+	} else {
+		leaseCounter := &leasecounter.Component{
+			NodeName:          nodeName,
+			InvocationID:      c.K0sVars.InvocationID,
+			KubeClientFactory: adminClientFactory,
+			UpdateLeases: func(leases leasecounter.Leases) *leasecounter.KonnectivityState {
+				numActiveControllers.Set(leases.ActiveCount)
+				return nil
+			},
+		}
+		if enableKonnectivity {
+			var debouncer controller.KonnectivityServerCountDebouncer
+			konnectivityServerCount = debouncer.Peek
+			update := leaseCounter.UpdateLeases
+			leaseCounter.UpdateLeases = func(leases leasecounter.Leases) *leasecounter.KonnectivityState {
+				update(leases)
+				return debouncer.Update(leases)
+			}
+		}
+
+		nodeComponents.Add(ctx, leaseCounter)
 	}
 
 	var leaderElector interface {
@@ -602,7 +625,7 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 			ManifestsDir:           c.K0sVars.ManifestsDir,
 			KonnectivityServerHost: cmp.Or(nodeConfig.Spec.API.ExternalHost(), nodeConfig.Spec.API.Address),
 			EventEmitter:           prober.NewEventEmitter(),
-			ServerCount:            numActiveControllers.Peek,
+			ServerCount:            konnectivityServerCount,
 		})
 	}
 

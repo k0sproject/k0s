@@ -121,10 +121,11 @@ func (c *ClusterInfoCollector) CollectData(ctx context.Context) (*ClusterInfo, e
 	}
 
 	// Collect control plane node count
-	ci.ControlPlaneNodesCount, err = leasecounter.ActiveLeases(ctx, c.client)
+	activeLeases, err := leasecounter.ActiveLeases(ctx, c.client)
 	if err != nil {
 		return ci, fmt.Errorf("can't collect control plane nodes count: %w", err)
 	}
+	ci.ControlPlaneNodesCount = uint(len(activeLeases))
 
 	return ci, nil
 }

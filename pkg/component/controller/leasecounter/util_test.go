@@ -1,11 +1,13 @@
 // SPDX-FileCopyrightText: 2026 k0s authors
 // SPDX-License-Identifier: Apache-2.0
 
-package leasecounter
+package leasecounter_test
 
 import (
 	"testing"
 	"time"
+
+	"github.com/k0sproject/k0s/pkg/component/controller/leasecounter"
 
 	coordinationv1 "k8s.io/api/coordination/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -22,7 +24,7 @@ func TestActiveLeases(t *testing.T) {
 
 	for _, tt := range []struct {
 		name     string
-		expected uint
+		expected int
 		leases   []runtime.Object
 	}{
 		{
@@ -34,7 +36,7 @@ func TestActiveLeases(t *testing.T) {
 			1, []runtime.Object{makeLease(withoutControllerLabel, withName("k0s-ctrl-foo"))},
 		},
 		{
-			"returns zero when there are no leases",
+			"returns no leases when there are none",
 			0, nil,
 		},
 		{
@@ -73,9 +75,9 @@ func TestActiveLeases(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			c := fake.NewSimpleClientset(tt.leases...)
-			count, err := ActiveLeases(t.Context(), c)
+			leases, err := leasecounter.ActiveLeases(t.Context(), c)
 			assert.NoError(t, err)
-			assert.Equal(t, tt.expected, count)
+			assert.Len(t, leases, tt.expected)
 		})
 	}
 }
@@ -87,7 +89,7 @@ func makeLease(funcs ...func(*coordinationv1.Lease)) *coordinationv1.Lease {
 			Name:      "foo",
 			Namespace: corev1.NamespaceNodeLease,
 			Labels: map[string]string{
-				leaseTypeLabel: leaseTypeLabelValueController,
+				"k0s.k0sproject.io/lease-type": "controller",
 			},
 		},
 		Spec: coordinationv1.LeaseSpec{
@@ -112,7 +114,7 @@ func withName(name string) func(*coordinationv1.Lease) {
 // Removes the controller lease type label, so the lease is only considered a
 // controller lease if its name carries the legacy prefix.
 func withoutControllerLabel(l *coordinationv1.Lease) {
-	delete(l.Labels, leaseTypeLabel)
+	delete(l.Labels, "k0s.k0sproject.io/lease-type")
 }
 
 // Pushes the lease's renew time far enough into the past that its duration has
