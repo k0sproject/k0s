@@ -1129,6 +1129,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#editor-completion-and-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Editor completion and validation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#configuring-k0s-via-k0sctl" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3208,6 +3219,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#editor-completion-and-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Editor completion and validation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#configuring-k0s-via-k0sctl" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3448,6 +3470,18 @@ sudo<span class="w"> </span>k0s<span class="w"> </span>start
 </code></pre></div>
 </li>
 </ol>
+<h2 id="editor-completion-and-validation">Editor completion and validation<a class="headerlink" href="#editor-completion-and-validation" title="Permanent link">#</a></h2>
+<p>k0s can generate <a href="https://json-schema.org/learn/getting-started-step-by-step">JSON Schema</a>
+documents for its configuration APIs. Editors that support
+<a href="https://github.com/redhat-developer/yaml-language-server#using-inlined-schema">schema associations</a>
+use them for completion and validation.</p>
+<p>Generate the ClusterConfig schema from the installed executable:</p>
+<div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>docs<span class="w"> </span>json-schema<span class="w"> </span>gen<span class="w"> </span>k0s.k0sproject.io/v1beta1<span class="w"> </span>ClusterConfig<span class="w"> </span>&gt;<span class="w"> </span>k0s.json
+</code></pre></div>
+<p>Add this comment at the top of your <code>k0s.yaml</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># yaml-language-server: $schema=./k0s.json</span>
+</code></pre></div>
+<p>Use <code>k0s config validate --config k0s.yaml</code> for cross-field and semantic validation.</p>
 <h2 id="configuring-k0s-via-k0sctl">Configuring k0s via k0sctl<a class="headerlink" href="#configuring-k0s-via-k0sctl" title="Permanent link">#</a></h2>
 <p>k0sctl can deploy your configuration options at cluster creation time. Your
 options should be placed in the <code>spec.k0s.config</code> section of the k0sctl
