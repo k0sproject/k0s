@@ -5,6 +5,7 @@ package status
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"testing"
 
@@ -34,7 +35,7 @@ func TestEvaluateCNI_KubeRouter(t *testing.T) {
 
 	t.Run("healthy", func(t *testing.T) {
 		t.Parallel()
-		client := fake.NewSimpleClientset(kubeRouterDS(1, 1), dsRevision(kubeRouterDaemonSet, 1, "current"), dsPod(kubeRouterDaemonSet, "current", "kube-router-a", true))
+		client := fake.NewSimpleClientset(kubeRouterDS(1, 1))
 		got, ok := evaluateCNI(t.Context(), client, kubeRouterNet())
 		require.True(t, ok)
 		assert.Equal(t, Condition{
@@ -111,6 +112,19 @@ func TestEvaluateCNI_KubeRouter(t *testing.T) {
 		assert.Equal(t, "CNI status check timed out", got.Message)
 	})
 
+	t.Run("canceled_is_error_not_timeout", func(t *testing.T) {
+		t.Parallel()
+		client := fake.NewSimpleClientset()
+		client.PrependReactor("get", "daemonsets", func(k8stesting.Action) (bool, runtime.Object, error) {
+			return true, nil, context.Canceled
+		})
+		got, ok := evaluateCNI(t.Context(), client, kubeRouterNet())
+		require.True(t, ok)
+		assert.Equal(t, corev1.ConditionUnknown, got.Status)
+		assert.Equal(t, reasonError, got.Reason)
+		assert.Equal(t, context.Canceled.Error(), got.Message)
+	})
+
 	t.Run("old_pods_during_rollout", func(t *testing.T) {
 		t.Parallel()
 		ds := kubeRouterDS(2, 2)
@@ -121,23 +135,6 @@ func TestEvaluateCNI_KubeRouter(t *testing.T) {
 		assert.Equal(t, reasonNotReady, got.Reason)
 		assert.Equal(t, "kube-router DaemonSet reports 2/2 available, 1 updated", got.Message)
 	})
-
-	t.Run("updated_available_counts_hide_old_template", func(t *testing.T) {
-		t.Parallel()
-		ds := kubeRouterDS(1, 1)
-		ds.Generation = 2
-		ds.Status.ObservedGeneration = 2
-		got, ok := evaluateCNI(t.Context(), fake.NewSimpleClientset(
-			ds,
-			dsRevision(kubeRouterDaemonSet, 1, "old"),
-			dsRevision(kubeRouterDaemonSet, 2, "current"),
-			dsPod(kubeRouterDaemonSet, "old", "kube-router-old", true),
-		), kubeRouterNet())
-		require.True(t, ok)
-		assert.Equal(t, corev1.ConditionFalse, got.Status)
-		assert.Equal(t, reasonNotReady, got.Reason)
-		assert.Equal(t, "kube-router DaemonSet has 0/1 current-template pods ready", got.Message)
-	})
 }
 
 func TestEvaluateCNI_Calico(t *testing.T) {
@@ -145,7 +142,7 @@ func TestEvaluateCNI_Calico(t *testing.T) {
 
 	t.Run("healthy", func(t *testing.T) {
 		t.Parallel()
-		client := fake.NewSimpleClientset(calicoNodeDS(2, 2), dsRevision(calicoNodeDaemonSet, 1, "current"), dsPod(calicoNodeDaemonSet, "current", "calico-node-a", true), dsPod(calicoNodeDaemonSet, "current", "calico-node-b", true), calicoControllers(corev1.ConditionTrue))
+		client := fake.NewSimpleClientset(calicoNodeDS(2, 2), calicoControllers(corev1.ConditionTrue))
 		got, ok := evaluateCNI(t.Context(), client, calicoNet(""))
 		require.True(t, ok)
 		assert.Equal(t, corev1.ConditionTrue, got.Status)
@@ -165,7 +162,7 @@ func TestEvaluateCNI_Calico(t *testing.T) {
 
 	t.Run("controllers_not_ready", func(t *testing.T) {
 		t.Parallel()
-		client := fake.NewSimpleClientset(calicoNodeDS(1, 1), dsRevision(calicoNodeDaemonSet, 1, "current"), dsPod(calicoNodeDaemonSet, "current", "calico-node-a", true), calicoControllers(corev1.ConditionFalse))
+		client := fake.NewSimpleClientset(calicoNodeDS(1, 1), calicoControllers(corev1.ConditionFalse))
 		got, ok := evaluateCNI(t.Context(), client, calicoNet(""))
 		require.True(t, ok)
 		assert.Equal(t, corev1.ConditionFalse, got.Status)
@@ -175,7 +172,7 @@ func TestEvaluateCNI_Calico(t *testing.T) {
 
 	t.Run("controllers_not_found", func(t *testing.T) {
 		t.Parallel()
-		client := fake.NewSimpleClientset(calicoNodeDS(1, 1), dsRevision(calicoNodeDaemonSet, 1, "current"), dsPod(calicoNodeDaemonSet, "current", "calico-node-a", true))
+		client := fake.NewSimpleClientset(calicoNodeDS(1, 1))
 		got, ok := evaluateCNI(t.Context(), client, calicoNet(""))
 		require.True(t, ok)
 		assert.Equal(t, corev1.ConditionFalse, got.Status)
@@ -185,7 +182,7 @@ func TestEvaluateCNI_Calico(t *testing.T) {
 
 	t.Run("controllers_api_error", func(t *testing.T) {
 		t.Parallel()
-		client := fake.NewSimpleClientset(calicoNodeDS(1, 1), dsRevision(calicoNodeDaemonSet, 1, "current"), dsPod(calicoNodeDaemonSet, "current", "calico-node-a", true))
+		client := fake.NewSimpleClientset(calicoNodeDS(1, 1))
 		client.PrependReactor("get", "deployments", func(k8stesting.Action) (bool, runtime.Object, error) {
 			return true, nil, errors.New("apiserver unavailable")
 		})
@@ -211,7 +208,7 @@ func TestEvaluateCNI_Calico(t *testing.T) {
 
 	t.Run("windows_not_found_is_ignored", func(t *testing.T) {
 		t.Parallel()
-		client := fake.NewSimpleClientset(calicoNodeDS(1, 1), dsRevision(calicoNodeDaemonSet, 1, "current"), dsPod(calicoNodeDaemonSet, "current", "calico-node-a", true), calicoControllers(corev1.ConditionTrue))
+		client := fake.NewSimpleClientset(calicoNodeDS(1, 1), calicoControllers(corev1.ConditionTrue))
 		got, ok := evaluateCNI(t.Context(), client, calicoNet(""))
 		require.True(t, ok)
 		assert.Equal(t, corev1.ConditionTrue, got.Status)
@@ -222,8 +219,6 @@ func TestEvaluateCNI_Calico(t *testing.T) {
 		t.Parallel()
 		client := fake.NewSimpleClientset(
 			calicoNodeDS(1, 1),
-			dsRevision(calicoNodeDaemonSet, 1, "current"),
-			dsPod(calicoNodeDaemonSet, "current", "calico-node-a", true),
 			calicoWindowsDS(1, 0),
 			calicoControllers(corev1.ConditionTrue),
 			windowsNode("win-1"),
@@ -239,11 +234,7 @@ func TestEvaluateCNI_Calico(t *testing.T) {
 		t.Parallel()
 		client := fake.NewSimpleClientset(
 			calicoNodeDS(1, 1),
-			dsRevision(calicoNodeDaemonSet, 1, "current"),
-			dsPod(calicoNodeDaemonSet, "current", "calico-node-a", true),
 			calicoWindowsDS(1, 1),
-			dsRevision(calicoWindowsDaemonSet, 1, "current"),
-			dsPod(calicoWindowsDaemonSet, "current", "calico-node-windows-a", true),
 			calicoControllers(corev1.ConditionTrue),
 			windowsNode("win-1"),
 		)
@@ -255,7 +246,7 @@ func TestEvaluateCNI_Calico(t *testing.T) {
 
 	t.Run("controllers_unknown", func(t *testing.T) {
 		t.Parallel()
-		client := fake.NewSimpleClientset(calicoNodeDS(1, 1), dsRevision(calicoNodeDaemonSet, 1, "current"), dsPod(calicoNodeDaemonSet, "current", "calico-node-a", true), calicoControllers(corev1.ConditionUnknown))
+		client := fake.NewSimpleClientset(calicoNodeDS(1, 1), calicoControllers(corev1.ConditionUnknown))
 		got, ok := evaluateCNI(t.Context(), client, calicoNet(""))
 		require.True(t, ok)
 		assert.Equal(t, corev1.ConditionUnknown, got.Status)
@@ -267,8 +258,6 @@ func TestEvaluateCNI_Calico(t *testing.T) {
 		t.Parallel()
 		client := fake.NewSimpleClientset(
 			calicoNodeDS(1, 1),
-			dsRevision(calicoNodeDaemonSet, 1, "current"),
-			dsPod(calicoNodeDaemonSet, "current", "calico-node-a", true),
 			calicoControllers(corev1.ConditionTrue),
 			windowsNode("win-1"),
 		)
@@ -283,8 +272,6 @@ func TestEvaluateCNI_Calico(t *testing.T) {
 		t.Parallel()
 		client := fake.NewSimpleClientset(
 			calicoNodeDS(1, 1),
-			dsRevision(calicoNodeDaemonSet, 1, "current"),
-			dsPod(calicoNodeDaemonSet, "current", "calico-node-a", true),
 			calicoControllers(corev1.ConditionTrue),
 			windowsNode("win-1"),
 		)
@@ -299,7 +286,7 @@ func TestEvaluateCNI_Calico(t *testing.T) {
 		deploy := calicoControllers(corev1.ConditionTrue)
 		deploy.Generation = 3
 		deploy.Status.ObservedGeneration = 2
-		client := fake.NewSimpleClientset(calicoNodeDS(1, 1), dsRevision(calicoNodeDaemonSet, 1, "current"), dsPod(calicoNodeDaemonSet, "current", "calico-node-a", true), deploy)
+		client := fake.NewSimpleClientset(calicoNodeDS(1, 1), deploy)
 		got, ok := evaluateCNI(t.Context(), client, calicoNet(""))
 		require.True(t, ok)
 		assert.Equal(t, corev1.ConditionFalse, got.Status)
@@ -312,7 +299,7 @@ func TestEvaluateCNI_Calico(t *testing.T) {
 		deploy := calicoControllers(corev1.ConditionTrue)
 		deploy.Status.UpdatedReplicas = 0
 		deploy.Status.AvailableReplicas = 1
-		client := fake.NewSimpleClientset(calicoNodeDS(1, 1), dsRevision(calicoNodeDaemonSet, 1, "current"), dsPod(calicoNodeDaemonSet, "current", "calico-node-a", true), deploy)
+		client := fake.NewSimpleClientset(calicoNodeDS(1, 1), deploy)
 		got, ok := evaluateCNI(t.Context(), client, calicoNet(""))
 		require.True(t, ok)
 		assert.Equal(t, corev1.ConditionFalse, got.Status)
@@ -326,7 +313,7 @@ func TestEvaluateCNI_Calico(t *testing.T) {
 		deploy.Status.Replicas = 2
 		deploy.Status.UpdatedReplicas = 1
 		deploy.Status.AvailableReplicas = 1
-		client := fake.NewSimpleClientset(calicoNodeDS(1, 1), dsRevision(calicoNodeDaemonSet, 1, "current"), dsPod(calicoNodeDaemonSet, "current", "calico-node-a", true), deploy)
+		client := fake.NewSimpleClientset(calicoNodeDS(1, 1), deploy)
 		got, ok := evaluateCNI(t.Context(), client, calicoNet(""))
 		require.True(t, ok)
 		assert.Equal(t, corev1.ConditionFalse, got.Status)
@@ -351,6 +338,16 @@ func TestAppendCNICondition(t *testing.T) {
 		status := K0sStatus{ClusterConfig: clusterConfigWithProvider("custom")}
 		sh := &statusHandler{Status: &Status{
 			AdminClientFactory: &stubFactory{client: fake.NewSimpleClientset()},
+		}}
+		sh.appendCNICondition(t.Context(), &status)
+		assert.Empty(t, status.Conditions)
+	})
+
+	t.Run("skips_custom_cni_when_admin_client_fails", func(t *testing.T) {
+		t.Parallel()
+		status := K0sStatus{ClusterConfig: clusterConfigWithProvider("custom")}
+		sh := &statusHandler{Status: &Status{
+			AdminClientFactory: &stubFactory{err: errors.New("admin kubeconfig missing")},
 		}}
 		sh.appendCNICondition(t.Context(), &status)
 		assert.Empty(t, status.Conditions)
@@ -386,12 +383,56 @@ func TestAppendCNICondition(t *testing.T) {
 				Workloads:     false,
 				ClusterConfig: clusterConfigWithProvider(constant.CNIProviderKubeRouter),
 			},
-			AdminClientFactory: &stubFactory{client: fake.NewSimpleClientset(kubeRouterDS(1, 1), dsRevision(kubeRouterDaemonSet, 1, "current"), dsPod(kubeRouterDaemonSet, "current", "kube-router-a", true))},
+			AdminClientFactory: &stubFactory{client: fake.NewSimpleClientset(kubeRouterDS(1, 1))},
 		}}
 		got := sh.getCurrentStatus(t.Context())
 		require.Len(t, got.Conditions, 1)
 		assert.Equal(t, corev1.ConditionTrue, got.Conditions[0].Status)
 		assert.False(t, got.WorkerToAPIConnectionStatus.Success)
+	})
+
+	t.Run("reconciled_calico_mode_requires_windows_daemonset", func(t *testing.T) {
+		t.Parallel()
+		startup := clusterConfigWithCalico(v1beta1.CalicoModeBIRD)
+		startup.Spec.Storage = &v1beta1.StorageSpec{
+			Type: v1beta1.KineStorageType,
+			Kine: &v1beta1.KineConfig{DataSource: "sqlite:///var/lib/k0s/db/state.db"},
+		}
+		st := &Status{
+			StatusInformation: K0sStatus{ClusterConfig: startup},
+			AdminClientFactory: &stubFactory{client: fake.NewSimpleClientset(
+				calicoNodeDS(1, 1),
+				calicoControllers(corev1.ConditionTrue),
+				windowsNode("win-1"),
+			)},
+		}
+		sh := &statusHandler{Status: st}
+
+		got := sh.getCurrentStatus(t.Context())
+		require.Len(t, got.Conditions, 1)
+		assert.Equal(t, corev1.ConditionTrue, got.Conditions[0].Status)
+
+		clusterWide := clusterConfigWithCalico(v1beta1.CalicoModeVXLAN)
+		require.NoError(t, (&ClusterConfigUpdater{Status: st}).Reconcile(t.Context(), clusterWide))
+		got = sh.getCurrentStatus(t.Context())
+		require.Len(t, got.Conditions, 1)
+		assert.Equal(t, corev1.ConditionFalse, got.Conditions[0].Status)
+		assert.Equal(t, reasonNotFound, got.Conditions[0].Reason)
+		assert.Equal(t, "calico-node-windows DaemonSet not found", got.Conditions[0].Message)
+		require.NotNil(t, got.ClusterConfig)
+		require.NotNil(t, got.ClusterConfig.Spec)
+		require.NotNil(t, got.ClusterConfig.Spec.Storage)
+		assert.False(t, got.ClusterConfig.Spec.Storage.IsJoinable())
+		assert.Equal(t, v1beta1.CalicoModeBIRD, got.ClusterConfig.Spec.Network.Calico.Mode)
+
+		encoded, err := json.Marshal(got)
+		require.NoError(t, err)
+		var decoded K0sStatus
+		require.NoError(t, json.Unmarshal(encoded, &decoded))
+		require.NotNil(t, decoded.ClusterConfig)
+		require.NotNil(t, decoded.ClusterConfig.Spec)
+		require.NotNil(t, decoded.ClusterConfig.Spec.Storage)
+		assert.False(t, decoded.ClusterConfig.Spec.Storage.IsJoinable())
 	})
 
 	t.Run("workloads_probe_failure_still_reports_cni", func(t *testing.T) {
@@ -404,7 +445,7 @@ func TestAppendCNICondition(t *testing.T) {
 			GetWorkerClientFactory: func() kubeutil.ClientFactoryInterface {
 				return &stubFactory{err: errors.New("kubelet kubeconfig missing")}
 			},
-			AdminClientFactory: &stubFactory{client: fake.NewSimpleClientset(kubeRouterDS(1, 1), dsRevision(kubeRouterDaemonSet, 1, "current"), dsPod(kubeRouterDaemonSet, "current", "kube-router-a", true))},
+			AdminClientFactory: &stubFactory{client: fake.NewSimpleClientset(kubeRouterDS(1, 1))},
 		}}
 		got := sh.getCurrentStatus(t.Context())
 		assert.False(t, got.WorkerToAPIConnectionStatus.Success)
@@ -429,62 +470,11 @@ func calicoWindowsDS(desired, available int32) *appsv1.DaemonSet {
 func daemonSet(name string, desired, available int32) *appsv1.DaemonSet {
 	return &appsv1.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: metav1.NamespaceSystem, Generation: 1},
-		Spec: appsv1.DaemonSetSpec{
-			Selector: &metav1.LabelSelector{MatchLabels: map[string]string{"k8s-app": name}},
-		},
 		Status: appsv1.DaemonSetStatus{
 			DesiredNumberScheduled: desired,
 			NumberAvailable:        available,
 			UpdatedNumberScheduled: desired,
 			ObservedGeneration:     1,
-		},
-	}
-}
-
-func dsRevision(dsName string, revision int64, hash string) *appsv1.ControllerRevision {
-	controller := true
-	return &appsv1.ControllerRevision{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      dsName + "-" + hash,
-			Namespace: metav1.NamespaceSystem,
-			Labels: map[string]string{
-				"k8s-app":                             dsName,
-				appsv1.DefaultDaemonSetUniqueLabelKey: hash,
-			},
-			OwnerReferences: []metav1.OwnerReference{{
-				APIVersion: "apps/v1",
-				Kind:       "DaemonSet",
-				Name:       dsName,
-				Controller: &controller,
-			}},
-		},
-		Revision: revision,
-	}
-}
-
-func dsPod(dsName, hash, name string, ready bool) *corev1.Pod {
-	readyStatus := corev1.ConditionFalse
-	if ready {
-		readyStatus = corev1.ConditionTrue
-	}
-	controller := true
-	return &corev1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: metav1.NamespaceSystem,
-			Labels: map[string]string{
-				"k8s-app":                             dsName,
-				appsv1.DefaultDaemonSetUniqueLabelKey: hash,
-			},
-			OwnerReferences: []metav1.OwnerReference{{
-				APIVersion: "apps/v1",
-				Kind:       "DaemonSet",
-				Name:       dsName,
-				Controller: &controller,
-			}},
-		},
-		Status: corev1.PodStatus{
-			Conditions: []corev1.PodCondition{{Type: corev1.PodReady, Status: readyStatus}},
 		},
 	}
 }
@@ -533,6 +523,14 @@ func clusterConfigWithProvider(provider string) *v1beta1.ClusterConfig {
 	return &v1beta1.ClusterConfig{
 		Spec: &v1beta1.ClusterSpec{
 			Network: &v1beta1.Network{Provider: provider},
+		},
+	}
+}
+
+func clusterConfigWithCalico(mode v1beta1.CalicoMode) *v1beta1.ClusterConfig {
+	return &v1beta1.ClusterConfig{
+		Spec: &v1beta1.ClusterSpec{
+			Network: calicoNet(mode),
 		},
 	}
 }

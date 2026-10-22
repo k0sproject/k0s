@@ -17,7 +17,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -51,10 +51,22 @@ func cniCondition(status corev1.ConditionStatus, reason, message string) Conditi
 }
 
 func apiErrorCondition(err error) Condition {
-	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
+	if errors.Is(err, context.DeadlineExceeded) {
 		return cniCondition(corev1.ConditionUnknown, reasonTimeout, "CNI status check timed out")
 	}
 	return cniCondition(corev1.ConditionUnknown, reasonError, err.Error())
+}
+
+func isManagedCNI(network *v1beta1.Network) bool {
+	if network == nil {
+		return false
+	}
+	switch network.Provider {
+	case constant.CNIProviderKubeRouter, constant.CNIProviderCalico:
+		return true
+	default:
+		return false
+	}
 }
 
 // evaluateCNI reports managed CNI health from DaemonSet and Deployment status.
@@ -62,7 +74,7 @@ func apiErrorCondition(err error) Condition {
 // mark the node Ready even when the CNI is not operational.
 // Custom CNI is skipped (ok=false). Callers must pass a live API client.
 func evaluateCNI(ctx context.Context, client kubernetes.Interface, network *v1beta1.Network) (Condition, bool) {
-	if network == nil {
+	if !isManagedCNI(network) {
 		return Condition{}, false
 	}
 	switch network.Provider {
@@ -98,7 +110,7 @@ func windowsCalicoRequired(ctx context.Context, client kubernetes.Interface, net
 		return false, nil
 	}
 	nodes, err := client.CoreV1().Nodes().List(ctx, metav1.ListOptions{
-		LabelSelector: fields.OneTermEqualSelector(corev1.LabelOSStable, string(corev1.Windows)).String(),
+		LabelSelector: labels.Set{corev1.LabelOSStable: string(corev1.Windows)}.AsSelector().String(),
 		Limit:         1,
 	})
 	if err != nil {
@@ -123,8 +135,10 @@ func mergeCalicoConditions(parts []Condition) Condition {
 			falseParts = append(falseParts, p)
 		case corev1.ConditionUnknown:
 			unknownParts = append(unknownParts, p)
-		default:
+		case corev1.ConditionTrue:
 			trueParts = append(trueParts, p)
+		default:
+			unknownParts = append(unknownParts, p)
 		}
 	}
 
@@ -169,100 +183,7 @@ func daemonSetCNICondition(ctx context.Context, client kubernetes.Interface, nam
 	if desired <= 0 || available != desired || updated != desired {
 		return cniCondition(corev1.ConditionFalse, reasonNotReady, message)
 	}
-
-	currentReady, err := countReadyCurrentDaemonPods(ctx, client, ds)
-	if err != nil {
-		return apiErrorCondition(err)
-	}
-	if currentReady < desired {
-		return cniCondition(
-			corev1.ConditionFalse,
-			reasonNotReady,
-			fmt.Sprintf("%s DaemonSet has %d/%d current-template pods ready", name, currentReady, desired),
-		)
-	}
 	return cniCondition(corev1.ConditionTrue, reasonAllReady, message)
-}
-
-func countReadyCurrentDaemonPods(ctx context.Context, client kubernetes.Interface, ds *appsv1.DaemonSet) (int32, error) {
-	hash, err := currentDaemonSetRevisionHash(ctx, client, ds)
-	if err != nil {
-		return 0, err
-	}
-	if hash == "" || ds.Spec.Selector == nil {
-		return 0, nil
-	}
-	selector, err := metav1.LabelSelectorAsSelector(ds.Spec.Selector)
-	if err != nil {
-		return 0, err
-	}
-	pods, err := client.CoreV1().Pods(ds.Namespace).List(ctx, metav1.ListOptions{LabelSelector: selector.String()})
-	if err != nil {
-		return 0, err
-	}
-	var ready int32
-	for i := range pods.Items {
-		pod := &pods.Items[i]
-		if !ownedByDaemonSet(pod, ds) {
-			continue
-		}
-		if pod.Labels[appsv1.DefaultDaemonSetUniqueLabelKey] != hash {
-			continue
-		}
-		if podReady(pod) {
-			ready++
-		}
-	}
-	return ready, nil
-}
-
-func currentDaemonSetRevisionHash(ctx context.Context, client kubernetes.Interface, ds *appsv1.DaemonSet) (string, error) {
-	if ds.Spec.Selector == nil {
-		return "", nil
-	}
-	selector, err := metav1.LabelSelectorAsSelector(ds.Spec.Selector)
-	if err != nil {
-		return "", err
-	}
-	revs, err := client.AppsV1().ControllerRevisions(ds.Namespace).List(ctx, metav1.ListOptions{LabelSelector: selector.String()})
-	if err != nil {
-		return "", err
-	}
-	var current *appsv1.ControllerRevision
-	for i := range revs.Items {
-		rev := &revs.Items[i]
-		if !ownedByDaemonSet(rev, ds) {
-			continue
-		}
-		if current == nil || rev.Revision > current.Revision {
-			current = rev
-		}
-	}
-	if current == nil {
-		return "", nil
-	}
-	if hash := current.Labels[appsv1.DefaultDaemonSetUniqueLabelKey]; hash != "" {
-		return hash, nil
-	}
-	return current.Labels[appsv1.ControllerRevisionHashLabelKey], nil
-}
-
-func ownedByDaemonSet(obj metav1.Object, ds *appsv1.DaemonSet) bool {
-	for _, owner := range obj.GetOwnerReferences() {
-		if owner.Kind == "DaemonSet" && owner.Name == ds.Name {
-			return true
-		}
-	}
-	return false
-}
-
-func podReady(pod *corev1.Pod) bool {
-	for _, c := range pod.Status.Conditions {
-		if c.Type == corev1.PodReady {
-			return c.Status == corev1.ConditionTrue
-		}
-	}
-	return false
 }
 
 func deploymentCNICondition(ctx context.Context, client kubernetes.Interface, name string) Condition {

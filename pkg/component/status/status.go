@@ -9,11 +9,12 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"sync/atomic"
 	"time"
 
+	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/component/prober"
-	"github.com/k0sproject/k0s/pkg/constant"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 
 	"github.com/sirupsen/logrus"
@@ -32,9 +33,44 @@ type Status struct {
 	httpserver             http.Server
 	GetWorkerClientFactory func() kubeutil.ClientFactoryInterface
 	AdminClientFactory     kubeutil.ClientFactoryInterface
+	clusterConfig          atomic.Pointer[v1beta1.ClusterConfig]
 }
 
 var _ manager.Component = (*Status)(nil)
+
+// ClusterConfigUpdater receives reconciled cluster config so CNIReady follows
+// live Calico mode, not only the node config captured at process start.
+type ClusterConfigUpdater struct {
+	Status *Status
+}
+
+var (
+	_ manager.Component  = (*ClusterConfigUpdater)(nil)
+	_ manager.Reconciler = (*ClusterConfigUpdater)(nil)
+)
+
+func (c *ClusterConfigUpdater) Init(context.Context) error  { return nil }
+func (c *ClusterConfigUpdater) Start(context.Context) error { return nil }
+func (c *ClusterConfigUpdater) Stop() error                 { return nil }
+
+func (c *ClusterConfigUpdater) Reconcile(_ context.Context, cfg *v1beta1.ClusterConfig) error {
+	c.Status.SetClusterConfig(cfg)
+	return nil
+}
+
+func (s *Status) SetClusterConfig(cfg *v1beta1.ClusterConfig) {
+	s.clusterConfig.Store(cfg)
+}
+
+func (s *Status) cniNetwork(snapshot *K0sStatus) *v1beta1.Network {
+	if cfg := s.clusterConfig.Load(); cfg != nil && cfg.Spec != nil && cfg.Spec.Network != nil {
+		return cfg.Spec.Network
+	}
+	if snapshot != nil && snapshot.ClusterConfig != nil && snapshot.ClusterConfig.Spec != nil {
+		return snapshot.ClusterConfig.Spec.Network
+	}
+	return nil
+}
 
 const defaultMaxEvents = 5
 
@@ -131,12 +167,8 @@ func (sh *statusHandler) appendCNICondition(ctx context.Context, status *K0sStat
 	if sh.Status.AdminClientFactory == nil {
 		return
 	}
-	if status.ClusterConfig == nil || status.ClusterConfig.Spec == nil || status.ClusterConfig.Spec.Network == nil {
-		return
-	}
-
-	provider := status.ClusterConfig.Spec.Network.Provider
-	if provider != constant.CNIProviderKubeRouter && provider != constant.CNIProviderCalico {
+	network := sh.Status.cniNetwork(status)
+	if !isManagedCNI(network) {
 		return
 	}
 
@@ -145,22 +177,12 @@ func (sh *statusHandler) appendCNICondition(ctx context.Context, status *K0sStat
 
 	client, err := sh.Status.AdminClientFactory.GetClient()
 	if err != nil {
-		status.Conditions = setCondition(status.Conditions, cniCondition(corev1.ConditionUnknown, reasonError, err.Error()))
+		status.Conditions = []Condition{cniCondition(corev1.ConditionUnknown, reasonError, err.Error())}
 		return
 	}
 
-	cond, ok := evaluateCNI(ctx, client, status.ClusterConfig.Spec.Network)
+	cond, ok := evaluateCNI(ctx, client, network)
 	if ok {
-		status.Conditions = setCondition(status.Conditions, cond)
+		status.Conditions = []Condition{cond}
 	}
-}
-
-func setCondition(conds []Condition, cond Condition) []Condition {
-	for i, existing := range conds {
-		if existing.Type == cond.Type {
-			conds[i] = cond
-			return conds
-		}
-	}
-	return append(conds, cond)
 }
