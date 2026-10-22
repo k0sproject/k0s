@@ -446,7 +446,8 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 			K0sVars:       c.K0sVars,
 			ClusterConfig: nodeConfig,
 		},
-		Socket: c.K0sVars.StatusSocketPath,
+		Socket:             c.K0sVars.StatusSocketPath,
+		AdminClientFactory: adminClientFactory,
 	}
 	if controllerMode.WorkloadsEnabled() {
 		// The worker installs the real factory once it starts.

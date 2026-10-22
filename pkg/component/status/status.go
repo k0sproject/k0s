@@ -13,9 +13,11 @@ import (
 
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/component/prober"
+	"github.com/k0sproject/k0s/pkg/constant"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 
 	"github.com/sirupsen/logrus"
+	corev1 "k8s.io/api/core/v1"
 )
 
 type Stater interface {
@@ -29,6 +31,7 @@ type Status struct {
 	L                      *logrus.Entry
 	httpserver             http.Server
 	GetWorkerClientFactory func() kubeutil.ClientFactoryInterface
+	AdminClientFactory     kubeutil.ClientFactoryInterface
 }
 
 var _ manager.Component = (*Status)(nil)
@@ -100,23 +103,64 @@ func (sh *statusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (sh *statusHandler) getCurrentStatus(ctx context.Context) K0sStatus {
 	status := sh.Status.StatusInformation
-	if !status.Workloads {
-		return status
+	if status.Workloads {
+		sh.probeWorkerAPI(ctx, &status)
 	}
+	sh.appendCNICondition(ctx, &status)
+	return status
+}
 
+func (sh *statusHandler) probeWorkerAPI(ctx context.Context, status *K0sStatus) {
 	client, err := sh.Status.GetWorkerClientFactory().GetClient()
 	if err != nil {
 		status.WorkerToAPIConnectionStatus = ProbeStatus{
 			Message: "failed to get client: " + err.Error(),
 		}
-		return status
+		return
 	}
 
 	_, err = client.Discovery().RESTClient().Get().AbsPath("/version").Do(ctx).Raw()
 	if err != nil {
 		status.WorkerToAPIConnectionStatus = ProbeStatus{Message: err.Error()}
-		return status
+		return
 	}
 	status.WorkerToAPIConnectionStatus = ProbeStatus{Success: true}
-	return status
+}
+
+func (sh *statusHandler) appendCNICondition(ctx context.Context, status *K0sStatus) {
+	if sh.Status.AdminClientFactory == nil {
+		return
+	}
+	if status.ClusterConfig == nil || status.ClusterConfig.Spec == nil || status.ClusterConfig.Spec.Network == nil {
+		return
+	}
+
+	provider := status.ClusterConfig.Spec.Network.Provider
+	if provider != constant.CNIProviderKubeRouter && provider != constant.CNIProviderCalico {
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, cniCheckTimeout)
+	defer cancel()
+
+	client, err := sh.Status.AdminClientFactory.GetClient()
+	if err != nil {
+		status.Conditions = setCondition(status.Conditions, cniCondition(corev1.ConditionUnknown, reasonError, err.Error()))
+		return
+	}
+
+	cond, ok := evaluateCNI(ctx, client, status.ClusterConfig.Spec.Network)
+	if ok {
+		status.Conditions = setCondition(status.Conditions, cond)
+	}
+}
+
+func setCondition(conds []Condition, cond Condition) []Condition {
+	for i, existing := range conds {
+		if existing.Type == cond.Type {
+			conds[i] = cond
+			return conds
+		}
+	}
+	return append(conds, cond)
 }
