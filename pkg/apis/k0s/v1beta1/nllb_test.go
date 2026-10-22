@@ -182,3 +182,56 @@ spec:
 		})
 	}
 }
+
+func TestNodeLocalLoadBalancing_Validate(t *testing.T) {
+	minimalValid := func() *NodeLocalLoadBalancing {
+		return &NodeLocalLoadBalancing{
+			Enabled: true,
+			Type:    NllbTypeEnvoyProxy,
+			EnvoyProxy: &EnvoyProxy{
+				APIServerBindPort: 7443,
+				Image:             &ImageSpec{Image: "envoy", Version: "latest"},
+			},
+			Traefik: &Traefik{
+				APIServerBindPort: 7443,
+				Image:             &ImageSpec{Image: "traefik", Version: "latest"},
+			},
+		}
+	}
+
+	require.NoError(t, minimalValid().Validate(nil).ToAggregate())
+
+	t.Run("empty patch", func(t *testing.T) {
+		patches := Patches{{}}
+		underTest := minimalValid()
+		underTest.EnvoyProxy.Patches = patches
+		underTest.Traefik.Patches = patches
+
+		err := underTest.Validate(nil).ToAggregate()
+		assert.ErrorContains(t, err, "envoyProxy.patches[0].patch.type: Invalid value")
+		assert.ErrorContains(t, err, "envoyProxy.patches[0].target.kind: Required value")
+		assert.ErrorContains(t, err, "envoyProxy.patches[0].target.name: Required value")
+		assert.ErrorContains(t, err, "traefik.patches[0].patch.type: Invalid value")
+		assert.ErrorContains(t, err, "traefik.patches[0].target.kind: Required value")
+		assert.ErrorContains(t, err, "traefik.patches[0].target.name: Required value")
+
+	})
+
+	t.Run("bogus patch", func(t *testing.T) {
+		patches := Patches{{
+			Target: PatchTarget{
+				Kind:      "Foo",
+				Name:      "foo",
+				Namespace: "none",
+			},
+			Patch: PatchSpec{},
+		}}
+		underTest := minimalValid()
+		underTest.EnvoyProxy.Patches = patches
+		underTest.Traefik.Patches = patches
+
+		err := underTest.Validate(nil).ToAggregate()
+		assert.ErrorContains(t, err, "envoyProxy.patches[0].patch.type: Invalid value")
+		assert.ErrorContains(t, err, "traefik.patches[0].patch.type: Invalid value")
+	})
+}

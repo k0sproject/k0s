@@ -6,6 +6,8 @@ package v1beta1
 import (
 	"strings"
 	"testing"
+
+	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 func TestPatches_Validate(t *testing.T) {
@@ -50,7 +52,7 @@ func TestPatches_Validate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			errs := tt.patches.Validate()
+			errs := tt.patches.validate(field.NewPath("patches"))
 			if tt.wantErr && len(errs) == 0 {
 				t.Fatalf("expected error, got none")
 			}
