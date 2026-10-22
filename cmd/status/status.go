@@ -127,6 +127,15 @@ func printStatus(w io.Writer, status *status.K0sStatus, output string) {
 		if status.StubFile != "" {
 			fmt.Fprintln(w, "Service file:", status.StubFile)
 		}
-
+		if len(status.Conditions) > 0 {
+			fmt.Fprintln(w, "Status:")
+			fmt.Fprintln(w, " conditions:")
+			for _, c := range status.Conditions {
+				fmt.Fprintf(w, "  - type:   %s\n", c.Type)
+				fmt.Fprintf(w, "    status: %s\n", c.Status)
+				fmt.Fprintf(w, "    reason: %s\n", c.Reason)
+				fmt.Fprintf(w, "    message: %s\n", c.Message)
+			}
+		}
 	}
 }
