@@ -369,9 +369,10 @@
       ],
       "matchDepNames": [
         "docker.io/calico/*",
-        "quay.io/k0sproject/calico-*"
+        "quay.io/k0sproject/calico-*",
+        "projectcalico/calico"
       ],
-      "allowedVersions": "<=3.31"
+      "allowedVersions": "/^v?3\\.31\\./"
     },
     {
       "description": "Bump containerd for release-1.35",
@@ -440,9 +441,10 @@
       ],
       "matchDepNames": [
         "docker.io/calico/*",
-        "quay.io/k0sproject/calico-*"
+        "quay.io/k0sproject/calico-*",
+        "projectcalico/calico"
       ],
-      "allowedVersions": "<=3.29"
+      "allowedVersions": "/^v?3\\.29\\./"
     },
     {
       "description": "Bump Envoy for release-1.34",
