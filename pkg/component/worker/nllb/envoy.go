@@ -34,8 +34,9 @@ import (
 type envoyProxy struct {
 	log logrus.FieldLogger
 
-	dir        string
-	staticPods worker.StaticPods
+	dir         string
+	staticPods  worker.StaticPods
+	setManifest func(context.Context, worker.StaticPod, *corev1.Pod) error
 
 	pod    worker.StaticPod
 	config *envoyConfig
@@ -153,7 +154,7 @@ func (e *envoyProxy) start(ctx context.Context, profile workerconfig.Profile, ap
 		return err
 	}
 
-	err = e.provision()
+	err = e.provision(ctx)
 	if err != nil {
 		return err
 	}
@@ -238,9 +239,9 @@ func writeEnvoyConfigFiles(params *envoyParams, filesParams *envoyFilesParams) e
 	return errors.Join(errs...)
 }
 
-func (e *envoyProxy) provision() error {
+func (e *envoyProxy) provision(ctx context.Context) error {
 	manifest := makePodManifest(&e.config.envoyParams, &e.config.envoyPodParams)
-	if err := e.pod.SetManifest(manifest); err != nil {
+	if err := e.setManifest(ctx, e.pod, manifest); err != nil {
 		return err
 	}
 
@@ -248,14 +249,14 @@ func (e *envoyProxy) provision() error {
 	return nil
 }
 
-func makePodManifest(params *envoyParams, podParams *envoyPodParams) corev1.Pod {
+func makePodManifest(params *envoyParams, podParams *envoyPodParams) *corev1.Pod {
 	ports := []corev1.ContainerPort{
 		{Name: "api-server", ContainerPort: int32(params.apiServerBindPort), Protocol: corev1.ProtocolTCP},
 	}
 	if params.konnectivityServerBindPort != 0 {
 		ports = append(ports, corev1.ContainerPort{Name: "konnectivity", ContainerPort: int32(params.konnectivityServerBindPort), Protocol: corev1.ProtocolTCP})
 	}
-	return corev1.Pod{
+	pod := &corev1.Pod{
 		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Pod"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "nllb",
@@ -325,6 +326,8 @@ func makePodManifest(params *envoyParams, podParams *envoyPodParams) corev1.Pod 
 			}},
 		},
 	}
+
+	return pod
 }
 
 var envoyBootstrapConfig = template.Must(template.New("Bootstrap").Parse(`

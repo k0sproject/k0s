@@ -35,8 +35,9 @@ import (
 type traefik struct {
 	log logrus.FieldLogger
 
-	dir        string
-	staticPods worker.StaticPods
+	dir         string
+	staticPods  worker.StaticPods
+	setManifest func(context.Context, worker.StaticPod, *corev1.Pod) error
 
 	pod    worker.StaticPod
 	config *traefikConfig
@@ -139,7 +140,7 @@ func (t *traefik) start(ctx context.Context, profile workerconfig.Profile, apiSe
 		return err
 	}
 
-	return t.provision()
+	return t.provision(ctx)
 }
 
 func (t *traefik) getAPIServerAddress() (*k0snet.HostPort, error) {
@@ -203,9 +204,9 @@ func (t *traefik) writeConfigFile(name string, content []byte) error {
 		Write(content)
 }
 
-func (t *traefik) provision() error {
+func (t *traefik) provision(ctx context.Context) error {
 	manifest := makeTraefikPodManifest(&t.config.traefikPodParams, &t.config.traefikInstallConfig)
-	if err := t.pod.SetManifest(manifest); err != nil {
+	if err := t.setManifest(ctx, t.pod, manifest); err != nil {
 		return err
 	}
 
@@ -227,7 +228,7 @@ func makeTraefikPodManifest(podParams *traefikPodParams, installConfig *traefikI
 
 	configDir := traefikContainerConfigDir()
 
-	return &corev1.Pod{
+	pod := &corev1.Pod{
 		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Pod"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "nllb",
@@ -302,6 +303,8 @@ func makeTraefikPodManifest(podParams *traefikPodParams, installConfig *traefikI
 			EnableServiceLinks: new(false),
 		},
 	}
+
+	return pod
 }
 
 func (i *traefikInstallConfig) toFileContent() ([]byte, error) {

@@ -20,6 +20,7 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	k0snet "github.com/k0sproject/k0s/internal/pkg/net"
+	k0spatches "github.com/k0sproject/k0s/internal/pkg/patches"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/component/worker"
@@ -28,12 +29,17 @@ import (
 	"github.com/k0sproject/k0s/pkg/constant"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	apitypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
+	"github.com/avast/retry-go"
 	"github.com/sirupsen/logrus"
+	"sigs.k8s.io/yaml"
 )
 
 // containerFileLabel is the SELinux label applied to files that need to be
@@ -45,10 +51,18 @@ import (
 // which we instruct people to install in the k0s installation docs if they use SELinux.
 const containerFileLabel string = "system_u:object_r:container_file_t:s0"
 
+// eventReasonPatchFailed is the reason of the Node event that's recorded
+// when the patches couldn't be applied to the node-local load balancer.
+const eventReasonPatchFailed = "NodeLocalLoadBalancingPatchFailed"
+
+// eventRetryDelay is the delay between attempts to record a Node event.
+var eventRetryDelay = 1 * time.Second
+
 // Reconciler reconciles a static Pod on a worker node that implements
 // node-local load balancing.
 type Reconciler struct {
 	log                        logrus.FieldLogger
+	nodeName                   apitypes.NodeName
 	dataDir                    string
 	runtimeDir                 string
 	workerProfileName          string
@@ -56,6 +70,10 @@ type Reconciler struct {
 	regularKubeconfigPath      string
 	loadBalancedKubeconfigPath string
 	loadBalancer               backend
+	patches                    v1beta1.Patches
+
+	// Creates the client used to record Node events.
+	newEventClient func() (kubernetes.Interface, error)
 
 	mu    sync.Mutex
 	state reconcilerState
@@ -96,6 +114,7 @@ func NewReconciler(
 	staticPods worker.StaticPods,
 	workerProfileName string,
 	workerProfile workerconfig.Profile,
+	nodeName apitypes.NodeName,
 ) (*Reconciler, error) {
 	runtimeDir := os.Getenv("XDG_RUNTIME_DIR")
 	if runtimeDir == "" {
@@ -109,35 +128,43 @@ func NewReconciler(
 	}
 	runtimeDir = filepath.Join(runtimeDir, "nllb")
 
-	var loadBalancer backend
-	switch workerProfile.NodeLocalLoadBalancing.Type {
-	case v1beta1.NllbTypeEnvoyProxy:
-		loadBalancer = &envoyProxy{
-			log:        logrus.WithFields(logrus.Fields{"component": "nllb.envoyProxy"}),
-			dir:        filepath.Join(runtimeDir, "envoy"),
-			staticPods: staticPods,
-		}
-	case v1beta1.NllbTypeTraefik:
-		loadBalancer = &traefik{
-			log:        logrus.WithFields(logrus.Fields{"component": "nllb.traefik"}),
-			dir:        filepath.Join(runtimeDir, "traefik"),
-			staticPods: staticPods,
-		}
-	default:
-		return nil, fmt.Errorf("unsupported node-local load balancing type: %q", workerProfile.NodeLocalLoadBalancing.Type)
-	}
-
 	r := &Reconciler{
 		log:                        logrus.WithFields(logrus.Fields{"component": "nllb.Reconciler"}),
+		nodeName:                   nodeName,
 		dataDir:                    k0sVars.DataDir,
 		runtimeDir:                 runtimeDir,
 		workerProfileName:          workerProfileName,
 		workerProfile:              workerProfile,
 		regularKubeconfigPath:      k0sVars.KubeletAuthConfigPath,
 		loadBalancedKubeconfigPath: filepath.Join(runtimeDir, "kubeconfig.yaml"),
-		loadBalancer:               loadBalancer,
 
 		state: reconcilerCreated,
+	}
+
+	// Use the regular kubeconfig, as it doesn't depend on the load balancer.
+	r.newEventClient = func() (kubernetes.Interface, error) {
+		return kubeutil.NewClientFromFile(r.regularKubeconfigPath)
+	}
+
+	switch workerProfile.NodeLocalLoadBalancing.Type {
+	case v1beta1.NllbTypeEnvoyProxy:
+		r.patches = workerProfile.NodeLocalLoadBalancing.EnvoyProxy.Patches
+		r.loadBalancer = &envoyProxy{
+			log:         logrus.WithFields(logrus.Fields{"component": "nllb.envoyProxy"}),
+			dir:         filepath.Join(runtimeDir, "envoy"),
+			staticPods:  staticPods,
+			setManifest: r.setPatchedManifest,
+		}
+	case v1beta1.NllbTypeTraefik:
+		r.patches = workerProfile.NodeLocalLoadBalancing.Traefik.Patches
+		r.loadBalancer = &traefik{
+			log:         logrus.WithFields(logrus.Fields{"component": "nllb.traefik"}),
+			dir:         filepath.Join(runtimeDir, "traefik"),
+			staticPods:  staticPods,
+			setManifest: r.setPatchedManifest,
+		}
+	default:
+		return nil, fmt.Errorf("unsupported node-local load balancing type: %q", workerProfile.NodeLocalLoadBalancing.Type)
 	}
 
 	return r, nil
@@ -438,4 +465,100 @@ func getLoopbackIP(ctx context.Context) (net.IP, error) {
 	}
 
 	return net.IP{127, 0, 0, 1}, err
+}
+
+// reportPatchFailure logs the failure and records it as a Node event.
+func (r *Reconciler) reportPatchFailure(ctx context.Context, cause error) {
+	r.log.WithError(cause).Error("Failed to apply patches to the node-local load balancer, running it without patches")
+	if err := r.recordPatchFailedEvent(ctx, cause); err != nil {
+		r.log.WithError(err).Error("Failed to record Node event")
+	}
+}
+
+// recordPatchFailedEvent records a Warning event on this Node, so that the
+// failure is visible in the cluster, and not only in the worker logs.
+func (r *Reconciler) recordPatchFailedEvent(ctx context.Context, cause error) error {
+	client, err := r.newEventClient()
+	if err != nil {
+		return fmt.Errorf("failed to create Kubernetes client: %w", err)
+	}
+
+	now := metav1.Now()
+	event := &corev1.Event{
+		ObjectMeta: metav1.ObjectMeta{
+			GenerateName: string(r.nodeName) + ".",
+			Namespace:    metav1.NamespaceDefault,
+		},
+		// Use the node name as UID. 'kubectl describe node' only finds events
+		// whose UID is either the Node's actual UID, or the node name (which is
+		// what older kubelets used). The actual UID isn't known if the Node
+		// hasn't been registered yet, and events without any UID aren't found
+		// at all.
+		InvolvedObject: corev1.ObjectReference{
+			APIVersion: "v1",
+			Kind:       "Node",
+			Name:       string(r.nodeName),
+			UID:        apitypes.UID(r.nodeName),
+		},
+		Type:   corev1.EventTypeWarning,
+		Reason: eventReasonPatchFailed,
+		Message: "Failed to apply patches to the node-local load balancer, running it without patches. " +
+			"Fix the patches in the cluster configuration and restart the worker. Error: " + cause.Error(),
+		Source:              corev1.EventSource{Component: "nllb", Host: string(r.nodeName)},
+		ReportingController: "nllb",
+		ReportingInstance:   string(r.nodeName),
+		FirstTimestamp:      now,
+		LastTimestamp:       now,
+		Count:               1,
+	}
+
+	return retry.Do(
+		func() error {
+			ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+			defer cancel()
+			_, err := client.CoreV1().Events(metav1.NamespaceDefault).Create(ctx, event, metav1.CreateOptions{})
+			return err
+		},
+		retry.Context(ctx),
+		retry.Attempts(3),
+		retry.Delay(eventRetryDelay),
+		retry.LastErrorOnly(true),
+	)
+}
+
+// setPatchedManifest sets the patched manifest. Falls back to the unpatched
+// one if patching fails or the static pod rejects the result.
+func (r *Reconciler) setPatchedManifest(ctx context.Context, staticPod worker.StaticPod, pod *corev1.Pod) error {
+	if len(r.patches) == 0 {
+		return staticPod.SetManifest(pod)
+	}
+
+	podBytes, err := patchPod(pod, r.patches)
+	if err != nil {
+		err = fmt.Errorf("failed to patch NLLB pod: %w", err)
+	} else if err = staticPod.SetManifest(podBytes); err != nil {
+		err = fmt.Errorf("failed to set manifest of patched NLLB pod: %w", err)
+	} else {
+		return nil
+	}
+
+	if fallbackErr := staticPod.SetManifest(pod); fallbackErr != nil {
+		return errors.Join(err, fmt.Errorf("failed to set manifest of unpatched NLLB pod: %w", fallbackErr))
+	}
+
+	go func() {
+		// report the failure in go routine to avoid blocking the main flow
+		r.reportPatchFailure(ctx, err)
+	}()
+	return nil
+}
+
+// patchPod returns the patched manifest. Validation is left to the static pod.
+func patchPod(pod *corev1.Pod, patches v1beta1.Patches) ([]byte, error) {
+	podBytes, err := yaml.Marshal(pod)
+	if err != nil {
+		return nil, err
+	}
+
+	return k0spatches.Apply(podBytes, patches)
 }
