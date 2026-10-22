@@ -94,19 +94,20 @@ application containers to separate workers.
    worker:
 
    ```sh
-   token=$(docker exec k0s-controller k0s token create --role=worker)
+   rm -f token-file
+   (umask 077; docker exec k0s-controller k0s token create --role=worker --expiry=100h > token-file)
    ```
 
 2. Run the container to create and join the new worker:
 
    ```sh
    docker run -d --name k0s-worker1 --hostname k0s-worker1 \
-     -e K0S_TOKEN="$token" \
+     -v "$PWD/token-file:/etc/k0s/join-token:ro" \
      -v /var/lib/k0s -v /var/log/pods `# this is where k0s stores its data` \
      --tmpfs /run `# this is where k0s stores runtime data` \
      --privileged `# this is the easiest way to enable container-in-container workloads` \
      docker.io/k0sproject/k0s:{{{ k0s_docker_version }}} \
-     k0s worker
+     k0s worker --token-file /etc/k0s/join-token
    ```
 
    Alternatively, with fine-grained privileges:
@@ -126,7 +127,7 @@ application containers to separate workers.
 
    ```sh
    docker run -d --name k0s-worker1 --hostname k0s-worker1 \
-     -e K0S_TOKEN="$token" \
+     -v "$PWD/token-file:/etc/k0s/join-token:ro" \
      -v /var/lib/k0s -v /var/log/pods `# this is where k0s stores its data` \
      --tmpfs /run `# this is where k0s stores runtime data` \
      --security-opt seccomp=unconfined \
@@ -137,7 +138,7 @@ application containers to separate workers.
      --cap-add sys_resource \
      --cap-add syslog \
      docker.io/k0sproject/k0s:{{{ k0s_docker_version }}} \
-     k0s worker
+     k0s worker --token-file /etc/k0s/join-token
    ```
 
    Notes on the security-related flags:

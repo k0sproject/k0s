@@ -32,7 +32,7 @@ func TestControllerCmd_Help(t *testing.T) {
 	assert.Equal(t, `Run controller
 
 Usage:
-  k0s controller [join-token] [flags]
+  k0s controller [flags]
 
 Aliases:
   controller, server

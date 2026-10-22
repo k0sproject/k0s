@@ -68,7 +68,7 @@ func NewControllerCmd() *cobra.Command {
 	)
 
 	cmd := &cobra.Command{
-		Use:     "controller [join-token]",
+		Use:     "controller",
 		Short:   "Run controller",
 		Aliases: []string{"server"},
 		Example: `	Command to associate master nodes:
