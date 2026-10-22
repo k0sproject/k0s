@@ -316,6 +316,7 @@ func (c *command) start(ctx context.Context, rtc *config.RuntimeConfig, nodeConf
 		})
 	}
 
+	var konnectivityServerCount func() (uint, <-chan struct{})
 	enableKonnectivity := controllerMode != config.SingleNodeMode && !slices.Contains(flags.DisableComponents, constant.KonnectivityServerComponentName)
 
 	if enableKonnectivity {
@@ -324,7 +325,9 @@ func (c *command) start(ctx context.Context, rtc *config.RuntimeConfig, nodeConf
 			K0sVars:      c.K0sVars,
 			LogLevel:     c.LogLevels.Konnectivity,
 			EventEmitter: prober.NewEventEmitter(),
-			ServerCount:  numActiveControllers.Peek,
+			ServerCount: func() (uint, <-chan struct{}) {
+				return konnectivityServerCount()
+			},
 		})
 	}
 
@@ -346,8 +349,9 @@ func (c *command) start(ctx context.Context, rtc *config.RuntimeConfig, nodeConf
 
 	if singleController {
 		numActiveControllers.Set(1)
+		konnectivityServerCount = numActiveControllers.Peek
 	} else {
-		nodeComponents.Add(ctx, &leasecounter.Component{
+		leaseCounter := &leasecounter.Component{
 			NodeName:          nodeName,
 			InvocationID:      c.K0sVars.InvocationID,
 			ClusterConfig:     nodeConfig,
@@ -355,7 +359,18 @@ func (c *command) start(ctx context.Context, rtc *config.RuntimeConfig, nodeConf
 			UpdateLeases: func(leases leasecounter.Leases) {
 				numActiveControllers.Set(leases.ActiveCount)
 			},
-		})
+		}
+		if enableKonnectivity {
+			var debouncer controller.KonnectivityServerCountDebouncer
+			konnectivityServerCount = debouncer.Peek
+			update := leaseCounter.UpdateLeases
+			leaseCounter.UpdateLeases = func(leases leasecounter.Leases) {
+				update(leases)
+				debouncer.Update(leases)
+			}
+		}
+
+		nodeComponents.Add(ctx, leaseCounter)
 	}
 
 	var leaderElector interface {
@@ -591,7 +606,7 @@ func (c *command) start(ctx context.Context, rtc *config.RuntimeConfig, nodeConf
 			ManifestsDir:           c.K0sVars.ManifestsDir,
 			KonnectivityServerHost: cmp.Or(nodeConfig.Spec.API.ExternalHost(), nodeConfig.Spec.API.Address),
 			EventEmitter:           prober.NewEventEmitter(),
-			ServerCount:            numActiveControllers.Peek,
+			ServerCount:            konnectivityServerCount,
 		})
 	}
 
