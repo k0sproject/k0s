@@ -4,7 +4,10 @@
 package cmd
 
 import (
-	"errors"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/k0sproject/k0s/cmd/airgap"
 	"github.com/k0sproject/k0s/cmd/api"
@@ -24,10 +27,12 @@ import (
 	"github.com/k0sproject/k0s/cmd/validate"
 	"github.com/k0sproject/k0s/cmd/version"
 	"github.com/k0sproject/k0s/cmd/worker"
+	"github.com/k0sproject/k0s/internal/schemagen"
 	"github.com/k0sproject/k0s/pkg/build"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
+	"github.com/spf13/pflag"
 )
 
 func NewRootCmd() *cobra.Command {
@@ -74,21 +79,113 @@ func NewRootCmd() *cobra.Command {
 }
 
 func newDocsCmd() *cobra.Command {
-	return &cobra.Command{
-		Use:       "docs {markdown|man}",
-		Short:     "Generate k0s command documentation",
-		ValidArgs: []string{"markdown", "man"},
-		Args:      cobra.MatchAll(cobra.ExactArgs(1), cobra.OnlyValidArgs),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			switch args[0] {
-			case "markdown":
-				return doc.GenMarkdownTree(NewRootCmd(), "./docs/cli")
-			case "man":
-				return doc.GenManTree(NewRootCmd(), &doc.GenManHeader{Title: "k0s", Section: "1"}, "./man")
+	cmd := &cobra.Command{
+		Use:   "docs",
+		Short: "Generate k0s command documentation",
+		Args:  cobra.NoArgs,
+		RunE:  func(*cobra.Command, []string) error { return pflag.ErrHelp }, // Enforce arg validation
+	}
+	cmd.AddCommand(
+		&cobra.Command{Use: "markdown", Short: "Generate Markdown documentation", Args: cobra.NoArgs, RunE: func(*cobra.Command, []string) error {
+			return doc.GenMarkdownTree(NewRootCmd(), "./docs/cli")
+		}},
+		&cobra.Command{Use: "man", Short: "Generate man pages", Args: cobra.NoArgs, RunE: func(*cobra.Command, []string) error {
+			return doc.GenManTree(NewRootCmd(), &doc.GenManHeader{Title: "k0s", Section: "1"}, "./man")
+		}},
+		newJSONSchemaDocsCmd(),
+	)
+	return cmd
+}
+
+func newJSONSchemaDocsCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "json-schema",
+		Short: "Generate JSON Schemas for k0s APIs",
+		Args:  cobra.NoArgs,
+		RunE:  func(*cobra.Command, []string) error { return pflag.ErrHelp }, // Enforce arg validation
+	}
+	cmd.AddCommand(
+		&cobra.Command{
+			Use:   "list",
+			Short: "List available JSON Schemas",
+			Args:  cobra.NoArgs,
+			RunE: func(cmd *cobra.Command, _ []string) error {
+				identifiers, err := schemagen.List()
+				if err != nil {
+					return err
+				}
+				for _, id := range identifiers {
+					if _, err := fmt.Fprintln(cmd.OutOrStdout(), id); err != nil {
+						return err
+					}
+				}
+				return nil
+			},
+		},
+		newJSONSchemaGenerateCmd(),
+	)
+	return cmd
+}
+
+func newJSONSchemaGenerateCmd() *cobra.Command {
+	var all bool
+	var outputDir string
+	cmd := &cobra.Command{
+		Use:     "generate {apiVersion kind | --all --output-dir dir}",
+		Aliases: []string{"gen"},
+		Short:   "Generate one or all JSON Schemas",
+		Example: `  k0s docs json-schema gen k0s.k0sproject.io/v1beta1 ClusterConfig > k0s.json
+  k0s docs json-schema gen --all --output-dir schemas`,
+		Args: func(cmd *cobra.Command, args []string) error {
+			if all {
+				return cobra.ExactArgs(0)(cmd, args)
 			}
-			return errors.New("invalid format")
+			if len(args) > 0 {
+				return cobra.ExactArgs(2)(cmd, args)
+			}
+			return nil
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if all {
+				return generateAllSchemas(outputDir)
+			}
+			if len(args) < 1 {
+				return pflag.ErrHelp // Show the help on blank invocations.
+			}
+			data, err := schemagen.Generate(args[0], args[1])
+			if err != nil {
+				return err
+			}
+			_, err = cmd.OutOrStdout().Write(data)
+			return err
 		},
 	}
+	cmd.Flags().BoolVar(&all, "all", false, "generate all schemas")
+	cmd.Flags().StringVar(&outputDir, "output-dir", "", "output directory for --all")
+	cmd.MarkFlagsRequiredTogether("all", "output-dir")
+	return cmd
+}
+
+func generateAllSchemas(output string) error {
+	identifiers, err := schemagen.List()
+	if err != nil {
+		return err
+	}
+	for _, id := range identifiers {
+		data, err := schemagen.Generate(id.APIVersion, id.Kind)
+		if err != nil {
+			return err
+		}
+		group, version, _ := strings.Cut(id.APIVersion, "/")
+		file := filepath.Join(output, group, strings.ToLower(id.Kind)+"_"+version+".json")
+		if err := os.MkdirAll(filepath.Dir(file), 0o755); err != nil {
+			return err
+		}
+		if err := os.WriteFile(file, data, 0o644); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func newDefaultConfigCmd() *cobra.Command {
