@@ -432,7 +432,7 @@ Configuration options required for using VRRP to configure VIPs in control plane
 | `sourceIP`                 | The local address of the BGP sessions.                                                                                                                                         |
 | `sourceInterface`          | The interface the BGP sessions are bound to, can't be combined with `sourceIP`.                                                                                                |
 | `holdTimeSeconds`          | The BGP hold time, at least `3`. Default: `90`.                                                                                                                                |
-| `keepaliveIntervalSeconds` | The BGP keepalive interval, shorter than the hold time. Default: `30`.                                                                                                         |
+| `keepaliveIntervalSeconds` | The BGP keepalive interval, shorter than the hold time. Default: a third of the hold time.                                                                                     |
 | `peers`                    | The BGP peers, at least one unless `listen` has neighbors.                                                                                                                     |
 | `listen`                   | Accepts BGP sessions from [neighbors](cplb.md#peering-with-calico-or-kube-router) within prefixes.                                                                             |
 

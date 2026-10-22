@@ -720,10 +720,9 @@ spec:
                             minimum: 3
                             type: integer
                           keepaliveIntervalSeconds:
-                            default: 30
                             description: |-
                               KeepaliveIntervalSeconds is the BGP keepalive interval, it must be
-                              shorter than the hold time. Defaults to 30 seconds.
+                              shorter than the hold time. Defaults to a third of the hold time.
                             format: int32
                             type: integer
                           listen:

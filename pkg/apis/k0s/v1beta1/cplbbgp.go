@@ -50,8 +50,7 @@ type BGPSpec struct {
 	HoldTimeSeconds uint32 `json:"holdTimeSeconds,omitempty"`
 
 	// KeepaliveIntervalSeconds is the BGP keepalive interval, it must be
-	// shorter than the hold time. Defaults to 30 seconds.
-	// +kubebuilder:default=30
+	// shorter than the hold time. Defaults to a third of the hold time.
 	KeepaliveIntervalSeconds uint32 `json:"keepaliveIntervalSeconds,omitempty"`
 }
 
@@ -166,7 +165,7 @@ func (b *BGPSpec) Validate(path *field.Path) (errs field.ErrorList) {
 		b.HoldTimeSeconds = 90
 	}
 	if b.KeepaliveIntervalSeconds == 0 {
-		b.KeepaliveIntervalSeconds = 30
+		b.KeepaliveIntervalSeconds = b.HoldTimeSeconds / 3
 	}
 	if b.HoldTimeSeconds < 3 {
 		errs = append(errs, field.Invalid(path.Child("holdTimeSeconds"), b.HoldTimeSeconds, "must be at least 3"))

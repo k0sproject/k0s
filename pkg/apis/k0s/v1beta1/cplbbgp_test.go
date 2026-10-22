@@ -44,6 +44,20 @@ func TestBGPSpec_Validate(t *testing.T) {
 		assert.Empty(t, c.Validate(field.NewPath("cplb")), "validating again should succeed")
 	})
 
+	t.Run("keepalive defaults to a third of the hold time", func(t *testing.T) {
+		c := bgpCPLB()
+		c.BGP.HoldTimeSeconds = 9
+		require.Empty(t, c.Validate(field.NewPath("cplb")))
+		assert.EqualValues(t, 3, c.BGP.KeepaliveIntervalSeconds)
+	})
+
+	t.Run("custom keepalive", func(t *testing.T) {
+		c := bgpCPLB()
+		c.BGP.HoldTimeSeconds, c.BGP.KeepaliveIntervalSeconds = 9, 5
+		require.Empty(t, c.Validate(field.NewPath("cplb")))
+		assert.EqualValues(t, 5, c.BGP.KeepaliveIntervalSeconds)
+	})
+
 	t.Run("communities", func(t *testing.T) {
 		c := bgpCPLB()
 		c.BGP.Communities = []string{"65000:100", "65535:65535", "4200000000:1:2", "no-export"}
@@ -144,13 +158,25 @@ func TestBGPSpec_Validate(t *testing.T) {
 }
 
 func TestBGPSpec_FeatureGate(t *testing.T) {
-	fg := featuregate.FeatureGates{}
-	require.NoError(t, fg.Set(""))
-	t.Cleanup(func() { featuregate.FlushDefaultFeatureGates(t) })
+	for _, test := range []struct {
+		name string
+		set  func(t *testing.T)
+	}{
+		{"empty", func(t *testing.T) {
+			fg := featuregate.FeatureGates{}
+			require.NoError(t, fg.Set(""))
+		}},
+		{"unset", featuregate.FlushDefaultFeatureGates},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			test.set(t)
+			t.Cleanup(func() { featuregate.FlushDefaultFeatureGates(t) })
 
-	errs := bgpCPLB().Validate(field.NewPath("cplb"))
-	if assert.Len(t, errs, 1) {
-		assert.ErrorContains(t, errs[0], "feature gate ControlPlaneLoadBalancingBGP must be explicitly enabled")
+			errs := bgpCPLB().Validate(field.NewPath("cplb"))
+			if assert.Len(t, errs, 1) {
+				assert.ErrorContains(t, errs[0], "feature gate ControlPlaneLoadBalancingBGP must be explicitly enabled")
+			}
+		})
 	}
 }
 
