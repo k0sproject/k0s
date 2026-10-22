@@ -5,7 +5,11 @@ package leasecounter
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"math"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -14,6 +18,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/leaderelection"
 
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apitypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
@@ -26,12 +31,21 @@ const (
 
 	leaseTypeLabel                = "k0s.k0sproject.io/lease-type"
 	leaseTypeLabelValueController = "controller"
+
+	konnectivityServersStateAnnotation = "k0s.k0sproject.io/konnectivity-servers-state"
 )
+
+// A controller's observed konnectivity state.
+type KonnectivityState struct {
+	ServerCount      uint   // observed server count advertised to agents
+	ServerCountRises uint64 // incremented on each server count rise
+}
 
 // A snapshot of an observed controller lease.
 type Lease struct {
-	Name   string
-	Active bool // lease held and not expired
+	Name         string
+	Active       bool               // lease held and not expired
+	Konnectivity *KonnectivityState // nil if not recorded
 }
 
 // The controller leases as observed by the lease counter.
@@ -58,8 +72,10 @@ type Component struct {
 	InvocationID      string
 	KubeClientFactory kubeutil.ClientFactoryInterface
 
-	// Called whenever a change to the controller leases was observed. Not deduplicated.
-	UpdateLeases func(Leases)
+	// Called whenever a change to the controller leases was observed. Not
+	// deduplicated. Returns the konnectivity state to be recorded in this
+	// controller's lease, or nil to record none.
+	UpdateLeases func(Leases) *KonnectivityState
 
 	log  logrus.FieldLogger
 	stop func()
@@ -150,7 +166,11 @@ func (c *Component) runLeaseCounter(ctx context.Context, clients kubernetes.Inte
 		all := make([]Lease, len(leases))
 		for i := range leases {
 			l := &leases[i]
-			all[i] = Lease{Name: l.Name, Active: isActive(l)}
+			all[i] = Lease{
+				Name:         l.Name,
+				Active:       isActive(l),
+				Konnectivity: fromKonnectivityServersStateAnnotation(l.Annotations[konnectivityServersStateAnnotation]),
+			}
 			if l.Name == ownLeaseName {
 				own = &all[i]
 			}
@@ -173,6 +193,66 @@ func (c *Component) runLeaseCounter(ctx context.Context, clients kubernetes.Inte
 			}
 		}
 
-		c.UpdateLeases(Leases{ActiveCount: count, Own: own, All: all})
+		desired := c.UpdateLeases(Leases{ActiveCount: count, Own: own, All: all})
+
+		// Record what the update asked for.
+		if own != nil {
+			actual := own.Konnectivity
+			if desired != actual && (desired == nil || actual == nil || *desired != *actual) {
+				if err := patchKonnectivityState(ctx, clients, own.Name, desired); err != nil {
+					log := c.log.WithError(err)
+					if desired != nil {
+						log = log.WithField("desired", toKonnectivityServersStateAnnotation(*desired))
+					}
+					if actual != nil {
+						log = log.WithField("actual", toKonnectivityServersStateAnnotation(*actual))
+					}
+					log.Error("Failed to patch the konnectivity state in this controller's lease, retrying after the next counting")
+				}
+			}
+		}
 	}, 10*time.Second)
+}
+
+func patchKonnectivityState(ctx context.Context, clients kubernetes.Interface, name string, state *KonnectivityState) error {
+	var encoded any
+	if state != nil {
+		encoded = toKonnectivityServersStateAnnotation(*state)
+	}
+
+	patch, err := json.Marshal(map[string]any{
+		"metadata": map[string]any{
+			"annotations": map[string]any{
+				konnectivityServersStateAnnotation: encoded,
+			},
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	leases := clients.CoordinationV1().Leases(corev1.NamespaceNodeLease)
+	_, err = leases.Patch(ctx, name, apitypes.MergePatchType, patch, metav1.PatchOptions{})
+	return err
+}
+
+func toKonnectivityServersStateAnnotation(s KonnectivityState) string {
+	return fmt.Sprintf("%d/%d", s.ServerCount, s.ServerCountRises)
+}
+
+func fromKonnectivityServersStateAnnotation(value string) *KonnectivityState {
+	countVal, risesVal, _ := strings.Cut(value, "/")
+	count, err := strconv.ParseUint(countVal, 10, 64)
+	if err != nil {
+		return nil
+	}
+	rises, err := strconv.ParseUint(risesVal, 10, 64)
+	if err != nil {
+		return nil
+	}
+
+	return &KonnectivityState{
+		ServerCount:      uint(min(count, math.MaxUint)),
+		ServerCountRises: rises,
+	}
 }

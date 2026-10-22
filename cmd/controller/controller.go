@@ -312,7 +312,7 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 		})
 	}
 
-	var konnectivityServerCount func() (uint, <-chan struct{})
+	var konnectivityServerCount controller.KonnectivityServerCounter
 	enableKonnectivity := controllerMode != config.SingleNodeMode && !slices.Contains(flags.DisableComponents, constant.KonnectivityServerComponentName)
 
 	if enableKonnectivity {
@@ -322,7 +322,8 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 			LogLevel:     c.LogLevels.Konnectivity,
 			EventEmitter: prober.NewEventEmitter(),
 			ServerCount: func() (uint, <-chan struct{}) {
-				return konnectivityServerCount()
+				count, changed := konnectivityServerCount()
+				return count.Count, changed
 			},
 		})
 	}
@@ -345,23 +346,27 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 
 	if singleController {
 		numActiveControllers.Set(1)
-		konnectivityServerCount = numActiveControllers.Peek
+		//nolint:unparam // The count never changes, a nil channel never fires.
+		konnectivityServerCount = func() (controller.KonnectivityServerCount, <-chan struct{}) {
+			return controller.KonnectivityServerCount{Count: 1}, nil
+		}
 	} else {
 		leaseCounter := &leasecounter.Component{
 			NodeName:          nodeName,
 			InvocationID:      c.K0sVars.InvocationID,
 			KubeClientFactory: adminClientFactory,
-			UpdateLeases: func(leases leasecounter.Leases) {
+			UpdateLeases: func(leases leasecounter.Leases) *leasecounter.KonnectivityState {
 				numActiveControllers.Set(leases.ActiveCount)
+				return nil
 			},
 		}
 		if enableKonnectivity {
 			var debouncer controller.KonnectivityServerCountDebouncer
 			konnectivityServerCount = debouncer.Peek
 			update := leaseCounter.UpdateLeases
-			leaseCounter.UpdateLeases = func(leases leasecounter.Leases) {
+			leaseCounter.UpdateLeases = func(leases leasecounter.Leases) *leasecounter.KonnectivityState {
 				update(leases)
-				debouncer.Update(leases)
+				return debouncer.Update(leases)
 			}
 		}
 
