@@ -119,7 +119,7 @@
       ],
       "groupName": "Kubernetes",
       "groupSlug": "kubernetes",
-      "commitMessageExtra": "{{~#each upgrades}}{{~#if (equals depName \"k8s.io/kubernetes\")}} to {{{newVersion}}}{{/if}}{{/each~}}",
+      "commitMessageExtra": "{{~#if (includes (lookupArray upgrades \"depName\") \"k8s.io/kubernetes\")}}{{~#each upgrades}}{{~#if (equals depName \"k8s.io/kubernetes\")}} to {{{newVersion}}}{{/if}}{{/each~}}{{~else}}{{~#each (distinct (lookupArray upgrades \"prettyNewVersion\"))}} to {{{.}}}{{/each~}}{{/if~}}",
       "ignoreUnstable": false,
       "respectLatest": false
     },
