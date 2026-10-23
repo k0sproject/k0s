@@ -33,13 +33,16 @@ type Status struct {
 	httpserver             http.Server
 	GetWorkerClientFactory func() kubeutil.ClientFactoryInterface
 	AdminClientFactory     kubeutil.ClientFactoryInterface
-	clusterConfig          atomic.Pointer[v1beta1.ClusterConfig]
+	network                atomic.Pointer[v1beta1.Network]
 }
 
 var _ manager.Component = (*Status)(nil)
 
-// ClusterConfigUpdater receives reconciled cluster config so CNIReady follows
-// live Calico mode, not only the node config captured at process start.
+const statusCheckTimeout = 5 * time.Second
+
+// ClusterConfigUpdater copies reconciled Network onto Status so CNIReady
+// follows live Calico mode. JSON ClusterConfig on K0sStatus stays node-local
+// so controller-token admission still sees Kine storage.
 type ClusterConfigUpdater struct {
 	Status *Status
 }
@@ -54,17 +57,21 @@ func (c *ClusterConfigUpdater) Start(context.Context) error { return nil }
 func (c *ClusterConfigUpdater) Stop() error                 { return nil }
 
 func (c *ClusterConfigUpdater) Reconcile(_ context.Context, cfg *v1beta1.ClusterConfig) error {
-	c.Status.SetClusterConfig(cfg)
+	var network *v1beta1.Network
+	if cfg != nil && cfg.Spec != nil {
+		network = cfg.Spec.Network
+	}
+	c.Status.SetNetwork(network)
 	return nil
 }
 
-func (s *Status) SetClusterConfig(cfg *v1beta1.ClusterConfig) {
-	s.clusterConfig.Store(cfg)
+func (s *Status) SetNetwork(network *v1beta1.Network) {
+	s.network.Store(network)
 }
 
 func (s *Status) cniNetwork(snapshot *K0sStatus) *v1beta1.Network {
-	if cfg := s.clusterConfig.Load(); cfg != nil && cfg.Spec != nil && cfg.Spec.Network != nil {
-		return cfg.Spec.Network
+	if network := s.network.Load(); network != nil {
+		return network
 	}
 	if snapshot != nil && snapshot.ClusterConfig != nil && snapshot.ClusterConfig.Spec != nil {
 		return snapshot.ClusterConfig.Spec.Network
@@ -138,6 +145,9 @@ func (sh *statusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (sh *statusHandler) getCurrentStatus(ctx context.Context) K0sStatus {
+	ctx, cancel := context.WithTimeout(ctx, statusCheckTimeout)
+	defer cancel()
+
 	status := sh.Status.StatusInformation
 	if status.Workloads {
 		sh.probeWorkerAPI(ctx, &status)
@@ -171,9 +181,6 @@ func (sh *statusHandler) appendCNICondition(ctx context.Context, status *K0sStat
 	if !isManagedCNI(network) {
 		return
 	}
-
-	ctx, cancel := context.WithTimeout(ctx, cniCheckTimeout)
-	defer cancel()
 
 	client, err := sh.Status.AdminClientFactory.GetClient()
 	if err != nil {

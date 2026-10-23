@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
@@ -24,22 +23,17 @@ import (
 const (
 	conditionCNIReady = "CNIReady"
 
-	reasonAllReady           = "AllReady"
-	reasonNotReady           = "NotReady"
-	reasonComponentsNotReady = "ComponentsNotReady"
-	reasonNotFound           = "NotFound"
-	reasonError              = "Error"
-	reasonTimeout            = "Timeout"
+	reasonAllReady = "AllReady"
+	reasonNotReady = "NotReady"
+	reasonNotFound = "NotFound"
+	reasonError    = "Error"
+	reasonTimeout  = "Timeout"
 
 	kubeRouterDaemonSet         = "kube-router"
 	calicoNodeDaemonSet         = "calico-node"
 	calicoWindowsDaemonSet      = "calico-node-windows"
 	calicoControllersDeployment = "calico-kube-controllers"
 )
-
-// cniCheckTimeout bounds live API reads so a stuck apiserver cannot hang
-// `k0s status` on the unix socket.
-var cniCheckTimeout = 5 * time.Second
 
 func cniCondition(status corev1.ConditionStatus, reason, message string) Condition {
 	return Condition{
@@ -74,7 +68,7 @@ func isManagedCNI(network *v1beta1.Network) bool {
 // mark the node Ready even when the CNI is not operational.
 // Custom CNI is skipped (ok=false). Callers must pass a live API client.
 func evaluateCNI(ctx context.Context, client kubernetes.Interface, network *v1beta1.Network) (Condition, bool) {
-	if !isManagedCNI(network) {
+	if network == nil {
 		return Condition{}, false
 	}
 	switch network.Provider {
@@ -90,9 +84,6 @@ func evaluateCNI(ctx context.Context, client kubernetes.Interface, network *v1be
 func calicoCNICondition(ctx context.Context, client kubernetes.Interface, network *v1beta1.Network) Condition {
 	node := daemonSetCNICondition(ctx, client, calicoNodeDaemonSet)
 	controllers := deploymentCNICondition(ctx, client, calicoControllersDeployment)
-	if controllers.Status == corev1.ConditionFalse && controllers.Reason == reasonNotReady {
-		controllers.Reason = reasonComponentsNotReady
-	}
 
 	parts := []Condition{node}
 	requireWindows, err := windowsCalicoRequired(ctx, client, network)

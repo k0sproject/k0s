@@ -166,7 +166,7 @@ func TestEvaluateCNI_Calico(t *testing.T) {
 		got, ok := evaluateCNI(t.Context(), client, calicoNet(""))
 		require.True(t, ok)
 		assert.Equal(t, corev1.ConditionFalse, got.Status)
-		assert.Equal(t, reasonComponentsNotReady, got.Reason)
+		assert.Equal(t, reasonNotReady, got.Reason)
 		assert.Equal(t, "calico-kube-controllers Deployment is not available", got.Message)
 	})
 
@@ -290,7 +290,7 @@ func TestEvaluateCNI_Calico(t *testing.T) {
 		got, ok := evaluateCNI(t.Context(), client, calicoNet(""))
 		require.True(t, ok)
 		assert.Equal(t, corev1.ConditionFalse, got.Status)
-		assert.Equal(t, reasonComponentsNotReady, got.Reason)
+		assert.Equal(t, reasonNotReady, got.Reason)
 		assert.Equal(t, "calico-kube-controllers Deployment has not observed generation 3 (observed 2)", got.Message)
 	})
 
@@ -303,7 +303,7 @@ func TestEvaluateCNI_Calico(t *testing.T) {
 		got, ok := evaluateCNI(t.Context(), client, calicoNet(""))
 		require.True(t, ok)
 		assert.Equal(t, corev1.ConditionFalse, got.Status)
-		assert.Equal(t, reasonComponentsNotReady, got.Reason)
+		assert.Equal(t, reasonNotReady, got.Reason)
 		assert.Equal(t, "calico-kube-controllers Deployment reports 0/1 updated, 1 available, 1 total", got.Message)
 	})
 
@@ -317,7 +317,7 @@ func TestEvaluateCNI_Calico(t *testing.T) {
 		got, ok := evaluateCNI(t.Context(), client, calicoNet(""))
 		require.True(t, ok)
 		assert.Equal(t, corev1.ConditionFalse, got.Status)
-		assert.Equal(t, reasonComponentsNotReady, got.Reason)
+		assert.Equal(t, reasonNotReady, got.Reason)
 		assert.Equal(t, "calico-kube-controllers Deployment reports 1/1 updated, 1 available, 2 total", got.Message)
 	})
 }

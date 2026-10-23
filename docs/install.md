@@ -99,6 +99,9 @@ systemd or OpenRC as its init system.
     Role: controller
     Workloads: true
     Init System: linux-systemd
+    CNIReady: True
+    Reason: AllReady
+    Message: kube-router DaemonSet reports 1/1 available, 1 updated
     ```
 
 5. Access the cluster using kubectl
