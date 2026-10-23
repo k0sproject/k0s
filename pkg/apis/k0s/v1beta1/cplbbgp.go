@@ -4,6 +4,7 @@
 package v1beta1
 
 import (
+	"math"
 	"net"
 	"net/netip"
 	"slices"
@@ -44,9 +45,10 @@ type BGPSpec struct {
 	// +kubebuilder:validation:Minimum=1
 	AS uint32 `json:"as"`
 
-	// HoldTimeSeconds is the BGP hold time, at least 3 seconds. Defaults to 90 seconds.
+	// HoldTimeSeconds is the BGP hold time, between 3 and 65535 seconds. Defaults to 90 seconds.
 	// +kubebuilder:default=90
 	// +kubebuilder:validation:Minimum=3
+	// +kubebuilder:validation:Maximum=65535
 	HoldTimeSeconds uint32 `json:"holdTimeSeconds,omitempty"`
 
 	// KeepaliveIntervalSeconds is the BGP keepalive interval, it must be
@@ -125,16 +127,19 @@ type BFDSpec struct {
 	// MinimumReceiveMilliseconds is the minimum interval between received
 	// BFD packets. Defaults to 300 milliseconds.
 	// +kubebuilder:default=300
+	// +kubebuilder:validation:Maximum=4294967
 	MinimumReceiveMilliseconds uint32 `json:"minimumReceiveMilliseconds,omitempty"`
 
 	// MinimumTransmitMilliseconds is the desired minimum interval between sent
 	// BFD packets. Defaults to 300 milliseconds.
 	// +kubebuilder:default=300
+	// +kubebuilder:validation:Maximum=4294967
 	MinimumTransmitMilliseconds uint32 `json:"minimumTransmitMilliseconds,omitempty"`
 
 	// Multiplier is the number of missed BFD packets after which the peer is
 	// considered down. Defaults to 3.
 	// +kubebuilder:default=3
+	// +kubebuilder:validation:Maximum=255
 	Multiplier uint32 `json:"multiplier,omitempty"`
 }
 
@@ -167,8 +172,8 @@ func (b *BGPSpec) Validate(path *field.Path) (errs field.ErrorList) {
 	if b.KeepaliveIntervalSeconds == 0 {
 		b.KeepaliveIntervalSeconds = b.HoldTimeSeconds / 3
 	}
-	if b.HoldTimeSeconds < 3 {
-		errs = append(errs, field.Invalid(path.Child("holdTimeSeconds"), b.HoldTimeSeconds, "must be at least 3"))
+	if b.HoldTimeSeconds < 3 || b.HoldTimeSeconds > math.MaxUint16 {
+		errs = append(errs, field.Invalid(path.Child("holdTimeSeconds"), b.HoldTimeSeconds, "must be between 3 and 65535"))
 	} else if b.KeepaliveIntervalSeconds >= b.HoldTimeSeconds {
 		errs = append(errs, field.Invalid(path.Child("keepaliveIntervalSeconds"), b.KeepaliveIntervalSeconds, "must be shorter than holdTimeSeconds"))
 	}
@@ -303,6 +308,15 @@ func validateSession(path *field.Path, bfd *BFDSpec, multihop, extendedNextHop, 
 		}
 		if bfd.Multiplier == 0 {
 			bfd.Multiplier = 3
+		}
+		if bfd.MinimumReceiveMilliseconds > math.MaxUint32/1000 {
+			errs = append(errs, field.Invalid(path.Child("bfd", "minimumReceiveMilliseconds"), bfd.MinimumReceiveMilliseconds, "must be at most 4294967"))
+		}
+		if bfd.MinimumTransmitMilliseconds > math.MaxUint32/1000 {
+			errs = append(errs, field.Invalid(path.Child("bfd", "minimumTransmitMilliseconds"), bfd.MinimumTransmitMilliseconds, "must be at most 4294967"))
+		}
+		if bfd.Multiplier > math.MaxUint8 {
+			errs = append(errs, field.Invalid(path.Child("bfd", "multiplier"), bfd.Multiplier, "must be at most 255"))
 		}
 	}
 	return errs

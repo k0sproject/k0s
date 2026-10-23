@@ -232,10 +232,17 @@ spec:
 ```
 
 For this, the routers must hash on the transport layer and must not send ICMP redirects for the VIP (for instance
-`net.ipv4.fib_multipath_hash_policy=1`, `net.ipv6.fib_multipath_hash_policy=1` and
-`net.ipv4.conf.all.send_redirects=0` on Linux), as each konnectivity agent needs connections to all controllers
-through the VIP. Workers and joining controllers need a route to the VIP through the routers, as the controllers
-don't install the routes they receive.
+`net.ipv4.fib_multipath_hash_policy=1`, `net.ipv6.fib_multipath_hash_policy=1`,
+`net.ipv4.conf.all.send_redirects=0`, `net.ipv4.conf.default.send_redirects=0` and
+`net.ipv4.conf.<interface>.send_redirects=0` on Linux), as each konnectivity agent needs connections to all
+controllers through the VIP. Workers and joining controllers need a route to the VIP through the routers, as the
+controllers don't install the routes they receive.
+
+Controllers started with `--enable-worker` deliver connections to the VIP to their own loopback interface, so their
+konnectivity agents only connect to the local controller and logs or exec requests through the other controllers
+fail for their pods. For controller+worker nodes, start all controllers with
+`--disable-components konnectivity-server`, which requires every controller to reach the kubelet port `10250` and
+the pod network of every node.
 
 The router ID defaults to `spec.api.address`. If that's not an IPv4 address, set `routerID` to a unique IPv4
 address on each controller. The peers can be in the same AS as the controllers (iBGP) or in another one (eBGP). In
@@ -306,7 +313,8 @@ spec:
 ```
 
 With kube-router, add the controllers as peers. kube-router only installs one of the routes, so each worker uses a
-single controller and moves to another one when it withdraws its route:
+single controller and moves to another one when it withdraws its route. As with controller+worker nodes, start all
+controllers with `--disable-components konnectivity-server` if `spec.api.externalAddress` is a VIP:
 
 ```yaml
 spec:

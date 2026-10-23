@@ -103,10 +103,17 @@ func TestBGPSpec_Validate(t *testing.T) {
 		{"hold time too short", func(c *ControlPlaneLoadBalancingSpec) {
 			c.BGP.HoldTimeSeconds, c.BGP.KeepaliveIntervalSeconds = 2, 1
 		}, "cplb.bgp.holdTimeSeconds: Invalid value"},
+		{"hold time too long", func(c *ControlPlaneLoadBalancingSpec) { c.BGP.HoldTimeSeconds = 65536 }, "cplb.bgp.holdTimeSeconds: Invalid value"},
 		{"no peers", func(c *ControlPlaneLoadBalancingSpec) { c.BGP.Peers = nil }, "cplb.bgp.peers: Required value"},
 		{"BFD with multihop", func(c *ControlPlaneLoadBalancingSpec) {
 			c.BGP.Peers[0].BFD, c.BGP.Peers[0].Multihop = &BFDSpec{}, true
 		}, "cplb.bgp.peers[0].bfd: Forbidden"},
+		{"BFD interval too long", func(c *ControlPlaneLoadBalancingSpec) {
+			c.BGP.Peers[0].BFD = &BFDSpec{MinimumReceiveMilliseconds: 4294968}
+		}, "cplb.bgp.peers[0].bfd.minimumReceiveMilliseconds: Invalid value"},
+		{"BFD multiplier too large", func(c *ControlPlaneLoadBalancingSpec) {
+			c.BGP.Peers[0].BFD = &BFDSpec{Multiplier: 256}
+		}, "cplb.bgp.peers[0].bfd.multiplier: Invalid value"},
 		{"invalid peer address", func(c *ControlPlaneLoadBalancingSpec) { c.BGP.Peers[0].Address = "router" }, "cplb.bgp.peers[0].address: Invalid value"},
 		{"link-local peer address", func(c *ControlPlaneLoadBalancingSpec) { c.BGP.Peers[0].Address = "fe80::1" }, "must not be a link-local address"},
 		{"missing peer AS", func(c *ControlPlaneLoadBalancingSpec) { c.BGP.Peers[0].AS = 0 }, "cplb.bgp.peers[0].as: Required value"},

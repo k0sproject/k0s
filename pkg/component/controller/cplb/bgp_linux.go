@@ -83,17 +83,17 @@ func (b *BGP) Start(ctx context.Context) error {
 		}
 	}
 
-	if b.lo, err = netlink.LinkByName("lo"); err != nil {
-		return fmt.Errorf("failed to get lo: %w", err)
-	}
-	b.setAdvertised(false)
-
 	client, err := kubeutil.NewClientFromFile(b.KubeConfigPath)
 	if err != nil {
 		return fmt.Errorf("failed to create Kubernetes client: %w", err)
 	}
 
+	if b.lo, err = netlink.LinkByName("lo"); err != nil {
+		return fmt.Errorf("failed to get lo: %w", err)
+	}
+
 	if err = b.startServer(ctx, routerID); err != nil {
+		_ = b.setAdvertised(false)
 		b.server.Stop()
 		b.server = nil
 		return err
@@ -103,7 +103,9 @@ func (b *BGP) Start(ctx context.Context) error {
 	var wg sync.WaitGroup
 	wg.Go(func() {
 		advertiseWhileReady(runCtx, func(ctx context.Context) error {
-			_, err := client.Discovery().RESTClient().Get().AbsPath("/readyz").DoRaw(ctx)
+			checkCtx, cancelCheck := context.WithTimeout(ctx, time.Second)
+			defer cancelCheck()
+			_, err := client.Discovery().RESTClient().Get().AbsPath("/readyz").DoRaw(checkCtx)
 			return err
 		}, b.setAdvertised)
 	})
@@ -259,45 +261,42 @@ func (b *BGP) Stop() error {
 
 // advertiseWhileReady advertises while the ready check succeeds, tolerating a
 // few failed checks so that a single blip doesn't move the routes.
-func advertiseWhileReady(ctx context.Context, check func(context.Context) error, set func(bool)) {
+func advertiseWhileReady(ctx context.Context, check func(context.Context) error, set func(bool) error) {
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
-	ready, failures := false, 0
+
+	failures, synced := 3, false
 	for {
 		select {
 		case <-ctx.Done():
-			if ready {
-				set(false)
-			}
+			_ = set(false)
 			return
 		case <-ticker.C:
 		}
 
-		checkCtx, cancel := context.WithTimeout(ctx, time.Second)
-		err := check(checkCtx)
-		cancel()
-		switch {
-		case err == nil:
+		if err := check(ctx); err == nil {
+			synced = synced && failures < 3
 			failures = 0
-			if !ready {
-				ready = true
-				set(true)
-			}
-		case ready:
-			if failures++; failures >= 3 {
-				logrus.WithField("component", "cplb-bgp").WithError(err).Warn("The local API server isn't ready, withdrawing the virtual IPs")
-				ready = false
-				set(false)
-			}
+		} else if ctx.Err() != nil {
+			continue
+		} else if failures++; failures == 3 {
+			logrus.WithField("component", "cplb-bgp").WithError(err).Warn("The local API server isn't ready, withdrawing the virtual IPs")
+			synced = false
+		}
+
+		if !synced {
+			synced = set(failures < 3) == nil
 		}
 	}
 }
 
-func (b *BGP) setAdvertised(advertised bool) {
+// setAdvertised is idempotent, so that failed updates can be retried for all virtual IPs.
+func (b *BGP) setAdvertised(advertised bool) (errs error) {
 	for _, vip := range b.Config.VirtualIPs {
 		prefix, err := netip.ParsePrefix(vip)
 		if err != nil {
 			b.log.WithError(err).Errorf("Invalid virtual IP %s", vip)
+			errs = errors.Join(errs, err)
 			continue
 		}
 		// A preferred lifetime of zero marks the address deprecated, which keeps it from being
@@ -306,6 +305,7 @@ func (b *BGP) setAdvertised(advertised bool) {
 		path, err := hostRoute(prefix.Addr(), b.Config.Communities)
 		if err != nil {
 			b.log.WithError(err).Errorf("Failed to build the route of %s", vip)
+			errs = errors.Join(errs, err)
 			continue
 		}
 
@@ -314,17 +314,17 @@ func (b *BGP) setAdvertised(advertised bool) {
 				_, err = b.server.AddPath(apiutil.AddPathRequest{Paths: []*apiutil.Path{path}})
 			}
 		} else {
-			if b.server != nil {
-				err = b.server.DeletePath(apiutil.DeletePathRequest{Paths: []*apiutil.Path{path}})
-			}
+			err = b.server.DeletePath(apiutil.DeletePathRequest{Paths: []*apiutil.Path{path}})
 			if delErr := netlink.AddrDel(b.lo, addr); delErr != nil && !errors.Is(delErr, syscall.EADDRNOTAVAIL) {
 				err = errors.Join(err, delErr)
 			}
 		}
 		if err != nil {
 			b.log.WithError(err).Errorf("Failed to update the advertisement of %s", vip)
+			errs = errors.Join(errs, err)
 		}
 	}
+	return errs
 }
 
 // hostRoute leaves the next hop unspecified, so that gobgp sets it to the session address.

@@ -241,11 +241,12 @@ func TestAdvertiseWhileReady(t *testing.T) {
 	var ready, advertised atomic.Bool
 	var mu sync.Mutex
 	var calls []bool
-	set := func(v bool) {
+	set := func(v bool) error {
 		mu.Lock()
 		defer mu.Unlock()
 		calls = append(calls, v)
 		advertised.Store(v)
+		return nil
 	}
 	check := func(context.Context) error {
 		if ready.Load() {
@@ -278,5 +279,52 @@ func TestAdvertiseWhileReady(t *testing.T) {
 	assert.False(t, advertised.Load(), "stopping should withdraw the virtual IPs")
 	mu.Lock()
 	defer mu.Unlock()
-	assert.Equal(t, []bool{true, false, true, false}, calls)
+	assert.Equal(t, []bool{false, true, false, true, false}, calls)
+}
+
+func TestAdvertiseWhileReady_RetriesFailedUpdates(t *testing.T) {
+	var ready, advertised atomic.Bool
+	var failing atomic.Int32
+	var mu sync.Mutex
+	var calls []bool
+	set := func(v bool) error {
+		mu.Lock()
+		defer mu.Unlock()
+		calls = append(calls, v)
+		if failing.Load() > 0 {
+			failing.Add(-1)
+			return errors.New("injected")
+		}
+		advertised.Store(v)
+		return nil
+	}
+	check := func(context.Context) error {
+		if ready.Load() {
+			return nil
+		}
+		return errors.New("not ready")
+	}
+
+	ctx, cancel := context.WithCancel(t.Context())
+	done := make(chan struct{})
+	go func() { defer close(done); advertiseWhileReady(ctx, check, set) }()
+
+	failing.Store(2)
+	ready.Store(true)
+	assert.Eventually(t, advertised.Load, 10*time.Second, 100*time.Millisecond,
+		"a failed advertisement should be retried")
+
+	failing.Store(2)
+	ready.Store(false)
+	assert.Eventually(t, func() bool { return !advertised.Load() }, 10*time.Second, 100*time.Millisecond,
+		"a failed withdrawal should be retried")
+
+	failing.Store(1)
+	ready.Store(true)
+	assert.Eventually(t, func() bool { return failing.Load() == 0 }, 5*time.Second, 100*time.Millisecond)
+	cancel()
+	<-done
+	mu.Lock()
+	defer mu.Unlock()
+	assert.False(t, calls[len(calls)-1], "stopping should withdraw the virtual IPs that failed to be advertised")
 }

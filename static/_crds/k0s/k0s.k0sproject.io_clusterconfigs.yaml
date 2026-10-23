@@ -714,9 +714,10 @@ spec:
                             type: array
                           holdTimeSeconds:
                             default: 90
-                            description: HoldTimeSeconds is the BGP hold time, at
-                              least 3 seconds. Defaults to 90 seconds.
+                            description: HoldTimeSeconds is the BGP hold time, between
+                              3 and 65535 seconds. Defaults to 90 seconds.
                             format: int32
+                            maximum: 65535
                             minimum: 3
                             type: integer
                           keepaliveIntervalSeconds:
@@ -758,6 +759,7 @@ spec:
                                             MinimumReceiveMilliseconds is the minimum interval between received
                                             BFD packets. Defaults to 300 milliseconds.
                                           format: int32
+                                          maximum: 4294967
                                           type: integer
                                         minimumTransmitMilliseconds:
                                           default: 300
@@ -765,6 +767,7 @@ spec:
                                             MinimumTransmitMilliseconds is the desired minimum interval between sent
                                             BFD packets. Defaults to 300 milliseconds.
                                           format: int32
+                                          maximum: 4294967
                                           type: integer
                                         multiplier:
                                           default: 3
@@ -772,6 +775,7 @@ spec:
                                             Multiplier is the number of missed BFD packets after which the peer is
                                             considered down. Defaults to 3.
                                           format: int32
+                                          maximum: 255
                                           type: integer
                                       type: object
                                     extendedNextHop:
@@ -831,6 +835,7 @@ spec:
                                         MinimumReceiveMilliseconds is the minimum interval between received
                                         BFD packets. Defaults to 300 milliseconds.
                                       format: int32
+                                      maximum: 4294967
                                       type: integer
                                     minimumTransmitMilliseconds:
                                       default: 300
@@ -838,6 +843,7 @@ spec:
                                         MinimumTransmitMilliseconds is the desired minimum interval between sent
                                         BFD packets. Defaults to 300 milliseconds.
                                       format: int32
+                                      maximum: 4294967
                                       type: integer
                                     multiplier:
                                       default: 3
@@ -845,6 +851,7 @@ spec:
                                         Multiplier is the number of missed BFD packets after which the peer is
                                         considered down. Defaults to 3.
                                       format: int32
+                                      maximum: 255
                                       type: integer
                                   type: object
                                 extendedNextHop:
