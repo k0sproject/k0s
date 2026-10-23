@@ -27,8 +27,6 @@ import (
 )
 
 const (
-	nodeNameLabel = "k0s.k0sproject.io/node-name"
-
 	leaseTypeLabel                = "k0s.k0sproject.io/lease-type"
 	leaseTypeLabelValueController = "controller"
 
@@ -103,7 +101,6 @@ func (c *Component) Start(context.Context) error {
 		Namespace: corev1.NamespaceNodeLease,
 		Name:      leaseName,
 		Labels: map[string]string{
-			nodeNameLabel:  string(c.NodeName),
 			leaseTypeLabel: leaseTypeLabelValueController,
 		},
 		Identity: c.InvocationID,
