@@ -21,6 +21,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
+	apitypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/kubectl/pkg/drain"
 	cr "sigs.k8s.io/controller-runtime"
@@ -34,10 +35,10 @@ const UnCordoning = "UnCordoning"
 
 // unCordoningEventFilter creates a controller-runtime predicate that governs which objects
 // will make it into reconciliation, and which will be ignored.
-func unCordoningEventFilter(hostname string, handler apsigpred.ErrorHandler) crpred.Predicate {
+func unCordoningEventFilter(nodeName apitypes.NodeName, handler apsigpred.ErrorHandler) crpred.Predicate {
 	return crpred.And(
 		crpred.AnnotationChangedPredicate{},
-		apsigpred.SignalNamePredicate(hostname),
+		apsigpred.SignalNamePredicate(nodeName),
 		apsigpred.NewSignalDataPredicateAdapter(handler).And(
 			signalDataUpdateCommandK0sPredicate(),
 			apsigpred.SignalDataStatusPredicate(UnCordoning),
