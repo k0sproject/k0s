@@ -86,7 +86,7 @@ const (
 	EnvoyProxyImage                       = "quay.io/k0sproject/envoy-distroless"
 	EnvoyProxyImageVersion                = "v1.34.14"
 	CalicoCNIImage                        = "quay.io/k0sproject/calico-cni"
-	CalicoComponentImagesVersion          = "v3.29.7-0"
+	CalicoComponentImagesVersion          = "v3.29.7-2"
 	CalicoCNIWindowsImage                 = "docker.io/calico/cni-windows"
 	CalicoCNIWindowsImageVersion          = "v3.29.7"
 	CalicoNodeImage                       = "quay.io/k0sproject/calico-node"
