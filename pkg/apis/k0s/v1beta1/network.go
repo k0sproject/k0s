@@ -103,7 +103,7 @@ func (n *Network) Validate() []error {
 		validCIDRs = false
 	}
 
-	serviceNetIP, serviceNet, err := net.ParseCIDR(n.ServiceCIDR)
+	serviceNetIP, _, err := net.ParseCIDR(n.ServiceCIDR)
 	if err != nil {
 		errors = append(errors, field.Invalid(field.NewPath("serviceCIDR"), n.ServiceCIDR, "invalid CIDR address"))
 		validCIDRs = false
@@ -114,15 +114,6 @@ func (n *Network) Validate() []error {
 		// if they have a valid IP to begin with because otherwise the error can be confusing
 		if (podNetIP.To4() != nil) != (serviceNetIP.To4() != nil) {
 			errors = append(errors, field.Invalid(field.NewPath("podCIDR"), n.PodCIDR, "podCIDR and serviceCIDR must be both IPv4 or IPv6"))
-		}
-
-		// Validate IPv6 ServiceCIDR prefix length per Kubernetes requirements (<= /108).
-		// https://github.com/kubernetes/kubernetes/blob/v1.37.1/cmd/kube-apiserver/app/options/validation.go#L52-L58
-		if serviceNetIP.To4() == nil {
-			ones, bits := serviceNet.Mask.Size()
-			if bits == 128 && ones > 108 {
-				errors = append(errors, field.Invalid(field.NewPath("serviceCIDR"), n.ServiceCIDR, "IPv6 service CIDR prefix must be <= 108"))
-			}
 		}
 
 		// Single stack IPv6 is an alpha feature, so we need to check if the feature gate is enabled, but only report it if both
@@ -146,20 +137,16 @@ func (n *Network) Validate() []error {
 		} else if ipv6PodIP.To4() != nil {
 			errors = append(errors, field.Invalid(field.NewPath("dualStack", "IPv6podCIDR"), n.DualStack.IPv6PodCIDR, "must be an IPv6 CIDR, not IPv4"))
 		}
-		ipv6SvcIP, ipv6SvcNet, err := net.ParseCIDR(n.DualStack.IPv6ServiceCIDR)
+		ipv6SvcIP, _, err := net.ParseCIDR(n.DualStack.IPv6ServiceCIDR)
 		if err != nil {
 			errors = append(errors, field.Invalid(field.NewPath("dualStack", "IPv6serviceCIDR"), n.DualStack.IPv6ServiceCIDR, "invalid CIDR address"))
 		} else if ipv6SvcIP.To4() != nil {
 			errors = append(errors, field.Invalid(field.NewPath("dualStack", "IPv6serviceCIDR"), n.DualStack.IPv6ServiceCIDR, "must be an IPv6 CIDR, not IPv4"))
-		} else {
-			ones, bits := ipv6SvcNet.Mask.Size()
-
-			// https://github.com/kubernetes/kubernetes/blob/v1.37.1/cmd/kube-apiserver/app/options/validation.go#L39
-			maxCIDRBits := 20
-			if bits-ones > maxCIDRBits {
-				errors = append(errors, field.Invalid(field.NewPath("dualStack", "IPv6serviceCIDR"), n.DualStack.IPv6ServiceCIDR, "IPv6 service CIDR prefix must be <= 108"))
-			}
 		}
+		// There is no limit on the size of the service CIDRs: Kubernetes only
+		// enforces one if the MultiCIDRServiceAllocator or the
+		// DisableAllocatorDualWrite feature gates are disabled, and both are
+		// enabled and locked to their defaults.
 		if podNetIP.To4() == nil {
 
 			errors = append(errors, field.Invalid(field.NewPath("podCIDR"), n.PodCIDR, "if DualStack is enabled, podCIDR must be IPv4"))
