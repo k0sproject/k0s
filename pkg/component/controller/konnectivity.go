@@ -11,13 +11,16 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
 	"github.com/k0sproject/k0s/internal/pkg/users"
+	"github.com/k0sproject/k0s/internal/sync/value"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/assets"
+	"github.com/k0sproject/k0s/pkg/component/controller/leasecounter"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/component/prober"
 	"github.com/k0sproject/k0s/pkg/config"
@@ -28,6 +31,155 @@ import (
 
 	"github.com/sirupsen/logrus"
 )
+
+// The konnectivity server count to be advertised.
+type KonnectivityServerCount struct {
+	Count uint
+	Rises uint64 // changes whenever the server count was observably raised
+}
+
+// Returns the server count to advertise. Same semantics as [value.Latest.Peek].
+type KonnectivityServerCounter = func() (KonnectivityServerCount, <-chan struct{})
+
+// Derives the konnectivity server count to be advertised from the observed
+// controller leases, and distributes it to interested parties.
+//
+// Debounces count drops for one minute to reduce churn on the konnectivity mesh
+// due to potentially intermittent dips, such as controller restarts or data
+// store hiccups. All other changes are distributed without delay.
+type KonnectivityServerCountDebouncer struct {
+	advertised value.Latest[KonnectivityServerCount]
+
+	mu          sync.Mutex
+	ownRises    uint64
+	pendingDrop *uint
+	timer       *time.Timer
+}
+
+// See [KonnectivityServerCounter].
+func (c *KonnectivityServerCountDebouncer) Peek() (KonnectivityServerCount, <-chan struct{}) {
+	return c.advertised.Peek()
+}
+
+// Derives a new konnectivity server count from leases.
+// Returns this controller's resulting konnectivity state after the update.
+func (c *KonnectivityServerCountDebouncer) Update(leases leasecounter.Leases) *leasecounter.KonnectivityState {
+	log := logrus.WithField("component", "konnectivity")
+
+	// Sum up the server count rises of all controllers.
+	var rises uint64
+	// Consider both active and inactive leases, so that a lease flapping
+	// between active and inactive doesn't change the sum and roll the agents
+	// although its generation is unchanged. This also covers the own lease
+	// being inactive right after startup, whose generation must still count.
+	for i := range leases.All {
+		if state := leases.All[i].Konnectivity; state != nil {
+			// Don't use this controller's own requested-but-not-yet-recorded
+			// generation (see below), so that the sum remains a pure function
+			// of the cluster state. Each controller computes the same value
+			// within the observation skew, ensuring that a leader change won't
+			// roll the agents unnecessarily.
+			rises += state.ServerCountRises
+		}
+	}
+	var own *leasecounter.KonnectivityState
+	if leases.Own != nil {
+		own = leases.Own.Konnectivity
+	}
+
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	// Pick up the recorded server count rises, unless more have been counted
+	// that haven't been recorded yet.
+	if own != nil {
+		c.ownRises = max(c.ownRises, own.ServerCountRises)
+	}
+
+	advertised, _ := c.advertised.Peek()
+	next := advertised
+	next.Rises = rises
+
+	switch {
+	case leases.ActiveCount < advertised.Count:
+		// A drop is withheld for the debounce period.
+		if c.pendingDrop == nil {
+			log.WithFields(logrus.Fields{
+				"advertised": advertised.Count,
+				"observed":   leases.ActiveCount,
+			}).Info("Observed a server count drop, withholding it for one minute")
+			var timer *time.Timer
+			timer = time.AfterFunc(time.Minute, func() {
+				c.mu.Lock()
+				defer c.mu.Unlock()
+				if c.pendingDrop != nil {
+					advertised, _ := c.advertised.Peek()
+					log.WithFields(logrus.Fields{
+						"observed":                 *c.pendingDrop,
+						"observedServerCountRises": advertised.Rises,
+					}).Info("Advertising a new server count")
+					advertised.Count, c.pendingDrop = *c.pendingDrop, nil
+					c.advertised.Set(advertised)
+				}
+				if c.timer == timer {
+					c.timer = nil
+				}
+			})
+			c.timer = timer
+		} else if leases.ActiveCount != *c.pendingDrop {
+			log.WithFields(logrus.Fields{
+				"advertised": advertised.Count,
+				"observed":   leases.ActiveCount,
+			}).Info("Server count changed during the debounce period")
+		}
+		c.pendingDrop = new(leases.ActiveCount)
+
+	case leases.ActiveCount > advertised.Count:
+		// The lower count this controller advertised before ...
+		advertisedCount := advertised.Count
+		// ... or if none has been advertised before (== 0) ...
+		if advertisedCount == 0 && own != nil {
+			// ... the one its previous process recorded in the lease.
+			advertisedCount = own.ServerCount
+		}
+
+		// If that count is lower than the new count ...
+		if advertisedCount != 0 && advertisedCount < leases.ActiveCount {
+			// ... the agents need to be rolled, so they'll pick it up.
+			c.ownRises++
+		}
+
+		next.Count = leases.ActiveCount
+		fallthrough // discard a drop
+
+	default:
+		if c.pendingDrop != nil {
+			log.WithFields(logrus.Fields{
+				"advertised": advertised.Count,
+				"observed":   next.Count,
+				"pending":    *c.pendingDrop,
+			}).Debug("Discarding an outdated pending server count drop")
+			c.pendingDrop = nil
+			if c.timer != nil {
+				c.timer.Stop()
+				c.timer = nil
+			}
+		}
+	}
+
+	if next != advertised {
+		log.WithFields(logrus.Fields{
+			"observed":                 next.Count,
+			"observedServerCountRises": next.Rises,
+		}).Info("Advertising a new server count")
+		c.advertised.Set(next)
+	}
+
+	return &leasecounter.KonnectivityState{
+		ServerCount:      next.Count,
+		ServerCountRises: c.ownRises,
+	}
+}
 
 // Konnectivity implements the component interface for konnectivity server
 type Konnectivity struct {
@@ -104,8 +256,6 @@ func (k *Konnectivity) Start(ctx context.Context) error {
 			case <-serverCountChanged:
 				prevServerCount := serverCount
 				serverCount, serverCountChanged = k.ServerCount()
-				// Never drop below one server: the agent treats zero as one internally anyways.
-				serverCount = max(1, serverCount)
 				// restart only if the server count actually changed
 				if serverCount == prevServerCount {
 					continue
@@ -183,6 +333,17 @@ func (k *Konnectivity) runServer(ctx context.Context, count uint) error {
 		Args:    k.serverArgs(count),
 		UID:     k.uid,
 	}
+
+	if count == 0 {
+		// Zero means that the actual server count isn't known yet. The server
+		// advertises it as is, and agents treat zero as one, so an agent
+		// connecting now would stop dialing after a single connection. Bind the
+		// agent port on the loopback interface until the count is known, so
+		// that agents can't reach this server in the meantime.
+		k.log.Info("Starting konnectivity on the loopback interface until the server count is known")
+		k.supervisor.Args = append(k.supervisor.Args, "--agent-bind-address=127.0.0.1")
+	}
+
 	err := k.supervisor.Supervise(ctx)
 	if err != nil {
 		k.supervisor = nil // not to make the next loop to try to stop it first
