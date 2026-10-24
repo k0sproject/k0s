@@ -15,10 +15,10 @@ recommended to use both together if you don't have an external load balancer.
 Load balancing means that an IP address will forward the traffic to every control plane node, Virtual IPs mean that
 this IP address will be present on at least one node at a time.
 
-CPLB relies on [keepalived](https://www.keepalived.org) for highly available VIPs. Internally, Keepalived uses the
-[VRRP protocol](https://datatracker.ietf.org/doc/html/rfc3768). Load Balancing can be done through either userspace
-reverse proxy implemented in k0s (recommended for simplicity), or it can use Keepalived's virtual servers feature,
-which ultimately relies on IPVS.
+By default, CPLB relies on [keepalived](https://www.keepalived.org) for highly available VIPs. Internally, Keepalived
+uses the [VRRP protocol](https://datatracker.ietf.org/doc/html/rfc3768). Load Balancing can be done through either
+userspace reverse proxy implemented in k0s (recommended for simplicity), or it can use Keepalived's virtual servers
+feature, which ultimately relies on IPVS. The [BGP](#bgp) type uses BGP routers instead.
 
 ## Compatibility
 
@@ -194,6 +194,137 @@ spec:
           authPass: "<my password>"
         virtualServers:
         - ipAddress: "<VIP address without netmask>" # for instance 172.16.0.100
+```
+
+## BGP
+
+With `type: BGP`, k0s doesn't use keepalived or layer 2. Every controller adds the VIPs to its loopback interface
+and advertises them as host routes to BGP routers while its local API server is ready, and the routers spread the
+traffic over all of them with ECMP. This allows controllers in different layer 2 segments, for instance in
+different racks. It requires the `ControlPlaneLoadBalancingBGP` [feature gate](feature-gates.md) on all
+controllers.
+
+* Each VIP is a `/32` or `/128` outside of the controllers' subnets, k0s refuses to start otherwise.
+* A controller withdraws its routes after three consecutive failed `/readyz` checks of its API server, and right away
+  when it stops gracefully. For crashed or unreachable controllers, the hold time or BFD applies.
+* There's no userspace proxy or iptables rule, and `spec.api.onlyBindToAddress` isn't supported.
+* The controllers initiate the BGP sessions and never accept them. BFD needs directly connected peers and UDP port
+  3784 open on the controllers.
+
+Setting `spec.api.externalAddress` to a VIP makes it the address of the control plane for clients, join tokens,
+kubelets and konnectivity agents:
+
+```yaml
+spec:
+  api:
+    externalAddress: <VIP address> # for instance 10.200.0.10
+  network:
+    controlPlaneLoadBalancing:
+      enabled: true
+      type: BGP
+      bgp:
+        virtualIPs: ["<VIP address>/32"]
+        as: 65000
+        peers:
+        - address: <router address>
+          as: 65000
+          bfd: {}
+```
+
+For this, the routers must hash on the transport layer and must not send ICMP redirects for the VIP (for instance
+`net.ipv4.fib_multipath_hash_policy=1`, `net.ipv6.fib_multipath_hash_policy=1`,
+`net.ipv4.conf.all.send_redirects=0`, `net.ipv4.conf.default.send_redirects=0` and
+`net.ipv4.conf.<interface>.send_redirects=0` on Linux), as each konnectivity agent needs connections to all
+controllers through the VIP. Workers and joining controllers need a route to the VIP through the routers, as the
+controllers don't install the routes they receive.
+
+Controllers started with `--enable-worker` deliver connections to the VIP to their own loopback interface, so their
+konnectivity agents only connect to the local controller and logs or exec requests through the other controllers
+fail for their pods. For controller+worker nodes, start all controllers with
+`--disable-components konnectivity-server`, which requires every controller to reach the kubelet port `10250` and
+the pod network of every node.
+
+The router ID defaults to `spec.api.address`. If that's not an IPv4 address, set `routerID` to a unique IPv4
+address on each controller. The peers can be in the same AS as the controllers (iBGP) or in another one (eBGP). In
+the FRR example below, `router bgp` is the AS of the routers and `remote-as` the AS of the controllers. The routers
+need multipath for the VIP routes:
+
+```text
+router bgp 65000
+ no bgp ebgp-requires-policy
+ bgp bestpath as-path multipath-relax
+ neighbor controllers peer-group
+ neighbor controllers remote-as 65000
+ neighbor controllers passive
+ neighbor controllers bfd
+ neighbor <controller address> peer-group controllers
+ address-family ipv4 unicast
+  neighbor controllers activate
+  maximum-paths 8
+  maximum-paths ibgp 8
+ exit-address-family
+```
+
+With BFD, enable `bfdd` in FRR. FRR doesn't bring up BFD for `bgp listen range` neighbors, so list the controllers
+as neighbors.
+
+IPv4 VIPs can also be advertised to IPv6 peers that set `extendedNextHop`. FRR then needs
+`neighbor controllers capability extended-nexthop`, which also makes it send router advertisements. Set
+`ipv6 nd prefix <node prefix> no-autoconfig` on the interface, unless the nodes should configure addresses from them.
+
+### Peering with Calico or kube-router
+
+Without routers, the BGP speakers of the workers' network provider can learn the VIP routes, so that workers and pods
+reach the VIPs. External clients still need routers or another way to reach the controllers. With `listen`, the
+controllers accept sessions from a prefix instead of listing every worker as a peer:
+
+```yaml
+bgp:
+  virtualIPs: ["<VIP address>/32"]
+  as: 65001
+  listen:
+    port: 1790
+    neighbors:
+    - prefix: <worker subnet> # for instance 10.0.0.0/24
+      as: 64512
+      password: <password>
+```
+
+Use a port other than 179 if controllers also run as workers, as the network provider listens on 179 there. Workers
+still join the cluster through a controller address, since the routes only exist once the network provider runs.
+
+With Calico in BIRD mode, add a `BGPPeer` for each controller, and set `net.ipv4.fib_multipath_hash_policy=1` on
+the workers so that their connections spread over all controllers. Calico reads the password from a Secret that the
+`calico-node` service account must be allowed to read, see the [Calico
+documentation](https://docs.tigera.io/calico/latest/reference/resources/bgppeer):
+
+```yaml
+apiVersion: crd.projectcalico.org/v1
+kind: BGPPeer
+metadata:
+  name: k0s-controller-1
+spec:
+  peerIP: <controller address>:1790
+  asNumber: 65001
+  password:
+    secretKeyRef:
+      name: bgp-password
+      key: password
+```
+
+With kube-router, add the controllers as peers. kube-router only installs one of the routes, so each worker uses a
+single controller and moves to another one when it withdraws its route. As with controller+worker nodes, start all
+controllers with `--disable-components konnectivity-server` if `spec.api.externalAddress` is a VIP:
+
+```yaml
+spec:
+  network:
+    kuberouter:
+      extraArgs:
+        peer-router-ips: <controller address>,...
+        peer-router-asns: 65001,...
+        peer-router-ports: 1790,...
+        peer-router-passwords: <base64 encoded password>,...
 ```
 
 ## Full example using `k0sctl`
@@ -565,6 +696,22 @@ SHA1 Fingerprint=B7:90:E6:E4:E1:EE:5B:19:72:99:02:28:54:36:D9:84:D5:39:67:8B
 
 Note: You can't query the port 6444 on the localhost address, there is an iptables conflict. You are expected to
 be able to reach the port 6443 on any address and the port 6444 on any address except localhost.
+
+### Troubleshooting BGP
+
+The VIPs are on the loopback interface of every controller that advertises them:
+
+```console
+controller0:/# ip -o addr show dev lo | grep 10.200.0.10
+1: lo    inet 10.200.0.10/32 scope global deprecated lo\       valid_lft forever preferred_lft 0sec
+```
+
+k0s logs the BGP sessions with `component=cplb-bgp`. On the router, each advertising controller should be a next
+hop of the VIP route, for instance with FRR:
+
+```console
+router# show ip route 10.200.0.10/32
+```
 
 ### Troubleshooting Keepalived Virtual Servers
 

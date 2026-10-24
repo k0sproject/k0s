@@ -374,11 +374,12 @@ for node-local load balancing.
 
 Configuration options related to k0s's [control plane load balancing] feature
 
-| Element      | Description                                                                                                                    |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------ |
-| `enabled`    | Indicates if control plane load balancing should be enabled. Default: `false`.                                                 |
-| `type`       | The type of the control plane load balancer to deploy on controller nodes. Currently, the only supported type is `Keepalived`. |
-| `keepalived` | Contains the keepalived configuration.                                                                                         |
+| Element      | Description                                                                                                              |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| `enabled`    | Indicates if control plane load balancing should be enabled. Default: `false`.                                           |
+| `type`       | The type of the control plane load balancer to deploy on controller nodes, `Keepalived` or `BGP`. Default: `Keepalived`. |
+| `keepalived` | Contains the keepalived configuration, can't be combined with `type: BGP`.                                               |
+| `bgp`        | Contains the [BGP](cplb.md#bgp) configuration, required with `type: BGP` and forbidden otherwise.                        |
 
 [control plane load balancing]: cplb.md
 
@@ -421,6 +422,52 @@ Configuration options required for using VRRP to configure VIPs in control plane
 | `lbAlgo`                    | Algorithm used by keepalived. Supported algorithms: `rr`, `wrr`, `lc`, `wlc`, `lblc`, `dh`, `sh`, `sed`, `nq`. Default: `rr`.              |
 | `lbKind`                    | Kind of IPVS load balancer. Supported values: `NAT`, `DR`, `TUN`. Default: `DR`.                                                           |
 | `persistenceTimeoutSeconds` | Timeout for persistent connections in seconds. Must be in the range of 1-2678400 (31 days). If not specified, defaults to 360 (6 minutes). |
+
+##### `spec.network.controlPlaneLoadBalancing.bgp`
+
+| Element                    | Description                                                                                                                                                                    |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `virtualIPs`               | The VIPs as `/32` or `/128` prefixes, each needs a peer of the same IP family, or for IPv4 an IPv6 peer with `extendedNextHop`.                                                |
+| `communities`              | Communities added to the VIP routes, standard (`65000:100`), large (`65000:1:100`) or well-known (`no-export`, `no-advertise`, `no-export-subconfed`, `no-peer`, `blackhole`). |
+| `as`                       | The autonomous system number of the controllers.                                                                                                                               |
+| `routerID`                 | The BGP router ID, an IPv4 address. Default: `spec.api.address` if that's an IPv4 address.                                                                                     |
+| `sourceIP`                 | The local address of the BGP sessions.                                                                                                                                         |
+| `sourceInterface`          | The interface the BGP sessions are bound to, can't be combined with `sourceIP`.                                                                                                |
+| `holdTimeSeconds`          | The BGP hold time, between `3` and `65535`. Default: `90`.                                                                                                                     |
+| `keepaliveIntervalSeconds` | The BGP keepalive interval, shorter than the hold time. Default: a third of the hold time.                                                                                     |
+| `peers`                    | The BGP peers, at least one unless `listen` has neighbors.                                                                                                                     |
+| `listen`                   | Accepts BGP sessions from [neighbors](cplb.md#peering-with-calico-or-kube-router) within prefixes.                                                                             |
+
+##### `spec.network.controlPlaneLoadBalancing.bgp.peers`
+
+| Element           | Description                                                                                                                                                                                                                                                              |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `address`         | The IP address of the peer, not a link-local one.                                                                                                                                                                                                                        |
+| `as`              | The autonomous system number of the peer, the same as the controllers' for iBGP.                                                                                                                                                                                         |
+| `port`            | The BGP port of the peer. Default: `179`.                                                                                                                                                                                                                                |
+| `password`        | The TCP MD5 password of the session.                                                                                                                                                                                                                                     |
+| `multihop`        | Allows an eBGP peer to be more than one hop away. Default: `false`.                                                                                                                                                                                                      |
+| `extendedNextHop` | Advertises the IPv4 VIPs to this IPv6 peer with an IPv6 next hop (RFC 8950). Default: `false`.                                                                                                                                                                           |
+| `bfd`             | Enables BFD, `{}` uses the defaults `minimumReceiveMilliseconds: 300`, `minimumTransmitMilliseconds: 300` and `multiplier: 3`, the intervals are at most `4294967` and the multiplier at most `255`. Needs a directly connected peer, can't be combined with `multihop`. |
+
+##### `spec.network.controlPlaneLoadBalancing.bgp.listen`
+
+| Element     | Description                                                 |
+| ----------- | ----------------------------------------------------------- |
+| `port`      | The TCP port to listen on.                                  |
+| `addresses` | The local addresses to listen on. Default: all addresses.   |
+| `neighbors` | The prefixes that sessions are accepted from, at least one. |
+
+##### `spec.network.controlPlaneLoadBalancing.bgp.listen.neighbors`
+
+| Element           | Description                                                                                                     |
+| ----------------- | --------------------------------------------------------------------------------------------------------------- |
+| `prefix`          | The prefix that sessions are accepted from.                                                                     |
+| `as`              | The autonomous system number of the neighbors.                                                                  |
+| `password`        | The TCP MD5 password of the sessions, required. k0s refuses to start BGP if the kernel can't apply it.          |
+| `multihop`        | Allows eBGP neighbors to be more than one hop away. Default: `false`.                                           |
+| `extendedNextHop` | Advertises the IPv4 VIPs to the neighbors of an IPv6 prefix with an IPv6 next hop (RFC 8950). Default: `false`. |
+| `bfd`             | Enables BFD, like for `peers`.                                                                                  |
 
 ### `spec.controllerManager`
 
