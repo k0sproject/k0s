@@ -4,6 +4,7 @@
 package controller
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -33,12 +34,15 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	apitypes "k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/wait"
 	nodeutil "k8s.io/component-helpers/node/util"
 )
 
 const (
-	controllerLeaseLabelName = "k0s.k0sproject.io/controller-lease"
+	controllerLeaseAnnotationName = "k0s.k0sproject.io/controller-lease"
+	// Deprecated: Stop writing and reading the label in k0s 1.38+.
+	controllerLeaseLabelName = controllerLeaseAnnotationName
 	shutdownOnLeaveLabelName = "k0s.k0sproject.io/shutdown-on-leave"
 	shutdownLabelName        = "k0s.k0sproject.io/shutdown"
 )
@@ -449,6 +453,12 @@ func (e *EtcdMemberReconciler) createMemberObject(ctx context.Context, client et
 	log.WithField("name", name).WithField("memberID", memberIDStr).Info("creating EtcdMember object")
 
 	controllerLeaseName := fmt.Sprintf("k0s-ctrl-%s", e.nodeName)
+	memberLabels := labels.Set{shutdownOnLeaveLabelName: e.k0sVars.InvocationID}
+	// Controllers that don't know about the annotation rely on the label.
+	// Set it for them whenever the lease name fits into a label value.
+	if len(validation.IsValidLabelValue(controllerLeaseName)) == 0 {
+		memberLabels[controllerLeaseLabelName] = controllerLeaseName
+	}
 
 	// Check if the object already exists
 	em, err = client.Get(ctx, name, metav1.GetOptions{})
@@ -458,10 +468,10 @@ func (e *EtcdMemberReconciler) createMemberObject(ctx context.Context, client et
 			em = &etcdv1beta1.EtcdMember{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: name,
-					Labels: map[string]string{
-						controllerLeaseLabelName: controllerLeaseName,
-						shutdownOnLeaveLabelName: e.k0sVars.InvocationID,
+					Annotations: map[string]string{
+						controllerLeaseAnnotationName: controllerLeaseName,
 					},
+					Labels: memberLabels,
 				},
 				Spec: etcdv1beta1.EtcdMemberSpec{
 					Leave: false,
@@ -486,10 +496,8 @@ func (e *EtcdMemberReconciler) createMemberObject(ctx context.Context, client et
 		}
 	}
 
-	em.Labels = labels.Merge(em.Labels, labels.Set{
-		controllerLeaseLabelName: controllerLeaseName,
-		shutdownOnLeaveLabelName: e.k0sVars.InvocationID,
-	})
+	metav1.SetMetaDataAnnotation(&em.ObjectMeta, controllerLeaseAnnotationName, controllerLeaseName)
+	em.Labels = labels.Merge(em.Labels, memberLabels)
 	delete(em.Labels, shutdownLabelName) // Clear any lingering shutdown request on re-join.
 	em.Spec.Leave = false
 
@@ -617,10 +625,11 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, etcdClient *
 			return false
 		}
 
-		memberLeaseName := member.Labels[controllerLeaseLabelName]
-		if memberLeaseName == "" {
-			memberLeaseName = "k0s-ctrl-" + member.Name
-		}
+		memberLeaseName := cmp.Or(
+			member.Annotations[controllerLeaseAnnotationName],
+			member.Labels[controllerLeaseLabelName],
+			"k0s-ctrl-"+member.Name,
+		)
 		if memberLease, err := clients.CoordinationV1().Leases(corev1.NamespaceNodeLease).Get(ctx, memberLeaseName, metav1.GetOptions{}); err != nil {
 			log.WithError(err).Error("Failed to get k0s controller lease")
 			msg := "Failed to get k0s controller lease: " + err.Error()
