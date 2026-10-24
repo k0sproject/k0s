@@ -461,4 +461,24 @@ func TestKeepalivedSpec_Validate(t *testing.T) {
 			}
 		})
 	}
+	// userSpaceProxyForwarding
+	for _, tt := range []struct {
+		name, forwarding, want, wantErr string
+	}{
+		{name: "defaults to DNAT", want: "DNAT"},
+		{name: "accepts REDIRECT", forwarding: "REDIRECT", want: "REDIRECT"},
+		{name: "rejects others", forwarding: "MASQUERADE", wantErr: `userSpaceProxyForwarding: Unsupported value: "MASQUERADE"`},
+	} {
+		t.Run("userSpaceProxyForwarding "+tt.name, func(t *testing.T) {
+			k := &KeepalivedSpec{UserSpaceProxyForwarding: UserSpaceProxyForwarding(tt.forwarding)}
+			errs := k.Validate(nil)
+			if tt.wantErr != "" {
+				require.Len(t, errs, 1)
+				assert.ErrorContains(t, errs[0], tt.wantErr)
+			} else {
+				require.Empty(t, errs)
+				require.Equal(t, UserSpaceProxyForwarding(tt.want), k.UserSpaceProxyForwarding)
+			}
+		})
+	}
 }

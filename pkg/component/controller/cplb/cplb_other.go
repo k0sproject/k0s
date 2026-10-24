@@ -24,6 +24,11 @@ type Keepalived struct {
 	LogConfig       bool
 	APIPort         int
 	KubeConfigPath  string
+	// Ports that may be load balanced as well, depending on the configuration.
+	KonnectivityAgentPort int
+	K0sAPIPort            int
+	// The address of this controller. Traffic to the virtual IPs reaches the userspace proxy there.
+	Address string
 }
 
 func (k *Keepalived) Init(context.Context) error {
