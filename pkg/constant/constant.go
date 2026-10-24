@@ -129,6 +129,13 @@ const (
 	ClusterConfigObjectName = "k0s"
 
 	K0SNodeRoleLabel = "node.k0sproject.io/role"
+
+	// K0sNodeLabel tells whether a node runs k0s, as true or false.
+	// k0s workers set it to true, and the leading controller labels the other nodes.
+	K0sNodeLabel = "node.k0sproject.io/k0s"
+
+	// K0sKubeletVersionSuffix ends the kubelet version that nodes running k0s report, as in v1.36.4+k0s.
+	K0sKubeletVersionSuffix = "+k0s"
 )
 
 // The list of allowed TLS v1.2 cipher suites. Those should be used for k0s
