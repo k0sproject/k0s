@@ -26,6 +26,7 @@ smoketests := \
 	check-byocri \
 	check-calico \
 	check-calico-ipv6 \
+	check-calico-mixedmtu \
 	check-capitalhostnames \
 	check-cli \
 	check-clusterreboot \
