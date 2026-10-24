@@ -36,6 +36,6 @@ six==1.17.0
 super_collections==0.6.2
 termcolor==3.3.0
 urllib3==2.7.0
-verspec==0.1.0
+verspec==0.2.1
 watchdog==6.0.0
 wcmatch==11.1
