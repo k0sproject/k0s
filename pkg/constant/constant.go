@@ -100,7 +100,7 @@ const (
 	KubeRouterCNIImage                    = "quay.io/k0sproject/kube-router"
 	KubeRouterCNIImageVersion             = "v2.11.1-iptables1.8.13-k0s.2"
 	KubeRouterCNIInstallerImage           = "quay.io/k0sproject/cni-node"
-	KubeRouterCNIInstallerImageVersion    = "v1.9.1-k0s.1-mac-pinning"
+	KubeRouterCNIInstallerImageVersion    = "v1.9.1-k0s.2"
 
 	/* Controller component names */
 
