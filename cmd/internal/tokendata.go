@@ -7,10 +7,14 @@ import (
 	"errors"
 	"fmt"
 	"os"
+
+	"github.com/sirupsen/logrus"
 )
 
 // EnvVarToken is the environment variable name for the join token
 const EnvVarToken = "K0S_TOKEN"
+
+const tokenArgDeprecationWarning = "Passing a join token as a CLI argument is deprecated. Use --token-file or the K0S_TOKEN environment variable instead."
 
 // CheckSingleTokenSource verifies that at most one token source is provided.
 // Returns an error if multiple sources are specified.
@@ -31,6 +35,15 @@ func CheckSingleTokenSource(tokenArg, tokenFile string) error {
 	}
 
 	return nil
+}
+
+// WarnDeprecatedTokenArg logs a deprecation warning when a join token is
+// provided as a positional CLI argument.
+func WarnDeprecatedTokenArg(tokenArg string) {
+	if tokenArg == "" {
+		return
+	}
+	logrus.Warn(tokenArgDeprecationWarning)
 }
 
 // GetTokenData resolves the join token from multiple possible sources:

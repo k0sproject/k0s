@@ -57,18 +57,15 @@ func NewWorkerCmd() *cobra.Command {
 	)
 
 	cmd := &cobra.Command{
-		Use:   "worker [join-token]",
+		Use:   "worker",
 		Short: "Run worker",
 		Example: `	Command to add worker node to the master node:
-	CLI argument:
-	$ k0s worker [token]
-
-	or CLI flag:
+	CLI flag:
 	$ k0s worker --token-file [path_to_file]
 
 	or environment variable:
 	$ K0S_TOKEN=[token] k0s worker
-	Note: Token can be passed either as a CLI argument, a flag, or an environment variable`,
+	Note: Passing a join token as a CLI argument is deprecated. Use --token-file or K0S_TOKEN instead.`,
 		Args:             cobra.MaximumNArgs(1),
 		PersistentPreRun: debugFlags.Run,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -89,6 +86,7 @@ func NewWorkerCmd() *cobra.Command {
 			if err := internal.CheckSingleTokenSource(c.TokenArg, c.TokenFile); err != nil {
 				return err
 			}
+			internal.WarnDeprecatedTokenArg(c.TokenArg)
 
 			getBootstrapKubeconfig := kubeconfigGetterFromJoinToken(c.TokenFile, c.TokenArg)
 

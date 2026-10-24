@@ -140,7 +140,7 @@ spec:
 With this config you can start your controller as usual. Any workers will need to be started with
 
 ```shell
-k0s worker --profile coreos [TOKEN]
+k0s worker --profile coreos --token-file /path/to/token
 ```
 
 ## iptables version mismatch
