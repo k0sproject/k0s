@@ -11,6 +11,7 @@ import (
 
 	// "github.com/k0sproject/k0s/pkg/component/manager"
 
+	"github.com/k0sproject/k0s/internal/secret"
 	"github.com/k0sproject/k0s/pkg/autopilot/channels"
 	"github.com/k0sproject/k0s/pkg/autopilot/controller/updates"
 	"github.com/k0sproject/k0s/pkg/build"
@@ -110,7 +111,7 @@ func (u *UpdateProber) checkUpdates(ctx context.Context) {
 		updateServer = os.Getenv("K0S_UPDATE_SERVER")
 	}
 	u.log.Debugf("using update server: %s", updateServer)
-	uc, err := channels.NewChannelClient(updateServer, "latest", "")
+	uc, err := channels.NewChannelClient(updateServer, "latest", secret.String{})
 	if err != nil {
 		u.log.Errorf("failed to create update channel client: %s", err.Error())
 		return
