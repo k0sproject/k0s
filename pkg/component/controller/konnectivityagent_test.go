@@ -63,7 +63,7 @@ func TestKonnectivityAgent_ProxyServerHostPort(t *testing.T) {
 							AgentPort:       9876,
 						},
 					},
-				}, 1))
+				}, KonnectivityServerCount{Count: 1}))
 
 				daemonSet := loadDaemonSet(t, manifestsDir)
 				containers := daemonSet.Spec.Template.Spec.Containers
@@ -75,6 +75,30 @@ func TestKonnectivityAgent_ProxyServerHostPort(t *testing.T) {
 			})
 		}
 	}
+}
+
+func TestKonnectivityAgent_ManifestEmbedsServerCountGeneration(t *testing.T) {
+	manifestsDir := t.TempDir()
+
+	underTest := KonnectivityAgent{
+		ManifestsDir:           manifestsDir,
+		KonnectivityServerHost: "10.0.0.1",
+		EventEmitter:           prober.NewEventEmitter(),
+	}
+
+	count := KonnectivityServerCount{Count: 3, Rises: 1337}
+	require.NoError(t, underTest.writeKonnectivityAgent(&k0sv1beta1.ClusterConfig{
+		Spec: &k0sv1beta1.ClusterSpec{
+			Images:       k0sv1beta1.DefaultClusterImages(),
+			Konnectivity: &k0sv1beta1.KonnectivitySpec{AgentPort: 8132},
+		},
+	}, count))
+
+	template := loadDaemonSet(t, manifestsDir).Spec.Template
+	assert.Equal(t,
+		"1337", template.Annotations["k0s.k0sproject.io/konnectivity-server-count-generation"],
+		"Expected the pod template to carry the server count generation, so that a rise rolls the agents",
+	)
 }
 
 func loadDaemonSet(t *testing.T, manifestsDir string) *appsv1.DaemonSet {
