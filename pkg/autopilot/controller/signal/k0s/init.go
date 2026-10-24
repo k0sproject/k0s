@@ -6,6 +6,7 @@
 package k0s
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"errors"
@@ -37,7 +38,7 @@ import (
 // controller-runtime manager. The restart tracker's lifetime needs to be tied
 // to the process, i.e. it has to be shared by all the managers this function is
 // called with throughout the lifetime of the process.
-func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Manager, delegate apdel.ControllerDelegate, nodeName types.NodeName, restartTracker *RestartTracker, enableWorker bool, clusterID string, leaseStatus leaderelection.Status) error {
+func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Manager, delegate apdel.ControllerDelegate, nodeName types.NodeName, restartTracker *RestartTracker, statusSocketPath string, enableWorker bool, clusterID string, leaseStatus leaderelection.Status) error {
 	if restartTracker == nil {
 		return errors.New("restart tracker is required")
 	}
@@ -53,7 +54,7 @@ func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Ma
 	logger.Infof("Using node name = '%v'", nodeName)
 
 	k0sVersionHandler := func() (string, error) {
-		return getK0sVersion(status.DefaultSocketPath)
+		return getK0sVersion(cmp.Or(statusSocketPath, status.DefaultSocketPath))
 	}
 
 	if enableWorker {
