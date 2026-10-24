@@ -121,7 +121,8 @@ jobs:
           cp .github/workflows/channel.yaml.tpl /tmp/tpl
           git checkout gh-pages
           echo "${STABLE}" >stable.txt
-          git add stable.txt && git update-index --refresh
+          cat /tmp/tpl | sed "s/{{ .Version }}/${LATEST}/g" >stable_release
+          git add stable.txt stable_release && git update-index --refresh
           git diff-index --quiet HEAD -- || git commit -m "Set stable to ${STABLE}"
           echo "${LATEST}" >latest.txt
           cat /tmp/tpl | sed "s/{{ .Version }}/${LATEST}/g" >edge_release
