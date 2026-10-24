@@ -58,6 +58,11 @@ type APISpec struct {
 
 	// Custom config for CA certificates.
 	CA *CA `json:"ca,omitempty"`
+
+	// Publishes cluster-info and what nodes joining via bootstrap tokens read, and lets anonymous users read cluster-info.
+	// The latter is skipped if authentication-config, anonymous-auth or OIDC flags are set via extraArgs or rawArgs.
+	// +optional
+	ClusterInfoDiscovery bool `json:"clusterInfoDiscovery,omitempty"`
 }
 
 // DefaultAPISpec default settings for api
