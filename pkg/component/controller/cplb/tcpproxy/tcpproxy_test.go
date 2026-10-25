@@ -5,10 +5,12 @@
 package tcpproxy
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
 	"net"
+	"sync"
 	"testing"
 )
 
@@ -206,4 +208,31 @@ func equalRoutes(routes []Route, expectedAddrs []string) bool {
 		}
 	}
 	return true
+}
+
+func TestServeConnConcurrent(t *testing.T) {
+	var p Proxy
+	dialErr := errors.New("no dial")
+	route := Route{
+		DialContext: func(context.Context, string, string) (net.Conn, error) { return nil, dialErr },
+		OnDialError: func(src net.Conn, _ error) { src.Close() },
+	}
+	cfg := &config{routes: []Route{route, route}}
+
+	const n = 50
+	var wg sync.WaitGroup
+	for range n {
+		wg.Go(func() {
+			src, dst := net.Pipe()
+			defer dst.Close()
+			if !p.serveConn(src, cfg) {
+				t.Error("serveConn did not match a route")
+			}
+		})
+	}
+	wg.Wait()
+
+	if p.connNumber != n {
+		t.Fatalf("got connNumber %d; want %d", p.connNumber, n)
+	}
 }

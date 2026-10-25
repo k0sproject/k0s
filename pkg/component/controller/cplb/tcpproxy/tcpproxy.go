@@ -158,10 +158,10 @@ func (p *Proxy) serveListener(ret chan<- error, ln net.Listener, cfg *config) {
 func (p *Proxy) serveConn(c net.Conn, cfg *config) bool {
 	br := bufio.NewReader(c)
 
-	p.mux.RLock()
+	p.mux.Lock()
 	p.connNumber++
 	route := cfg.routes[p.connNumber%(len(cfg.routes))]
-	p.mux.RUnlock()
+	p.mux.Unlock()
 
 	if n := br.Buffered(); n > 0 {
 		peeked, _ := br.Peek(br.Buffered())
