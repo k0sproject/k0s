@@ -56,17 +56,3 @@ func Copy(src, dst string) (err error) {
 		return err
 	})
 }
-
-func WriteTmpFile(data string, prefix string) (path string, err error) {
-	tmpFile, err := os.CreateTemp("", prefix)
-	if err != nil {
-		return "", fmt.Errorf("cannot create temporary file: %w", err)
-	}
-
-	text := []byte(data)
-	if _, err = tmpFile.Write(text); err != nil {
-		return "", fmt.Errorf("failed to write to temporary file: %w", err)
-	}
-
-	return tmpFile.Name(), nil
-}
