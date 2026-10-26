@@ -117,6 +117,9 @@ func (k *Keepalived) Start(ctx context.Context) error {
 		APIServerPort:  k.APIPort,
 		K0sBin:         escapeSingleQuotes(os.Args[0]),
 		RunDir:         escapeSingleQuotes(k.K0sVars.RunDir),
+
+		KonnectivityAgentPort: k.KonnectivityAgentPort,
+		K0sAPIPort:            k.K0sAPIPort,
 	}
 
 	if len(k.Config.VirtualServers) > 0 {
@@ -552,6 +555,20 @@ type keepalivedConfig struct {
 	IPVSLoadBalancer bool
 	K0sBin           string
 	RunDir           string
+
+	KonnectivityAgentPort int
+	K0sAPIPort            int
+}
+
+func (c *keepalivedConfig) Ports(vs k0sAPI.VirtualServer) []int {
+	ports := []int{c.APIServerPort}
+	if vs.Konnectivity {
+		ports = append(ports, c.KonnectivityAgentPort)
+	}
+	if vs.K0sAPI {
+		ports = append(ports, c.K0sAPIPort)
+	}
+	return ports
 }
 
 const dummyLinkName = "dummyvip0"

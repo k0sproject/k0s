@@ -423,6 +423,8 @@ Configuration options required for using VRRP to configure VIPs in control plane
 | `lbAlgo`                    | Algorithm used by keepalived. Supported algorithms: `rr`, `wrr`, `lc`, `wlc`, `lblc`, `dh`, `sh`, `sed`, `nq`. Default: `rr`.              |
 | `lbKind`                    | Kind of IPVS load balancer. Supported values: `NAT`, `DR`, `TUN`. Default: `DR`.                                                           |
 | `persistenceTimeoutSeconds` | Timeout for persistent connections in seconds. Must be in the range of 1-2678400 (31 days). If not specified, defaults to 360 (6 minutes). |
+| `konnectivity`              | Load balances the konnectivity agent port on the virtual IP, without persistence. Default: `false`.                                        |
+| `k0sApi`                    | Load balances the k0s API port on the virtual IP. Default: `false`.                                                                        |
 
 ### `spec.controllerManager`
 

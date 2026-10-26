@@ -264,6 +264,13 @@ type VirtualServer struct {
 	// +kubebuilder:validation:Maximum=2678400
 	// +kubebuilder:default=360
 	PersistenceTimeoutSeconds int `json:"persistenceTimeoutSeconds,omitempty"`
+	// Konnectivity enables load balancing of the konnectivity agent port on the virtual IP, without
+	// persistence, so that every agent reaches every konnectivity server.
+	// +optional
+	Konnectivity bool `json:"konnectivity,omitempty"`
+	// K0sAPI enables load balancing of the k0s API port on the virtual IP.
+	// +optional
+	K0sAPI bool `json:"k0sApi,omitempty"`
 }
 
 // KeepalivedLBAlgo describes the load balancing algorithm.

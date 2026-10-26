@@ -15,18 +15,25 @@ import (
 
 	"github.com/k0sproject/k0s/inttest/common"
 
+	"k8s.io/client-go/rest"
+
 	"github.com/stretchr/testify/suite"
 )
 
 type cplbIPVSSuite struct {
 	common.BootlooseSuite
-	isIPv6Only bool
+	isIPv6Only                       bool
+	loadBalanceKonnectivityAndK0sAPI bool
 }
 
 const keepalivedTestMarker = "# k0s-inttest-cplb-ipvs"
 
 const cplbCfgTemplate = `
 spec:
+{{ if .loadBalanceKonnectivityAndK0sAPI }}
+  api:
+    externalAddress: {{ .lbAddr }}
+{{ end }}
   network:
 {{ if .isIPv6Only }}
     podCIDR: fd00::/108
@@ -48,9 +55,14 @@ spec:
 {{- end }}
         virtualServers:
         - ipAddress: {{ .lbAddr }}
+{{- if .loadBalanceKonnectivityAndK0sAPI }}
+          konnectivity: true
+          k0sApi: true
+{{- else }}
     nodeLocalLoadBalancing:
       enabled: true
       type: EnvoyProxy
+{{- end }}
 `
 
 func (s *cplbIPVSSuite) getK0sCfg(nodeIdx int, vip string) string {
@@ -62,6 +74,8 @@ func (s *cplbIPVSSuite) getK0sCfg(nodeIdx int, vip string) string {
 		"lbCIDR":          common.GetCPLBVIPCIDR(vip, s.isIPv6Only),
 		"unicastSourceIP": srcIP,
 		"unicastPeers":    peers,
+
+		"loadBalanceKonnectivityAndK0sAPI": s.loadBalanceKonnectivityAndK0sAPI,
 	}
 	s.Require().NoError(template.Must(template.New("k0s.yaml").
 		Parse(cplbCfgTemplate)).
@@ -122,6 +136,10 @@ func (s *cplbIPVSSuite) TestK0sGetsUp() {
 		s.T().Logf("putting files")
 		s.generateKeepalivedTemplates(ctx, idx)
 		s.PutFile(s.ControllerNode(idx), "/tmp/k0s.yaml", k0sCfg)
+		if s.loadBalanceKonnectivityAndK0sAPI {
+			_, err := s.RunCommandController(idx, "sysctl -w net.ipv4.conf.all.arp_ignore=1 net.ipv4.conf.all.arp_announce=2")
+			s.Require().NoError(err)
+		}
 
 		s.T().Logf("init controller")
 		// Note that the token is intentionally empty for the first controller
@@ -178,7 +196,17 @@ func (s *cplbIPVSSuite) TestK0sGetsUp() {
 
 	// Verify that the real servers are present in the ipvsadm output in the active node and missing in the others
 	for idx := range s.ControllerCount {
-		s.validateRealServers(ctx, s.ControllerNode(idx), vip, idx == activeNode)
+		s.validateRealServers(ctx, s.ControllerNode(idx), vip, "6443", idx == activeNode)
+		for _, port := range []string{"8132", "9443"} {
+			s.validateRealServers(ctx, s.ControllerNode(idx), vip, port, idx == activeNode && s.loadBalanceKonnectivityAndK0sAPI)
+		}
+	}
+
+	if s.loadBalanceKonnectivityAndK0sAPI {
+		var restConfig *rest.Config
+		restConfig, err = s.GetKubeConfig(s.ControllerNode(0))
+		s.Require().NoError(err)
+		s.Require().NoError(common.VerifyKonnectivityMesh(ctx, restConfig, client, s.T(), uint(s.ControllerCount), uint(s.WorkerCount)))
 	}
 
 	// Verify that the custom templates were used to generate the keepalived configuration
@@ -205,7 +233,7 @@ func (s *cplbIPVSSuite) getUnicastAddresses(i int, cplbVIP string) (string, []st
 
 // validateRealServers checks that the real servers are present in the
 // ipvsadm output.
-func (s *cplbIPVSSuite) validateRealServers(ctx context.Context, node string, vip string, isActive bool) {
+func (s *cplbIPVSSuite) validateRealServers(ctx context.Context, node string, vip string, port string, isActive bool) {
 	ssh, err := s.SSH(ctx, node)
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
@@ -222,9 +250,9 @@ func (s *cplbIPVSSuite) validateRealServers(ctx context.Context, node string, vi
 	output, err := ssh.ExecWithOutput(ctx, "ipvsadm --save -n")
 	s.Require().NoError(err)
 
-	vipHostPort := net.JoinHostPort(vip, "6443")
+	vipHostPort := net.JoinHostPort(vip, port)
 	for _, server := range servers {
-		serverHostPort := net.JoinHostPort(server, "6443")
+		serverHostPort := net.JoinHostPort(server, port)
 
 		expected := fmt.Sprintf("-a -t %s -r %s", vipHostPort, serverHostPort)
 		if isActive {
@@ -285,6 +313,8 @@ func TestCPLBIPVSSuite(t *testing.T) {
 		s.isIPv6Only = true
 		s.Networks = []string{"bridge-ipv6"}
 		s.AirgapImageBundleMountPoints = []string{"/var/lib/k0s/images/bundle-ipv6.tar"}
+	} else {
+		s.loadBalanceKonnectivityAndK0sAPI = true
 	}
 	suite.Run(t, s)
 }

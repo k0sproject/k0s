@@ -763,6 +763,15 @@ spec:
                                     used by the virtual server.
                                   minLength: 1
                                   type: string
+                                k0sApi:
+                                  description: K0sAPI enables load balancing of the
+                                    k0s API port on the virtual IP.
+                                  type: boolean
+                                konnectivity:
+                                  description: |-
+                                    Konnectivity enables load balancing of the konnectivity agent port on the virtual IP, without
+                                    persistence, so that every agent reaches every konnectivity server.
+                                  type: boolean
                                 lbAlgo:
                                   default: rr
                                   description: |-

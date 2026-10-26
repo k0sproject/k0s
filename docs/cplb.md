@@ -64,6 +64,9 @@ spec:
         userSpaceProxyK0sApiBindPort: 9444
 ```
 
+With virtual servers, set `konnectivity` and `k0sApi` on the virtual servers instead. The konnectivity agent port is
+load balanced without persistence, so that the connections of an agent reach every server.
+
 ### Node Local load balancing
 
 CPLB is fully compatible with [NLLB](nllb.md), however NLLB is incompatible with [`spec.api.externalAddress`](configuration.md#specapi).
@@ -675,10 +678,15 @@ The templates are only read during the k0s bootstrap. If a template is changed i
 | Variable                                      | Description                                             |
 |-----------------------------------------------|---------------------------------------------------------|
 | `.APIServerPort`                              | Kubernetes API server port.                             |
+| `.KonnectivityAgentPort`                      | Konnectivity agent port.                                |
+| `.K0sAPIPort`                                 | k0s API port.                                           |
+| `.Ports`                                      | Ports load balanced by a virtual server.                |
 | `.RealServers`                                | List of real server IP addresses (control plane nodes). |
 | `.VirtualServers`                             | Array of virtual server configurations.                 |
 | `.VirtualServers[].DelayLoop`                 | Delay timer for check polling.                          |
 | `.VirtualServers[].IPAddress`                 | Virtual IP address used by the virtual server.          |
+| `.VirtualServers[].K0sAPI`                    | Whether the k0s API port is load balanced.              |
+| `.VirtualServers[].Konnectivity`              | Whether the konnectivity agent port is load balanced.   |
 | `.VirtualServers[].LBAlgo`                    | Load balancing algorithm.                               |
 | `.VirtualServers[].LBKind`                    | Load balancing forwarding method.                       |
 | `.VirtualServers[].PersistenceTimeoutSeconds` | Timeout value for persistent connections in seconds.    |
