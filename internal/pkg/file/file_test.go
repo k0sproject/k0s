@@ -4,6 +4,7 @@
 package file
 
 import (
+	"io/fs"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -12,6 +13,22 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestWriteNew(t *testing.T) {
+	t.Run("creates file", func(t *testing.T) {
+		p := filepath.Join(t.TempDir(), "new.txt")
+		require.NoError(t, WriteNew(p, []byte("hello"), 0o644))
+		got, err := os.ReadFile(p)
+		require.NoError(t, err)
+		assert.Equal(t, []byte("hello"), got)
+	})
+
+	t.Run("fails if exists", func(t *testing.T) {
+		p := filepath.Join(t.TempDir(), "existing.txt")
+		require.NoError(t, os.WriteFile(p, []byte("old"), 0o644))
+		assert.ErrorIs(t, WriteNew(p, []byte("new"), 0o644), fs.ErrExist)
+	})
+}
 
 func TestExists(t *testing.T) {
 
