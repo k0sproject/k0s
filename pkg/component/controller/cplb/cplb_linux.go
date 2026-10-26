@@ -44,6 +44,7 @@ type Keepalived struct {
 	LogConfig       bool
 	APIPort         int
 	KubeConfigPath  string
+	Address         string
 
 	keepalivedConfig       *keepalivedConfig
 	supervisor             *supervisor.Supervisor
@@ -439,12 +440,13 @@ func (k *Keepalived) redirectToProxyIPTables(op string) error {
 	for _, vrrp := range k.Config.VRRPInstances {
 		for _, vipCIDR := range vrrp.VirtualIPs {
 			vip, _, _ := strings.Cut(vipCIDR, "/")
+			ip := net.ParseIP(vip)
 
 			cmdArgs := []string{
 				"-t", "nat", op, "PREROUTING", "-p", "tcp",
 				"-d", vip, "--dport", strconv.Itoa(k.APIPort),
-				"-j", "REDIRECT", "--to-port", strconv.Itoa(k.Config.UserSpaceProxyPort),
 			}
+			cmdArgs = append(cmdArgs, k.proxyTarget(ip)...)
 
 			switch op {
 			case iptablesCommandAppend:
@@ -454,7 +456,7 @@ func (k *Keepalived) redirectToProxyIPTables(op string) error {
 			}
 
 			iptablesBin := "iptables"
-			if ip := net.ParseIP(vip); ip != nil && ip.To4() == nil {
+			if ip != nil && ip.To4() == nil {
 				iptablesBin = "ip6tables"
 			}
 			cmd := exec.Command(filepath.Join(k.K0sVars.BinDir, iptablesBin), cmdArgs...)
@@ -465,6 +467,15 @@ func (k *Keepalived) redirectToProxyIPTables(op string) error {
 		}
 	}
 	return nil
+}
+
+// REDIRECT drops packets from interfaces without an address, such as Calico's veths.
+func (k *Keepalived) proxyTarget(vip net.IP) []string {
+	port := strconv.Itoa(k.Config.UserSpaceProxyPort)
+	if addr := net.ParseIP(k.Address); addr != nil && vip != nil && (addr.To4() == nil) == (vip.To4() == nil) {
+		return []string{"-j", "DNAT", "--to-destination", net.JoinHostPort(k.Address, port)}
+	}
+	return []string{"-j", "REDIRECT", "--to-port", port}
 }
 
 func (k *Keepalived) watchReconcilerUpdatesKeepalived(templ *template.Template) {
