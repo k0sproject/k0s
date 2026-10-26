@@ -43,7 +43,10 @@ type Keepalived struct {
 	DetailedLogging bool
 	LogConfig       bool
 	APIPort         int
-	KubeConfigPath  string
+	// The ports that the userspace proxy may load balance, too, depending on the configuration.
+	KonnectivityAgentPort int
+	K0sAPIPort            int
+	KubeConfigPath        string
 
 	keepalivedConfig       *keepalivedConfig
 	supervisor             *supervisor.Supervisor
@@ -98,7 +101,9 @@ func (k *Keepalived) Start(ctx context.Context) error {
 		}
 	}
 
-	if !k.Config.DisableLoadBalancer && (len(k.Config.VRRPInstances) > 0 || len(k.Config.VirtualServers) > 0) {
+	// The userspace proxy only runs if it load balances any ports.
+	loadBalance := len(k.Config.VirtualServers) > 0 || len(k.proxiedPorts()) > 0
+	if !k.Config.DisableLoadBalancer && loadBalance && (len(k.Config.VRRPInstances) > 0 || len(k.Config.VirtualServers) > 0) {
 		k.log.Info("Starting CPLB reconciler")
 		updateCh := make(chan struct{}, 1)
 		k.reconciler = NewCPLBReconciler(k.KubeConfigPath, k.APIPort, updateCh)
@@ -223,6 +228,9 @@ func (k *Keepalived) Stop() error {
 	}
 
 	// Only clean iptables rules if we are using the userspace reverse proxy
+	if k.reconciler == nil {
+		return nil
+	}
 	return k.redirectToProxyIPTables(iptablesCommandDelete)
 }
 
@@ -397,11 +405,46 @@ func (k *Keepalived) generateTemplate(templ *template.Template, path string) err
 	return nil
 }
 
+// proxiedPort is a port on the virtual IPs that the userspace proxy load balances.
+type proxiedPort struct {
+	// The port on the virtual IPs and on the control plane nodes.
+	port int
+	// The port where the userspace proxy listens.
+	bindPort int
+}
+
+// proxiedPorts returns the ports that the userspace proxy load balances.
+func (k *Keepalived) proxiedPorts() []proxiedPort {
+	ports := k.Config.LoadBalancedPorts
+	var proxied []proxiedPort
+	if ports.IsAPIEnabled() {
+		proxied = append(proxied, proxiedPort{port: k.APIPort, bindPort: k.Config.UserSpaceProxyPort})
+	}
+	if ports.IsKonnectivityEnabled() {
+		proxied = append(proxied, proxiedPort{port: k.KonnectivityAgentPort, bindPort: k.Config.UserSpaceProxyKonnectivityPort()})
+	}
+	if ports.IsK0sAPIEnabled() {
+		proxied = append(proxied, proxiedPort{port: k.K0sAPIPort, bindPort: k.Config.UserSpaceProxyK0sAPIPort()})
+	}
+	return proxied
+}
+
+// backends returns the addresses that the userspace proxy forwards the port to.
+func backends(addrs []string, port int) []tcpproxy.Route {
+	routes := make([]tcpproxy.Route, 0, len(addrs))
+	for _, addr := range addrs {
+		routes = append(routes, tcpproxy.To(net.JoinHostPort(addr, strconv.Itoa(port))))
+	}
+	return routes
+}
+
 func (k *Keepalived) startReverseProxy() error {
 	k.proxy = tcpproxy.Proxy{}
 	// We don't know how long until we get the first update, so initially we
 	// forward everything to localhost
-	k.proxy.SetRoutes(fmt.Sprintf(":%d", k.Config.UserSpaceProxyPort), []tcpproxy.Route{tcpproxy.To(fmt.Sprintf("127.0.0.1:%d", k.APIPort))})
+	for _, p := range k.proxiedPorts() {
+		k.proxy.SetRoutes(fmt.Sprintf(":%d", p.bindPort), backends([]string{"127.0.0.1"}, p.port))
+	}
 	if err := k.proxy.Start(); err != nil {
 		return fmt.Errorf("failed to start proxy: %w", err)
 	}
@@ -422,49 +465,50 @@ func (k *Keepalived) watchReconcilerUpdatesReverseProxy(ctx context.Context) {
 }
 
 func (k *Keepalived) setProxyRoutes() {
-	routes := []tcpproxy.Route{}
-	port := strconv.Itoa(k.APIPort)
-	for _, addr := range k.reconciler.GetIPs() {
-		routes = append(routes, tcpproxy.To(net.JoinHostPort(addr, port)))
-	}
-
-	if len(routes) == 0 {
+	addrs := k.reconciler.GetIPs()
+	if len(addrs) == 0 {
 		k.log.Error("No API servers available, leave previous configuration")
 		return
 	}
-	k.proxy.SetRoutes(fmt.Sprintf(":%d", k.Config.UserSpaceProxyPort), routes)
+	for _, p := range k.proxiedPorts() {
+		k.proxy.SetRoutes(fmt.Sprintf(":%d", p.bindPort), backends(addrs, p.port))
+	}
 }
 
 func (k *Keepalived) redirectToProxyIPTables(op string) error {
 	for _, vrrp := range k.Config.VRRPInstances {
 		for _, vipCIDR := range vrrp.VirtualIPs {
 			vip, _, _ := strings.Cut(vipCIDR, "/")
+			for _, p := range k.proxiedPorts() {
+				switch op {
+				case iptablesCommandAppend:
+					k.log.Infof("Adding iptables rule to redirect %s port %d", vip, p.port)
+				case iptablesCommandDelete:
+					k.log.Infof("Deleting iptables rule to redirect %s port %d", vip, p.port)
+				}
 
-			cmdArgs := []string{
-				"-t", "nat", op, "PREROUTING", "-p", "tcp",
-				"-d", vip, "--dport", strconv.Itoa(k.APIPort),
-				"-j", "REDIRECT", "--to-port", strconv.Itoa(k.Config.UserSpaceProxyPort),
-			}
-
-			switch op {
-			case iptablesCommandAppend:
-				k.log.Infof("Adding iptables rule to redirect %s", vip)
-			case iptablesCommandDelete:
-				k.log.Infof("Deleting iptables rule to redirect %s", vip)
-			}
-
-			iptablesBin := "iptables"
-			if ip := net.ParseIP(vip); ip != nil && ip.To4() == nil {
-				iptablesBin = "ip6tables"
-			}
-			cmd := exec.Command(filepath.Join(k.K0sVars.BinDir, iptablesBin), cmdArgs...)
-			output, err := cmd.CombinedOutput()
-			if err != nil {
-				return fmt.Errorf("failed to execute iptables command: %w, output: %s", err, output)
+				iptablesBin := "iptables"
+				if ip := net.ParseIP(vip); ip != nil && ip.To4() == nil {
+					iptablesBin = "ip6tables"
+				}
+				cmd := exec.Command(filepath.Join(k.K0sVars.BinDir, iptablesBin), redirectArgs(op, vip, p)...) //nolint:gosec,noctx // the call predates the per port loop, and Stop has no context
+				output, err := cmd.CombinedOutput()
+				if err != nil {
+					return fmt.Errorf("failed to execute iptables command: %w, output: %s", err, output)
+				}
 			}
 		}
 	}
 	return nil
+}
+
+// redirectArgs returns the iptables arguments that redirect the port on the virtual IP to the userspace proxy.
+func redirectArgs(op, vip string, p proxiedPort) []string {
+	return []string{
+		"-t", "nat", op, "PREROUTING", "-p", "tcp",
+		"-d", vip, "--dport", strconv.Itoa(p.port),
+		"-j", "REDIRECT", "--to-port", strconv.Itoa(p.bindPort),
+	}
 }
 
 func (k *Keepalived) watchReconcilerUpdatesKeepalived(templ *template.Template) {

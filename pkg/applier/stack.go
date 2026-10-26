@@ -170,6 +170,10 @@ func (s *Stack) Apply(ctx context.Context, prune bool) error {
 			err = fmt.Errorf("unknown api error: %w", err)
 			errs = append(errs, err)
 			continue
+		} else if serverResource.GetDeletionTimestamp() != nil {
+			// Updating a resource that's being deleted has no lasting effect, it's created again once it's gone.
+			errs = append(errs, fmt.Errorf("resource %s is being deleted", resource.GetName()))
+			continue
 		} else { // The resource already exists, we need to update/patch it
 			localChecksum := resource.GetAnnotations()[ChecksumAnnotation]
 			checksumMatches := serverResource.GetAnnotations()[ChecksumAnnotation] == localChecksum

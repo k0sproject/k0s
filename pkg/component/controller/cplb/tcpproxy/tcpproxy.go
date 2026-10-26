@@ -13,6 +13,7 @@ import (
 	"io"
 	"net"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -27,10 +28,9 @@ type Proxy struct {
 	mux     sync.RWMutex
 	configs map[string]*config // ip:port => config
 
-	lns        []net.Listener
-	donec      chan struct{} // closed before err
-	err        error         // any error from listening
-	connNumber int           // connection number counter, used for round robin
+	lns   []net.Listener
+	donec chan struct{} // closed before err
+	err   error         // any error from listening
 
 	// ListenFunc optionally specifies an alternate listen
 	// function. If nil, net.Dial is used.
@@ -45,6 +45,8 @@ type Matcher func(ctx context.Context, hostname string) bool
 // config contains the proxying state for one listener.
 type config struct {
 	routes []Route
+	// Counts the connections to this address, for round robin over its own routes.
+	connNumber atomic.Uint64
 }
 
 func (p *Proxy) netListen() func(net, laddr string) (net.Listener, error) {
@@ -158,10 +160,7 @@ func (p *Proxy) serveListener(ret chan<- error, ln net.Listener, cfg *config) {
 func (p *Proxy) serveConn(c net.Conn, cfg *config) bool {
 	br := bufio.NewReader(c)
 
-	p.mux.RLock()
-	p.connNumber++
-	route := cfg.routes[p.connNumber%(len(cfg.routes))]
-	p.mux.RUnlock()
+	route := p.nextRoute(cfg)
 
 	if n := br.Buffered(); n > 0 {
 		peeked, _ := br.Peek(br.Buffered())
@@ -172,6 +171,14 @@ func (p *Proxy) serveConn(c net.Conn, cfg *config) bool {
 	}
 	route.HandleConn(c)
 	return true
+}
+
+// nextRoute picks the route for the next connection to the address of the config.
+func (p *Proxy) nextRoute(cfg *config) Route {
+	p.mux.RLock()
+	routes := cfg.routes
+	p.mux.RUnlock()
+	return routes[cfg.connNumber.Add(1)%uint64(len(routes))]
 }
 
 // Conn is an incoming connection that has had some bytes read from it

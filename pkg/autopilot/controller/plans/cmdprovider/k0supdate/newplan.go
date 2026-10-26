@@ -82,9 +82,15 @@ func populateControllerStatus(ctx context.Context, client crcli.Client, update a
 func populateWorkerStatus(ctx context.Context, client crcli.Client, update apv1beta2.PlanCommandK0sUpdate, dm apdel.ControllerDelegateMap) ([]apv1beta2.PlanCommandTargetStatus, bool) {
 	worker := dm["worker"]
 	return appkd.DiscoverNodes(ctx, client, &update.Targets.Workers, worker, func(name string) (appkd.SignalObjectFilterResult, *apv1beta2.PlanCommandTargetStateType) {
-		exists, state := appku.ObjectExistsWithPlatform(ctx, client, name, worker.CreateObject(), update.Platforms)
+		node := worker.CreateObject()
+		exists, state := appku.ObjectExistsWithPlatform(ctx, client, name, node, update.Platforms)
 		if !exists {
 			return appkd.SignalObjectFilterResultMissing, state
+		}
+
+		// Nodes without k0s have no autopilot to update them.
+		if appku.IsNodeWithoutK0s(node) {
+			return appkd.SignalObjectFilterResultIgnore, state
 		}
 
 		// Ensure this is a pure worker, i.e. there's no corresponding

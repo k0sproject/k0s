@@ -57,6 +57,11 @@ spec:
                         description: The expiration duration of the CA certificate
                         type: string
                     type: object
+                  clusterInfoDiscovery:
+                    description: |-
+                      Lets anonymous users read the cluster-info ConfigMap in kube-public, as bootstrap token discovery does.
+                      It has no effect if authentication-config, anonymous-auth or OIDC flags are set via extraArgs or rawArgs.
+                    type: boolean
                   externalAddress:
                     description: The loadbalancer address (for k0s controllers running
                       behind a loadbalancer)
@@ -720,6 +725,26 @@ spec:
                           disableLoadBalancer:
                             description: DisableLoadBalancer disables the load balancer.
                             type: boolean
+                          loadBalancedPorts:
+                            description: |-
+                              LoadBalancedPorts selects the ports that the userspace proxy load balances. By default, only the API server port.
+                              The proxy listens on userSpaceProxyBindPort for it, and on the next two ports for the others.
+                            properties:
+                              api:
+                                default: true
+                                description: Load balance the API server port. Enabled
+                                  by default.
+                                type: boolean
+                              k0sApi:
+                                description: Load balance the k0s API port, which
+                                  joining controllers use. Disabled by default.
+                                type: boolean
+                              konnectivity:
+                                description: |-
+                                  Load balance the konnectivity agent port, so that agents connecting via a virtual IP reach every
+                                  konnectivity server. Disabled by default.
+                                type: boolean
+                            type: object
                           userSpaceProxyBindPort:
                             default: 6444
                             description: |-
