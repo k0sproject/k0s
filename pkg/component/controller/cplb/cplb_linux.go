@@ -45,6 +45,9 @@ type Keepalived struct {
 	APIPort         int
 	KubeConfigPath  string
 
+	KonnectivityAgentPort int
+	K0sAPIPort            int
+
 	keepalivedConfig       *keepalivedConfig
 	supervisor             *supervisor.Supervisor
 	uid                    int
@@ -401,7 +404,9 @@ func (k *Keepalived) startReverseProxy() error {
 	k.proxy = tcpproxy.Proxy{}
 	// We don't know how long until we get the first update, so initially we
 	// forward everything to localhost
-	k.proxy.SetRoutes(fmt.Sprintf(":%d", k.Config.UserSpaceProxyPort), []tcpproxy.Route{tcpproxy.To(fmt.Sprintf("127.0.0.1:%d", k.APIPort))})
+	for _, p := range k.proxiedPorts() {
+		k.proxy.SetRoutes(fmt.Sprintf(":%d", p.bindPort), []tcpproxy.Route{tcpproxy.To(fmt.Sprintf("127.0.0.1:%d", p.port))})
+	}
 	if err := k.proxy.Start(); err != nil {
 		return fmt.Errorf("failed to start proxy: %w", err)
 	}
@@ -422,17 +427,33 @@ func (k *Keepalived) watchReconcilerUpdatesReverseProxy(ctx context.Context) {
 }
 
 func (k *Keepalived) setProxyRoutes() {
-	routes := []tcpproxy.Route{}
-	port := strconv.Itoa(k.APIPort)
-	for _, addr := range k.reconciler.GetIPs() {
-		routes = append(routes, tcpproxy.To(net.JoinHostPort(addr, port)))
-	}
-
-	if len(routes) == 0 {
+	addrs := k.reconciler.GetIPs()
+	if len(addrs) == 0 {
 		k.log.Error("No API servers available, leave previous configuration")
 		return
 	}
-	k.proxy.SetRoutes(fmt.Sprintf(":%d", k.Config.UserSpaceProxyPort), routes)
+
+	for _, p := range k.proxiedPorts() {
+		routes := []tcpproxy.Route{}
+		port := strconv.Itoa(p.port)
+		for _, addr := range addrs {
+			routes = append(routes, tcpproxy.To(net.JoinHostPort(addr, port)))
+		}
+		k.proxy.SetRoutes(fmt.Sprintf(":%d", p.bindPort), routes)
+	}
+}
+
+type proxiedPort struct{ port, bindPort int }
+
+func (k *Keepalived) proxiedPorts() []proxiedPort {
+	ports := []proxiedPort{{k.APIPort, k.Config.UserSpaceProxyPort}}
+	if bindPort := k.Config.UserSpaceProxyKonnectivityBindPort; bindPort != 0 {
+		ports = append(ports, proxiedPort{k.KonnectivityAgentPort, bindPort})
+	}
+	if bindPort := k.Config.UserSpaceProxyK0sAPIBindPort; bindPort != 0 {
+		ports = append(ports, proxiedPort{k.K0sAPIPort, bindPort})
+	}
+	return ports
 }
 
 func (k *Keepalived) redirectToProxyIPTables(op string) error {
@@ -440,27 +461,29 @@ func (k *Keepalived) redirectToProxyIPTables(op string) error {
 		for _, vipCIDR := range vrrp.VirtualIPs {
 			vip, _, _ := strings.Cut(vipCIDR, "/")
 
-			cmdArgs := []string{
-				"-t", "nat", op, "PREROUTING", "-p", "tcp",
-				"-d", vip, "--dport", strconv.Itoa(k.APIPort),
-				"-j", "REDIRECT", "--to-port", strconv.Itoa(k.Config.UserSpaceProxyPort),
-			}
-
-			switch op {
-			case iptablesCommandAppend:
-				k.log.Infof("Adding iptables rule to redirect %s", vip)
-			case iptablesCommandDelete:
-				k.log.Infof("Deleting iptables rule to redirect %s", vip)
-			}
-
 			iptablesBin := "iptables"
 			if ip := net.ParseIP(vip); ip != nil && ip.To4() == nil {
 				iptablesBin = "ip6tables"
 			}
-			cmd := exec.Command(filepath.Join(k.K0sVars.BinDir, iptablesBin), cmdArgs...)
-			output, err := cmd.CombinedOutput()
-			if err != nil {
-				return fmt.Errorf("failed to execute iptables command: %w, output: %s", err, output)
+			for _, p := range k.proxiedPorts() {
+				cmdArgs := []string{
+					"-t", "nat", op, "PREROUTING", "-p", "tcp",
+					"-d", vip, "--dport", strconv.Itoa(p.port),
+					"-j", "REDIRECT", "--to-port", strconv.Itoa(p.bindPort),
+				}
+
+				switch op {
+				case iptablesCommandAppend:
+					k.log.Infof("Adding iptables rule to redirect %s port %d", vip, p.port)
+				case iptablesCommandDelete:
+					k.log.Infof("Deleting iptables rule to redirect %s port %d", vip, p.port)
+				}
+
+				cmd := exec.Command(filepath.Join(k.K0sVars.BinDir, iptablesBin), cmdArgs...)
+				output, err := cmd.CombinedOutput()
+				if err != nil {
+					return fmt.Errorf("failed to execute iptables command: %w, output: %s", err, output)
+				}
 			}
 		}
 	}

@@ -729,6 +729,20 @@ spec:
                             maximum: 65535
                             minimum: 1
                             type: integer
+                          userSpaceProxyK0sApiBindPort:
+                            description: |-
+                              UserSpaceProxyK0sAPIBindPort enables load balancing of the k0s API port on the virtual IPs.
+                              The userspace proxy binds to it on every interface. Can't be combined with virtual servers.
+                            maximum: 65535
+                            minimum: 1
+                            type: integer
+                          userSpaceProxyKonnectivityBindPort:
+                            description: |-
+                              UserSpaceProxyKonnectivityBindPort enables load balancing of the konnectivity agent port on the
+                              virtual IPs. The userspace proxy binds to it on every interface. Can't be combined with virtual servers.
+                            maximum: 65535
+                            minimum: 1
+                            type: integer
                           virtualServers:
                             description: |-
                               Configuration options related to the virtual servers. This is an array

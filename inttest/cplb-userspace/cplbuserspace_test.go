@@ -30,8 +30,9 @@ import (
 
 type CPLBUserSpaceSuite struct {
 	common.BootlooseSuite
-	isIPv6Only         bool
-	useExternalAddress bool
+	isIPv6Only                       bool
+	useExternalAddress               bool
+	loadBalanceKonnectivityAndK0sAPI bool
 }
 
 const nllbControllerConfig = `
@@ -59,7 +60,11 @@ spec:
   api:
     externalAddress: {{ .ExtAddr }}
   network:
+{{ if .LoadBalanceKonnectivityAndK0sAPI }}
+    provider: kuberouter
+{{ else }}
     provider: calico
+{{ end }}
     controlPlaneLoadBalancing:
       enabled: true
       type: Keepalived
@@ -68,6 +73,10 @@ spec:
         - virtualIPs: ["{{ .VIP }}"]
           authPass: "123456"
           interface: "{{ .Interface }}"
+{{ if .LoadBalanceKonnectivityAndK0sAPI }}
+        userSpaceProxyKonnectivityBindPort: 8134
+        userSpaceProxyK0sApiBindPort: 9444
+{{ end }}
 {{ if .IsIPv6Only }}
     podCIDR: fd00::/108
     serviceCIDR: fd01::/108
@@ -85,6 +94,8 @@ func (s *CPLBUserSpaceSuite) getK0sCfg(lb string, nic string) string {
 		"VIP":        common.GetCPLBVIPCIDR(lb, s.isIPv6Only),
 		"IsIPv6Only": s.isIPv6Only,
 		"Interface":  nic,
+
+		"LoadBalanceKonnectivityAndK0sAPI": s.loadBalanceKonnectivityAndK0sAPI,
 	}
 	s.Require().NoError(template.Must(template.New("k0s.yaml").
 		Parse(extAddrControllerConfig)).
@@ -173,7 +184,7 @@ func (s *CPLBUserSpaceSuite) TestK0sGetsUp() {
 
 	// Verify that controller+worker nodes are working normally.
 	s.T().Log("waiting to see CNI pods ready")
-	if s.useExternalAddress {
+	if s.useExternalAddress && !s.loadBalanceKonnectivityAndK0sAPI {
 		s.Require().NoError(common.WaitForDaemonSet(ctx, client, "calico-node", metav1.NamespaceSystem), "calico-node did not start")
 	} else {
 		s.Require().NoError(common.WaitForKubeRouterReady(ctx, client), "kube router did not start")
@@ -184,25 +195,42 @@ func (s *CPLBUserSpaceSuite) TestK0sGetsUp() {
 	{
 		s.T().Log("waiting for konnectivity")
 		controllerCount := uint(s.ControllerCount)
-		// FIXME: Currently, the external address doesn't load-balance konnectivity properly.
-		if s.useExternalAddress {
+		if s.useExternalAddress && !s.loadBalanceKonnectivityAndK0sAPI {
 			controllerCount = 1
 		}
 		s.Require().NoError(common.VerifyKonnectivityMesh(ctx, restConfig, client, s.T(), controllerCount, uint(s.ControllerCount+s.WorkerCount)), "While verifying konnectivity mesh")
 	}
 
 	s.T().Log("Testing that the load balancer is actually balancing the load")
-	// Other stuff may be querying the controller, running the HTTPS request 15 times
-	// should be more than we need.
-	attempt := 0
-	signatures := make(map[string]int)
-	url := url.URL{Scheme: "https", Host: net.JoinHostPort(lb, strconv.Itoa(6443))}
-	for len(signatures) < 3 {
-		signature, err := getServerCertSignature(ctx, url.String())
-		s.Require().NoError(err)
-		signatures[signature] = 1
-		attempt++
-		s.Require().LessOrEqual(attempt, 15, "Failed to get a signature from all controllers")
+	ports := []int{6443}
+	if s.loadBalanceKonnectivityAndK0sAPI {
+		ports = append(ports, 9443)
+	}
+	for _, port := range ports {
+		// Other stuff may be querying the controller, running the HTTPS request 15 times
+		// should be more than we need.
+		attempt := 0
+		signatures := make(map[string]int)
+		url := url.URL{Scheme: "https", Host: net.JoinHostPort(lb, strconv.Itoa(port))}
+		for len(signatures) < 3 {
+			signature, err := getServerCertSignature(ctx, url.String())
+			s.Require().NoError(err)
+			signatures[signature] = 1
+			attempt++
+			s.Require().LessOrEqual(attempt, 15, "Failed to get a signature from all controllers on port %d", port)
+		}
+	}
+
+	s.T().Log("Testing that the konnectivity agent and k0s API ports have iptables rules only if they are load balanced")
+	iptablesSave := "/var/lib/k0s/bin/iptables-save"
+	if s.isIPv6Only {
+		iptablesSave = "/var/lib/k0s/bin/ip6tables-save"
+	}
+	for idx := range s.ControllerCount {
+		rules := s.getCommandOutput(ctx, s.ControllerNode(idx), iptablesSave+" -t nat")
+		for _, port := range []string{"8132", "9443"} {
+			s.Equal(s.loadBalanceKonnectivityAndK0sAPI, strings.Contains(rules, "--dport "+port+" "), "Unexpected iptables rules for port %s on %s", port, s.ControllerNode(idx))
+		}
 	}
 
 	s.T().Log("Verify that controllers resolved the interface name from the MAC address correctly")
@@ -287,11 +315,15 @@ func (s *CPLBUserSpaceSuite) getMAC(ctx context.Context, nodeName string) string
 }
 
 func (s *CPLBUserSpaceSuite) getFile(ctx context.Context, nodeName string, path string) string {
+	return s.getCommandOutput(ctx, nodeName, "cat "+path)
+}
+
+func (s *CPLBUserSpaceSuite) getCommandOutput(ctx context.Context, nodeName string, command string) string {
 	ssh, err := s.SSH(ctx, nodeName)
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
 
-	output, err := ssh.ExecWithOutput(ctx, "cat "+path)
+	output, err := ssh.ExecWithOutput(ctx, command)
 	s.Require().NoError(err)
 
 	return output
@@ -319,6 +351,7 @@ func TestCPLBUserSpaceSuite(t *testing.T) {
 	case strings.Contains(target, "extaddr"):
 		t.Log("Testing external address")
 		cplbSuite.useExternalAddress = true
+		cplbSuite.loadBalanceKonnectivityAndK0sAPI = true
 	}
 
 	suite.Run(t, cplbSuite)
