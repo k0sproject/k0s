@@ -5,6 +5,8 @@ package root
 
 import (
 	"context"
+
+	apitypes "k8s.io/apimachinery/pkg/types"
 )
 
 // TODO: decide on renaming root.RootConfig -> root.Config
@@ -19,6 +21,7 @@ type RootConfig struct {
 	MetricsBindAddr     string
 	HealthProbeBindAddr string
 	ExcludeFromPlans    []string
+	NodeName            apitypes.NodeName
 }
 
 // Root is the 'root' of all controllers
