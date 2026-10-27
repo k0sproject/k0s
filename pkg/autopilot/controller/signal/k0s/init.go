@@ -13,12 +13,12 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/k0sproject/k0s/internal/leaderelection"
 	autopilotv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 	"github.com/k0sproject/k0s/pkg/autopilot/constant"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
 	apsigpred "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/common/predicate"
 	"github.com/k0sproject/k0s/pkg/component/status"
-	"github.com/k0sproject/k0s/pkg/leaderelection"
 
 	coordinationv1 "k8s.io/api/coordination/v1"
 	corev1 "k8s.io/api/core/v1"

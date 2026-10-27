@@ -6,7 +6,7 @@ package leaderelector
 import (
 	"context"
 
-	"github.com/k0sproject/k0s/pkg/leaderelection"
+	"github.com/k0sproject/k0s/internal/leaderelection"
 )
 
 // AlwaysLeading is a dummy leader elector that reports itself as the leader
