@@ -6,8 +6,8 @@ package cleanup
 import (
 	"context"
 
+	"github.com/k0sproject/k0s/internal/install"
 	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
-	"github.com/k0sproject/k0s/pkg/install"
 
 	"github.com/sirupsen/logrus"
 )

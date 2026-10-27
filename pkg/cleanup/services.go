@@ -11,7 +11,7 @@ import (
 	"io/fs"
 	"os/exec"
 
-	"github.com/k0sproject/k0s/pkg/install"
+	"github.com/k0sproject/k0s/internal/install"
 	"github.com/kardianos/service"
 	"github.com/sirupsen/logrus"
 )
