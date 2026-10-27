@@ -16,6 +16,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/k0sproject/k0s/internal/leaderelection"
 	"github.com/k0sproject/k0s/pkg/applier"
 	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
 	apcont "github.com/k0sproject/k0s/pkg/autopilot/controller"
@@ -25,7 +26,6 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
-	"github.com/k0sproject/k0s/pkg/leaderelection"
 	"github.com/k0sproject/k0s/static"
 
 	"github.com/sirupsen/logrus"
