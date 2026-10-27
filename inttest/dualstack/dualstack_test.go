@@ -53,10 +53,10 @@ func (s *DualstackSuite) TestDualStackNodesHavePodCIDRs() {
 func (s *DualstackSuite) TestComponentsHaveCorrectCIDRs() {
 	ctx := s.Context()
 	expectedPodCIDRs := "10.233.0.0/16,fd00::/108"
-	expectedServiceCIDRs := "10.112.0.0/12,fd01::/108"
+	expectedServiceCIDRs := "10.112.0.0/12,fd01::/100"
 	if s.defaultIPv6 {
 		expectedPodCIDRs = "fd00::/108,10.233.0.0/16"
-		expectedServiceCIDRs = "fd01::/108,10.112.0.0/12"
+		expectedServiceCIDRs = "fd01::/100,10.112.0.0/12"
 	}
 
 	node := s.ControllerNode(0)
@@ -321,7 +321,7 @@ spec:
     dualStack:
       enabled: true
       IPv6podCIDR: "fd00::/108"
-      IPv6serviceCIDR: "fd01::/108"
+      IPv6serviceCIDR: "fd01::/100"
     podCIDR: 10.233.0.0/16
     serviceCIDR: 10.112.0.0/12
 `
@@ -335,7 +335,7 @@ spec:
     dualStack:
       enabled: true
       IPv6podCIDR: "fd00::/108"
-      IPv6serviceCIDR: "fd01::/108"
+      IPv6serviceCIDR: "fd01::/100"
     podCIDR: 10.233.0.0/16
     serviceCIDR: 10.112.0.0/12
 `
