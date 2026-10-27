@@ -143,10 +143,6 @@ func (n *Network) Validate() []error {
 		} else if ipv6SvcIP.To4() != nil {
 			errors = append(errors, field.Invalid(field.NewPath("dualStack", "IPv6serviceCIDR"), n.DualStack.IPv6ServiceCIDR, "must be an IPv6 CIDR, not IPv4"))
 		}
-		// There is no limit on the size of the service CIDRs: Kubernetes only
-		// enforces one if the MultiCIDRServiceAllocator or the
-		// DisableAllocatorDualWrite feature gates are disabled, and both are
-		// enabled and locked to their defaults.
 		if podNetIP.To4() == nil {
 
 			errors = append(errors, field.Invalid(field.NewPath("podCIDR"), n.PodCIDR, "if DualStack is enabled, podCIDR must be IPv4"))
