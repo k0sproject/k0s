@@ -8,8 +8,8 @@ import (
 	"fmt"
 
 	"github.com/k0sproject/k0s/cmd/internal"
+	"github.com/k0sproject/k0s/internal/uninstall"
 	"github.com/k0sproject/k0s/pkg/config"
-	"github.com/k0sproject/k0s/pkg/uninstall"
 
 	"github.com/spf13/cobra"
 )
