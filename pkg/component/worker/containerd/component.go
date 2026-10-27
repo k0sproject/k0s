@@ -19,12 +19,12 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	containerruntime "github.com/k0sproject/k0s/internal/cri"
+	"github.com/k0sproject/k0s/internal/debounce"
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	workerconfig "github.com/k0sproject/k0s/pkg/component/worker/config"
 	"github.com/k0sproject/k0s/pkg/config"
-	"github.com/k0sproject/k0s/pkg/debounce"
 	"github.com/k0sproject/k0s/pkg/supervisor"
 
 	"k8s.io/apimachinery/pkg/util/wait"
