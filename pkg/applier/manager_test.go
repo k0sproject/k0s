@@ -14,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/k0sproject/k0s/internal/leaderelection"
 	"github.com/k0sproject/k0s/internal/sync/value"
 	"github.com/k0sproject/k0s/internal/testutil"
 	"github.com/k0sproject/k0s/pkg/applier"
@@ -21,7 +22,6 @@ import (
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
-	"github.com/k0sproject/k0s/pkg/leaderelection"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
