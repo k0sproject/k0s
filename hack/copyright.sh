@@ -8,13 +8,23 @@ set -eu
 RESULT=0
 FIX=${FIX:=n}
 
+year_added(){
+    TZ=UTC git log --follow --find-copies=90% --name-status --pretty=format:'%H %ad' --date=format:%Y "$2" -- "$1" |
+    while read -r first second third; do
+        case "$first" in
+        '') ;;
+        A)  echo "$year"; break ;;
+        R* | C*) year_added "$second" "$commit^"; break ;;
+        *)  commit=$first; year=$second ;;
+        esac
+    done
+}
+
 get_year(){
-    # The -1 has to be added because if a file has been added, removed and added
-    # again we'll get two lines with both dates. We only pick the newest one.
-    YEAR=$(TZ=UTC git log --follow --find-copies=90% -1 --diff-filter=A --pretty=format:%ad --date=format:%Y -- "$1")
+    YEAR=$(year_added "$1" HEAD)
     if [ -z "$YEAR" ]; then
         YEAR=$(TZ=UTC date +%Y)
-	    echo "WARN: $1 doesn't seem to be committed in the repo, assuming $YEAR" 1>&2
+        echo "WARN: $1 doesn't seem to be committed in the repo, assuming $YEAR" 1>&2
     fi
     echo "$YEAR"
 }
