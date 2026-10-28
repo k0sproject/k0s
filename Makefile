@@ -81,6 +81,11 @@ BUILD_GO_LDFLAGS_EXTRA :=
 DEBUG ?= false
 
 VERSION ?= $(shell git describe --tags 2>/dev/null || printf v%s-dev+k0s '$(kubernetes_version)')
+# The embedded Kubernetes binaries report v$(kubernetes_version)+$(KUBERNETES_VERSION_SUFFIX).
+# Release builds use the release's build metadata, so that e.g. the kubelet of
+# k0s v1.2.3+k0s.0 reports v1.2.3+k0s.0, just like k0s itself. Any other build
+# uses "k0s", so that the binaries don't have to be rebuilt for every commit.
+KUBERNETES_VERSION_SUFFIX ?= $(or $(shell printf %s '$(VERSION)' | sed -nE 's/^v$(subst .,\.,$(kubernetes_version))\+(k0s\.[0-9]+)$$/\1/p'),k0s)
 ifeq ($(DEBUG), false)
 BUILD_GO_FLAGS += -trimpath
 LD_FLAGS ?= -w -s
@@ -222,11 +227,18 @@ ifneq ($(EMBEDDED_BINS_BUILDMODE),none)
 endif
 	@printf '\n%s size: %s\n\n' '$@' "$$(du -sh -- $@ | cut -f1)"
 
-.bins.windows.stamp .bins.linux.stamp: embedded-bins/Makefile.variables
+.bins.windows.stamp .bins.linux.stamp: embedded-bins/Makefile.variables embedded-bins/.kubernetes-version-suffix
 	$(MAKE) -C embedded-bins \
 	  TARGET_OS=$(patsubst .bins.%.stamp,%,$@) \
-	  SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH)
+	  SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) \
+	  KUBERNETES_VERSION_SUFFIX=$(KUBERNETES_VERSION_SUFFIX)
 	touch $@
+
+embedded-bins/.kubernetes-version-suffix: FORCE
+	@$(MAKE) -C embedded-bins --no-print-directory KUBERNETES_VERSION_SUFFIX=$(KUBERNETES_VERSION_SUFFIX) .kubernetes-version-suffix
+
+.PHONY: FORCE
+FORCE:
 
 .PHONY: codegen
 codegen: $(codegen_targets)

@@ -22,7 +22,8 @@ ARG TARGET_OS \
   BUILD_GO_CGO_ENABLED \
   BUILD_GO_FLAGS \
   BUILD_GO_LDFLAGS \
-  KUBERNETES_BINS
+  KUBERNETES_BINS \
+  KUBERNETES_VERSION_SUFFIX=k0s
 
 RUN --mount=source=patches,target=/run/patches,ro \
   set -ex; \
@@ -48,7 +49,7 @@ RUN --mount=source=patches,target=/run/patches,ro \
   export FORCE_HOST_GO=y; \
   export KUBE_VERBOSE=9; \
   export KUBE_GIT_TREE_STATE=clean; \
-  export KUBE_GIT_VERSION="v$VERSION+k0s"; \
+  export KUBE_GIT_VERSION="v$VERSION+$KUBERNETES_VERSION_SUFFIX"; \
   for cmd in $commands; do \
     make GOFLAGS="${BUILD_GO_FLAGS} -tags=${BUILD_GO_TAGS}" GOLDFLAGS="${BUILD_GO_LDFLAGS}" WHAT=cmd/$cmd; \
     mv /go/src/github.com/kubernetes/kubernetes/_output/local/bin/*/*/$cmd$binarySuffix /out/; \
