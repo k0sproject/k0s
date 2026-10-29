@@ -57,12 +57,64 @@ require (
 	golang.org/x/sync v0.24.0
 	golang.org/x/sys v0.49.0
 	golang.org/x/text v0.43.0
+<<<<<<< HEAD
 	golang.org/x/tools v0.51.0
 	google.golang.org/grpc v1.83.2
 	helm.sh/helm/v3 v3.21.4
 	modernc.org/sqlite v1.52.0
 	oras.land/oras-go/v2 v2.6.1
 	sigs.k8s.io/controller-runtime v0.24.1
+||||||| parent of a3df782 (Bump oras.land/oras-go/v2 from 2.6.4 to 2.7.0)
+	golang.org/x/tools v0.52.0
+	google.golang.org/grpc v1.84.0
+	helm.sh/helm/v4 v4.3.1
+	k8s.io/api v0.37.1
+	k8s.io/apiextensions-apiserver v0.37.1
+	k8s.io/apimachinery v0.37.1
+	k8s.io/apiserver v0.37.1
+	k8s.io/cli-runtime v0.37.1
+	k8s.io/client-go v0.37.1
+	k8s.io/cloud-provider v0.37.1
+	k8s.io/cluster-bootstrap v0.37.1
+	k8s.io/component-base v0.37.1
+	k8s.io/component-helpers v0.37.1
+	k8s.io/cri-api v0.37.1
+	k8s.io/kube-aggregator v0.37.1
+	k8s.io/kube-proxy v0.37.1
+	k8s.io/kubectl v0.37.1
+	k8s.io/kubelet v0.37.1
+	k8s.io/kubernetes v1.37.1
+	k8s.io/mount-utils v0.37.1
+	k8s.io/utils v0.0.0-20260626114624-be93311217bd
+	modernc.org/sqlite v1.60.1
+	oras.land/oras-go/v2 v2.6.4
+	sigs.k8s.io/controller-runtime v0.25.2
+=======
+	golang.org/x/tools v0.52.0
+	google.golang.org/grpc v1.84.0
+	helm.sh/helm/v4 v4.3.1
+	k8s.io/api v0.37.1
+	k8s.io/apiextensions-apiserver v0.37.1
+	k8s.io/apimachinery v0.37.1
+	k8s.io/apiserver v0.37.1
+	k8s.io/cli-runtime v0.37.1
+	k8s.io/client-go v0.37.1
+	k8s.io/cloud-provider v0.37.1
+	k8s.io/cluster-bootstrap v0.37.1
+	k8s.io/component-base v0.37.1
+	k8s.io/component-helpers v0.37.1
+	k8s.io/cri-api v0.37.1
+	k8s.io/kube-aggregator v0.37.1
+	k8s.io/kube-proxy v0.37.1
+	k8s.io/kubectl v0.37.1
+	k8s.io/kubelet v0.37.1
+	k8s.io/kubernetes v1.37.1
+	k8s.io/mount-utils v0.37.1
+	k8s.io/utils v0.0.0-20260626114624-be93311217bd
+	modernc.org/sqlite v1.60.1
+	oras.land/oras-go/v2 v2.7.0
+	sigs.k8s.io/controller-runtime v0.25.2
+>>>>>>> a3df782 (Bump oras.land/oras-go/v2 from 2.6.4 to 2.7.0)
 	sigs.k8s.io/yaml v1.6.0
 )
 
