@@ -1,6 +1,6 @@
 //go:build noembedbins || (!linux && !windows)
 
-// SPDX-FileCopyrightText: 2024 k0s authors
+// SPDX-FileCopyrightText: 2021 k0s authors
 // SPDX-License-Identifier: Apache-2.0
 
 package assets
