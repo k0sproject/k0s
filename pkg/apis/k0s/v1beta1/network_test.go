@@ -323,19 +323,27 @@ func (s *NetworkSuite) TestValidation() {
 		}
 	})
 
-	s.Run("invalid_ipv6_service_cidr_prefix_too_large", func() {
+	s.Run("large_ipv6_service_cidrs_are_valid", func() {
 		fg := featuregate.FeatureGates{}
 		s.NoError(fg.Set("IPv6SingleStack=true"))
 		defer func() { featuregate.FlushDefaultFeatureGates(s.T()) }()
 
-		n := DefaultNetwork()
-		n.PodCIDR = "fd00::/108"
-		n.ServiceCIDR = "fd01::/120"
-
-		errors := n.Validate()
-		if s.Len(errors, 1) {
-			s.ErrorContains(errors[0], "IPv6 service CIDR prefix must be <= 108")
+		for _, cidr := range []string{"fd01::/120", "fdc0:1::/104", "fd01::/64"} {
+			n := DefaultNetwork()
+			n.PodCIDR = "fd00::/108"
+			n.ServiceCIDR = cidr
+			s.Empty(n.Validate(), "service CIDR %s", cidr)
 		}
+
+		n := DefaultNetwork()
+		n.Calico = DefaultCalico()
+		n.Calico.Mode = CalicoModeBIRD
+		n.DualStack = DefaultDualStack()
+		n.DualStack.Enabled = true
+		n.KubeProxy.Mode = "ipvs"
+		n.DualStack.IPv6PodCIDR = "fd00::/108"
+		n.DualStack.IPv6ServiceCIDR = "fdc0:1::/104"
+		s.Empty(n.Validate())
 	})
 
 	s.Run("invalid_ipv6_pod_cidr", func() {
