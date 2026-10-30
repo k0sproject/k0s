@@ -52,6 +52,6 @@ func (c *Config) Cleanup(ctx context.Context) error {
 type Step interface {
 	// Run implements specific cleanup operations
 	Run(ctx context.Context) error
-	// Name returns name of the step for conveninece
+	// Name returns name of the step for convenience
 	Name() string
 }
