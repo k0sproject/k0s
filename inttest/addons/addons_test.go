@@ -192,6 +192,7 @@ func (as *AddonsSuite) TestHelmBasedAddons() {
 	as.Run("Secret-based authentication", func() { as.testSecretBasedAuth(kc) })
 	as.Run("Controller restart recovery", func() { as.testControllerRestartRecovery(kc) })
 	as.Run("Chart ordering", func() { as.testChartOrdering() })
+	as.Run("Helm history limit", func() { as.testHistoryMax() })
 
 	as.doTestAddonUpdate(ctx, addonName)
 	chart := as.waitForTestRelease(addonName, "0.6.0", metav1.NamespaceDefault, 2)
@@ -619,6 +620,67 @@ func (as *AddonsSuite) doTestAddonUpdate(ctx context.Context, addonName string) 
 		}},
 	)
 	as.Require().NoError(err)
+}
+
+func (as *AddonsSuite) testHistoryMax() {
+	ctx := as.TContext()
+	releaseName := "history-limit-test"
+	chartName := "k0s-addon-chart-" + releaseName
+
+	k0sClients, err := as.AutopilotClient(as.ControllerNode(0))
+	as.Require().NoError(err)
+	kc, err := as.KubeClient(as.ControllerNode(0))
+	as.Require().NoError(err)
+	charts := k0sClients.HelmV1beta1().Charts(metav1.NamespaceSystem)
+
+	chart := &helmv1beta1.Chart{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: helmv1beta1.SchemeGroupVersion.String(),
+			Kind:       "Chart",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      chartName,
+			Namespace: metav1.NamespaceSystem,
+			Finalizers: []string{
+				"helm.k0sproject.io/uninstall-helm-release",
+			},
+		},
+		Spec: helmv1beta1.ChartSpec{
+			ChartName:   "ealenn/echo-server",
+			ReleaseName: releaseName,
+			Version:     "0.5.0",
+			Namespace:   metav1.NamespaceDefault,
+			Values:      "replicaCount: 1",
+			HistoryMax:  2,
+		},
+	}
+	_, err = charts.Create(ctx, chart, metav1.CreateOptions{})
+	as.Require().NoError(err)
+
+	as.waitForTestRelease(releaseName, "0.6.0", metav1.NamespaceDefault, 1)
+	for revision := int64(2); revision <= 4; revision++ {
+		chart, err = charts.Get(ctx, chartName, metav1.GetOptions{})
+		as.Require().NoError(err)
+		chart.Spec.Values = fmt.Sprintf("replicaCount: %d", revision)
+		_, err = charts.Update(ctx, chart, metav1.UpdateOptions{})
+		as.Require().NoError(err)
+		as.waitForTestRelease(releaseName, "0.6.0", metav1.NamespaceDefault, revision)
+	}
+
+	secrets, err := kc.CoreV1().Secrets(metav1.NamespaceDefault).List(ctx, metav1.ListOptions{
+		LabelSelector: "owner=helm,name=" + releaseName,
+	})
+	as.Require().NoError(err)
+	as.Require().Len(secrets.Items, 2, "Helm should retain only historyMax revisions")
+
+	as.Require().NoError(charts.Delete(ctx, chartName, metav1.DeleteOptions{}))
+	as.Require().NoError(wait.PollUntilContextCancel(ctx, time.Second, true, func(ctx context.Context) (bool, error) {
+		_, err := charts.Get(ctx, chartName, metav1.GetOptions{})
+		if apierrors.IsNotFound(err) {
+			return true, nil
+		}
+		return false, err
+	}))
 }
 
 // testControllerRestartRecovery tests that charts stuck in pending-install state

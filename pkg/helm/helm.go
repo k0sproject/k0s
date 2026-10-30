@@ -400,7 +400,7 @@ func (hc *Commands) GetRelease(ctx context.Context, releaseName, namespace strin
 
 // InstallChart installs a helm chart
 // InstallChart, UpgradeChart and UninstallRelease(releaseName are *NOT* thread-safe
-func (hc *Commands) InstallChart(ctx context.Context, chartName string, version string, releaseName string, namespace string, values map[string]any, timeout time.Duration, replace bool) (release.Releaser, error) {
+func (hc *Commands) InstallChart(ctx context.Context, chartName string, version string, releaseName string, namespace string, values map[string]any, timeout time.Duration, historyMax int, replace bool) (release.Releaser, error) {
 	// Keep the action's context detached from the caller's cancellation so that
 	// we can explicitly terminate the Helm internals when this method exits.
 	// The install action still receives the caller context via the
@@ -412,6 +412,8 @@ func (hc *Commands) InstallChart(ctx context.Context, chartName string, version 
 	if err != nil {
 		return nil, fmt.Errorf("can't create action configuration: %w", err)
 	}
+	// Helm v4 has no install history field; set action.Configuration.Releases.MaxHistory instead.
+	cfg.Releases.MaxHistory = historyMax
 
 	cfg.RegistryClient, err = hc.resolveRegistryClient(chartName)
 	if err != nil {
@@ -460,7 +462,7 @@ func (hc *Commands) InstallChart(ctx context.Context, chartName string, version 
 
 // UpgradeChart upgrades a helm chart.
 // InstallChart, UpgradeChart and UninstallRelease(releaseName are *NOT* thread-safe
-func (hc *Commands) UpgradeChart(ctx context.Context, chartName string, version string, releaseName string, namespace string, values map[string]any, timeout time.Duration, force bool) (release.Releaser, error) {
+func (hc *Commands) UpgradeChart(ctx context.Context, chartName string, version string, releaseName string, namespace string, values map[string]any, timeout time.Duration, historyMax int, force bool) (release.Releaser, error) {
 	// Keep the action's context detached from the caller's cancellation so that
 	// we can explicitly terminate the Helm internals when this method exits.
 	// The upgrade action still receives the caller context via the
@@ -487,6 +489,8 @@ func (hc *Commands) UpgradeChart(ctx context.Context, chartName string, version 
 	upgrade.ForceReplace = force
 	upgrade.RollbackOnFailure = true
 	upgrade.Timeout = timeout
+	// Helm v4's action.Upgrade.MaxHistory is applied to action.Configuration.Releases.
+	upgrade.MaxHistory = historyMax
 	chartDir, err := hc.locateChart(chartName, version, cfg.RegistryClient)
 	if err != nil {
 		return nil, err
