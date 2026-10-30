@@ -116,9 +116,13 @@ func TestGetEnv(t *testing.T) {
 		"k2=foo_v2",
 		"k3=foo_v3",
 		"k4=v4",
+		"app=end",
+		"k1=additional",
 	}
-	actual := getEnv(filepath.FromSlash("/var/lib/k0s"), "foo", false)
+	additionalEnv := []string{"app=end", "k1=additional"}
+	actual := getEnv(filepath.FromSlash("/var/lib/k0s"), "foo", false, additionalEnv)
 	assert.ElementsMatch(t, expected, actual)
+	assert.Equal(t, additionalEnv, actual[len(actual)-len(additionalEnv):])
 
 	expected = []string{
 		"FOO_PATH=/usr/local/bin",
@@ -134,9 +138,12 @@ func TestGetEnv(t *testing.T) {
 		"k2=v2",
 		"k3=v3",
 		"k4=v4",
+		"app=end",
+		"k1=additional",
 	}
-	actual = getEnv(filepath.FromSlash("/var/lib/k0s"), "foo", true)
+	actual = getEnv(filepath.FromSlash("/var/lib/k0s"), "foo", true, additionalEnv)
 	assert.ElementsMatch(t, expected, actual)
+	assert.Equal(t, additionalEnv, actual[len(actual)-len(additionalEnv):])
 }
 
 func TestRespawn(t *testing.T) {
