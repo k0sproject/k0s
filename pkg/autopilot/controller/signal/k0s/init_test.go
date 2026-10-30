@@ -58,3 +58,4 @@ func TestSignalDataUpdateCommandK0sPredicate(t *testing.T) {
 		})
 	}
 }
+

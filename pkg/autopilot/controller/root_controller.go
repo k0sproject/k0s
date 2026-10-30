@@ -250,7 +250,7 @@ func (c *rootController) startSubControllerRoutine(ctx context.Context, logger *
 		return fmt.Errorf("unable to determine hostname: %w", err)
 	}
 
-	if err := signal.RegisterControllers(ctx, logger, mgr, delegateMap[apdel.ControllerDelegateController], apitypes.NodeName(hostname), restartTracker, c.cfg.K0sDataDir, c.enableWorker, clusterID, event); err != nil {
+	if err := signal.RegisterControllers(ctx, logger, mgr, delegateMap[apdel.ControllerDelegateController], apitypes.NodeName(hostname), restartTracker, c.cfg.StatusSocketPath, c.cfg.K0sDataDir, c.enableWorker, clusterID, event); err != nil {
 		logger.WithError(err).Error("unable to register signal controllers")
 		return err
 	}
