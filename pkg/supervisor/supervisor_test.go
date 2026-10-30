@@ -497,8 +497,9 @@ func TestStop_PIDFileRemainsOnTerminationTimeout(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, pidStat.Mode().IsRegular())
 
-	// Stop the supervisor. The process should survive that.
-	assert.NoError(t, s.Stop())
+	// Stop the supervisor. The process should survive that, so the stop call
+	// reports the timeout to callers.
+	assert.ErrorContains(t, s.Stop(), "timed out")
 
 	// PID file should be unchanged.
 	if newPidStat, err := os.Stat(pidFilePath); assert.NoError(t, err, "While ensuring the existence of the PID file") {
