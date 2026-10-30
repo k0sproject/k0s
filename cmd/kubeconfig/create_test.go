@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/k0sproject/k0s/cmd"
+	"github.com/k0sproject/k0s/internal/certificate"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
-	"github.com/k0sproject/k0s/pkg/certificate"
 	"github.com/k0sproject/k0s/pkg/config"
 
 	"k8s.io/client-go/tools/clientcmd"
