@@ -1,0 +1,24 @@
+apiVersion: troubleshoot.sh/v1beta2
+kind: SupportBundle
+metadata:
+  name: k0s-inttest
+spec:
+  collectors:
+    - clusterResources: {}
+    - clusterInfo: {}
+    - logs: {}
+    - configMap:
+        collectorName: autopilot
+        namespace: autopilot
+        selector: [""] # we want all ConfigMaps
+        includeAllData: true
+    - configMap:
+        collectorName: default
+        namespace: default
+        selector: [""] # we want all ConfigMaps
+        includeAllData: true
+    - configMap:
+        collectorName: kube-system
+        namespace: kube-system
+        selector: [""] # we want all ConfigMaps
+        includeAllData: true
