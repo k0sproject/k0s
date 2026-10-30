@@ -173,6 +173,6 @@ func (u *UpdateProber) checkUpdates(ctx context.Context) {
 			return
 		}
 	} else {
-		u.log.Debugf("no newer version availablen")
+		u.log.Debugf("no newer version available")
 	}
 }
