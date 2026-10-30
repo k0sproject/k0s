@@ -49,6 +49,7 @@ func NewEtcdCmd() *cobra.Command {
 	pflags.AddFlagSet(config.GetPersistentFlagSet())
 
 	cmd.AddCommand(etcdLeaveCmd())
+	cmd.AddCommand(etcdUpdateCmd())
 	cmd.AddCommand(etcdListCmd())
 
 	return cmd
