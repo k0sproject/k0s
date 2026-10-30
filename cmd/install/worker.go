@@ -11,8 +11,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/k0sproject/k0s/internal/install"
 	"github.com/k0sproject/k0s/pkg/config"
-	"github.com/k0sproject/k0s/pkg/install"
 )
 
 func installWorkerCmd(installFlags *installFlags) *cobra.Command {

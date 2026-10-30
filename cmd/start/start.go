@@ -9,7 +9,7 @@ import (
 	"runtime"
 
 	"github.com/k0sproject/k0s/cmd/internal"
-	"github.com/k0sproject/k0s/pkg/install"
+	"github.com/k0sproject/k0s/internal/install"
 
 	"github.com/spf13/cobra"
 )
