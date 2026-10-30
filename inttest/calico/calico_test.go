@@ -7,6 +7,7 @@ import (
 	"context"
 	"net"
 	"os"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -24,6 +25,9 @@ import (
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 )
 
+// The MTU of the nodes' network interface, below the usual 1500.
+const hostMTU = 1400
+
 type CalicoSuite struct {
 	common.BootlooseSuite
 	isIPv6Only bool
@@ -39,6 +43,7 @@ func (s *CalicoSuite) TestK0sGetsUp() {
 					network := v1beta1.DefaultNetwork()
 					network.Provider = "calico"
 					network.Calico = &v1beta1.Calico{
+						MTU: 0, // let Calico detect the MTU on each node
 						EnvVars: map[string]string{
 							"TEST_BOOL_VAR":   "true",
 							"TEST_INT_VAR":    "42",
@@ -57,6 +62,17 @@ func (s *CalicoSuite) TestK0sGetsUp() {
 		config, err := yaml.Marshal(clusterCfg)
 		s.Require().NoError(err)
 		s.WriteFileContent(s.ControllerNode(0), "/tmp/k0s.yaml", config)
+	}
+
+	// Use a host MTU below 1500, so that the default overlay MTU (1450) won't
+	// fit into the tunnel. The MTU is set to 0 in the cluster config, so
+	// Calico has to detect it on each node.
+	setMTU := "ip link set dev eth0 mtu " + strconv.Itoa(hostMTU)
+	_, err := s.RunCommandController(0, setMTU)
+	s.Require().NoError(err, "failed to set MTU on controller 0")
+	for i := range s.WorkerCount {
+		_, err := s.RunCommandWorker(i, setMTU)
+		s.Require().NoError(err, "failed to set MTU on worker %d", i)
 	}
 
 	s.Require().NoError(s.InitController(0, "--config=/tmp/k0s.yaml", "--feature-gates=IPv6SingleStack=true"))
@@ -140,6 +156,23 @@ func (s *CalicoSuite) TestK0sGetsUp() {
 	}, metav1.CreateOptions{})
 	s.Require().NoError(err)
 	s.NoError(common.WaitForPod(ctx, kc, "alpine", metav1.NamespaceDefault), "alpine pod did not start")
+
+	s.Run("pod MTU matches the tunnel MTU", func() {
+		// VXLAN adds 50 bytes of overhead over IPv4 and 70 bytes over IPv6.
+		tunnelDevice, expectedMTU := "vxlan.calico", hostMTU-50
+		if s.isIPv6Only {
+			tunnelDevice, expectedMTU = "vxlan-v6.calico", hostMTU-70
+		}
+		tunnelMTU, err := s.RunCommandWorker(1, "cat /sys/class/net/"+tunnelDevice+"/mtu")
+		s.Require().NoError(err)
+		podMTU, err := common.PodExecCmdOutput(kc, restConfig, sourcePod.Name, sourcePod.Namespace, "cat /sys/class/net/eth0/mtu")
+		s.Require().NoError(err)
+		podMTU = strings.TrimSpace(podMTU)
+
+		s.T().Logf("Host MTU: %d, tunnel MTU: %s, pod MTU: %s", hostMTU, tunnelMTU, podMTU)
+		s.Equal(strconv.Itoa(expectedMTU), tunnelMTU, "MTU of %s doesn't fit the host MTU", tunnelDevice)
+		s.Equal(tunnelMTU, podMTU, "pod MTU doesn't match the MTU of %s", tunnelDevice)
+	})
 
 	err = wait.PollImmediateWithContext(ctx, 100*time.Millisecond, time.Minute, func(ctx context.Context) (done bool, err error) {
 		out, err := common.PodExecCmdOutput(kc, restConfig, sourcePod.Name, sourcePod.Namespace,
