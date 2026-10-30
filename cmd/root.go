@@ -27,8 +27,8 @@ import (
 	"github.com/k0sproject/k0s/cmd/validate"
 	"github.com/k0sproject/k0s/cmd/version"
 	"github.com/k0sproject/k0s/cmd/worker"
+	"github.com/k0sproject/k0s/internal/build"
 	"github.com/k0sproject/k0s/internal/schemagen"
-	"github.com/k0sproject/k0s/pkg/build"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
