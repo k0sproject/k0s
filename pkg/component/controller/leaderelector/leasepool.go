@@ -10,10 +10,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/k0sproject/k0s/internal/leaderelection"
 	"github.com/k0sproject/k0s/internal/sync/value"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
-	"github.com/k0sproject/k0s/pkg/leaderelection"
 
 	corev1 "k8s.io/api/core/v1"
 

@@ -11,6 +11,7 @@ import (
 	"slices"
 	"time"
 
+	"github.com/k0sproject/k0s/internal/leaderelection"
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
@@ -18,7 +19,6 @@ import (
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
-	"github.com/k0sproject/k0s/pkg/leaderelection"
 
 	"k8s.io/apimachinery/pkg/util/wait"
 

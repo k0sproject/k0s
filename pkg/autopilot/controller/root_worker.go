@@ -11,12 +11,12 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/k0sproject/k0s/internal/leaderelection"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
 	aproot "github.com/k0sproject/k0s/pkg/autopilot/controller/root"
 	"github.com/k0sproject/k0s/pkg/autopilot/controller/signal"
 	apsigk0s "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/k0s"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
-	"github.com/k0sproject/k0s/pkg/leaderelection"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

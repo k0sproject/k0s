@@ -12,6 +12,7 @@ import (
 	"net/netip"
 	"time"
 
+	"github.com/k0sproject/k0s/internal/leaderelection"
 	"github.com/k0sproject/k0s/internal/sync/value"
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
@@ -24,7 +25,6 @@ import (
 	apsigk0s "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/k0s"
 	"github.com/k0sproject/k0s/pkg/autopilot/controller/updates"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
-	"github.com/k0sproject/k0s/pkg/leaderelection"
 
 	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

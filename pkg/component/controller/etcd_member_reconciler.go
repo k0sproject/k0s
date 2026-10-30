@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/avast/retry-go"
+	"github.com/k0sproject/k0s/internal/leaderelection"
 	etcdv1beta1 "github.com/k0sproject/k0s/pkg/apis/etcd/v1beta1"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	etcdclient "github.com/k0sproject/k0s/pkg/client/clientset/typed/etcd/v1beta1"
@@ -24,7 +25,6 @@ import (
 	"github.com/k0sproject/k0s/pkg/etcd"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
-	"github.com/k0sproject/k0s/pkg/leaderelection"
 	"github.com/sirupsen/logrus"
 	"go.etcd.io/etcd/api/v3/v3rpc/rpctypes"
 	corev1 "k8s.io/api/core/v1"
