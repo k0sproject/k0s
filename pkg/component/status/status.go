@@ -9,13 +9,16 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"sync/atomic"
 	"time"
 
+	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/component/prober"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 
 	"github.com/sirupsen/logrus"
+	corev1 "k8s.io/api/core/v1"
 )
 
 type Stater interface {
@@ -29,9 +32,52 @@ type Status struct {
 	L                      *logrus.Entry
 	httpserver             http.Server
 	GetWorkerClientFactory func() kubeutil.ClientFactoryInterface
+	AdminClientFactory     kubeutil.ClientFactoryInterface
+	network                atomic.Pointer[v1beta1.Network]
 }
 
 var _ manager.Component = (*Status)(nil)
+
+const statusCheckTimeout = 5 * time.Second
+
+// ClusterConfigUpdater copies reconciled Network onto Status so CNIReady
+// follows live Calico mode. JSON ClusterConfig on K0sStatus stays node-local
+// so controller-token admission still sees Kine storage.
+type ClusterConfigUpdater struct {
+	Status *Status
+}
+
+var (
+	_ manager.Component  = (*ClusterConfigUpdater)(nil)
+	_ manager.Reconciler = (*ClusterConfigUpdater)(nil)
+)
+
+func (c *ClusterConfigUpdater) Init(context.Context) error  { return nil }
+func (c *ClusterConfigUpdater) Start(context.Context) error { return nil }
+func (c *ClusterConfigUpdater) Stop() error                 { return nil }
+
+func (c *ClusterConfigUpdater) Reconcile(_ context.Context, cfg *v1beta1.ClusterConfig) error {
+	var network *v1beta1.Network
+	if cfg != nil && cfg.Spec != nil {
+		network = cfg.Spec.Network
+	}
+	c.Status.SetNetwork(network)
+	return nil
+}
+
+func (s *Status) SetNetwork(network *v1beta1.Network) {
+	s.network.Store(network)
+}
+
+func (s *Status) cniNetwork(snapshot *K0sStatus) *v1beta1.Network {
+	if network := s.network.Load(); network != nil {
+		return network
+	}
+	if snapshot != nil && snapshot.ClusterConfig != nil && snapshot.ClusterConfig.Spec != nil {
+		return snapshot.ClusterConfig.Spec.Network
+	}
+	return nil
+}
 
 const defaultMaxEvents = 5
 
@@ -99,24 +145,51 @@ func (sh *statusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (sh *statusHandler) getCurrentStatus(ctx context.Context) K0sStatus {
-	status := sh.Status.StatusInformation
-	if !status.Workloads {
-		return status
-	}
+	ctx, cancel := context.WithTimeout(ctx, statusCheckTimeout)
+	defer cancel()
 
+	status := sh.Status.StatusInformation
+	if status.Workloads {
+		sh.probeWorkerAPI(ctx, &status)
+	}
+	sh.appendCNICondition(ctx, &status)
+	return status
+}
+
+func (sh *statusHandler) probeWorkerAPI(ctx context.Context, status *K0sStatus) {
 	client, err := sh.Status.GetWorkerClientFactory().GetClient()
 	if err != nil {
 		status.WorkerToAPIConnectionStatus = ProbeStatus{
 			Message: "failed to get client: " + err.Error(),
 		}
-		return status
+		return
 	}
 
 	_, err = client.Discovery().RESTClient().Get().AbsPath("/version").Do(ctx).Raw()
 	if err != nil {
 		status.WorkerToAPIConnectionStatus = ProbeStatus{Message: err.Error()}
-		return status
+		return
 	}
 	status.WorkerToAPIConnectionStatus = ProbeStatus{Success: true}
-	return status
+}
+
+func (sh *statusHandler) appendCNICondition(ctx context.Context, status *K0sStatus) {
+	if sh.Status.AdminClientFactory == nil {
+		return
+	}
+	network := sh.Status.cniNetwork(status)
+	if !isManagedCNI(network) {
+		return
+	}
+
+	client, err := sh.Status.AdminClientFactory.GetClient()
+	if err != nil {
+		status.Conditions = []Condition{cniCondition(corev1.ConditionUnknown, reasonError, err.Error())}
+		return
+	}
+
+	cond, ok := evaluateCNI(ctx, client, network)
+	if ok {
+		status.Conditions = []Condition{cond}
+	}
 }
