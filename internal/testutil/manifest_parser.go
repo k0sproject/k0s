@@ -23,8 +23,17 @@ func ParseObjects(scheme *runtime.Scheme, r io.Reader) iter.Seq2[runtime.Object,
 				}
 				return
 			}
+			if resource.Object == nil {
+				continue // empty --- section
+			}
+
 			gv := resource.GroupVersionKind().GroupVersion()
-			if !yield(scheme.ConvertToVersion(&resource, gv)) {
+			obj, err := scheme.ConvertToVersion(&resource, gv)
+			// Fallback to unstructured if the type is unknown.
+			if runtime.IsNotRegisteredError(err) {
+				obj, err = &resource, nil
+			}
+			if !yield(obj, err) {
 				return
 			}
 		}
