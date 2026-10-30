@@ -6,7 +6,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 # Autopilot
 
 A tool for updating your `k0s` controller and worker nodes using specialized plans.
-There is a public update-server hosted on the same domain as the documentation site. See the example below on how to use it. There is only a single channel `edge_release` available. The channel exposes the latest released version.
+There is a public update-server hosted on the same domain as the documentation site. See the example below on how to use it. There are two channels available, `stable`(default) and `unstable`.
 
 ## How it works
 
@@ -30,7 +30,7 @@ metadata:
   name: example
   namespace: default
 spec:
-  channel: edge_release
+  channel: stable
   updateServer: https://updates.k0sproject.io/
   upgradeStrategy:
     type: periodic
@@ -42,6 +42,42 @@ spec:
   planSpec: # This defines the plan to be created IF there are updates available
     ...
 ```
+
+## Update channels
+
+An update channel is a path on an update server that announces exactly one
+k0s version. Autopilot resolves the channel URL from `spec.updateServer` and
+`spec.channel`.
+
+### Channels published with the k0s documentation
+
+These channels are regenerated on every k0s release.
+
+| Channel          | URL                                          | Content                                                   |
+|------------------|----------------------------------------------|-----------------------------------------------------------|
+| `stable_release` | <https://docs.k0sproject.io/stable_release>  | Newest k0s release, excluding pre-releases                |
+| `edge_release`   | <https://docs.k0sproject.io/edge_release>    | Newest k0s release, including alpha, beta and RC versions |
+| `stable.txt`     | <https://docs.k0sproject.io/stable.txt>      | Version string only, excluding pre-releases               |
+| `latest.txt`     | <https://docs.k0sproject.io/latest.txt>      | Version string only, including pre-releases               |
+
+`stable_release` and `edge_release` use the format of the deprecated `cron`
+upgrade strategy. The plain-text files are intended for scripts and CI pipelines:
+
+```shell
+curl -sSL https://docs.k0sproject.io/stable.txt
+```
+
+**Note:** The `periodic` upgrade strategy requests `<updateServer>/<channel>/index.yaml` and cannot consume the files above.
+
+### Default update server
+
+If `spec.updateServer` and `spec.channel` are not set, autopilot uses
+`https://updates.k0sproject.io` with channel `stable`.
+
+!!! warning "Outdated update server"
+    The channels on `https://updates.k0sproject.io` are no longer updated with
+    new k0s releases. See <https://updates.k0sproject.io/> for the channels it
+    provides.
 
 ## Safeguards
 
@@ -361,7 +397,7 @@ Similar to the **Plan Status**, the individual nodes can have their own statuses
 
 #### `spec.channel <string> (optional)`
 
-* Update channel to use. Supported values: `stable`(default), `unstable`.
+* Update channel to use. Supported values: `stable`(default), `unstable`. See [Update channels](#update-channels).
 
 #### `spec.updateServer <string> (optional)`
 
