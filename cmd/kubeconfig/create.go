@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/k0sproject/k0s/internal/pkg/users"
+	"github.com/k0sproject/k0s/internal/secret"
 	"github.com/k0sproject/k0s/pkg/certificate"
 	"github.com/k0sproject/k0s/pkg/config"
 
@@ -69,7 +70,7 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 				return err
 			}
 
-			_, err = cmd.OutOrStdout().Write(kubeconfig)
+			_, err = kubeconfig.Use(cmd.OutOrStdout().Write)
 			return err
 		},
 	}
@@ -83,7 +84,7 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 	return cmd
 }
 
-func createUserKubeconfig(k0sVars *config.CfgVars, clusterAPIURL, username, groups string, certificateExpiresAfter time.Duration, contextName string) ([]byte, error) {
+func createUserKubeconfig(k0sVars *config.CfgVars, clusterAPIURL, username, groups string, certificateExpiresAfter time.Duration, contextName string) (secret.Bytes, error) {
 	userReq := certificate.Request{
 		Name:   username,
 		CN:     username,
@@ -96,27 +97,31 @@ func createUserKubeconfig(k0sVars *config.CfgVars, clusterAPIURL, username, grou
 	}
 	userCert, err := certManager.EnsureCertificate(userReq, users.RootUID, certificateExpiresAfter)
 	if err != nil {
-		return nil, fmt.Errorf("failed generate user certificate: %w, check if the control plane is initialized on this node", err)
+		return secret.Bytes{}, fmt.Errorf("failed generate user certificate: %w, check if the control plane is initialized on this node", err)
 	}
 
-	kubeconfig := clientcmdapi.Config{
-		Clusters: map[string]*clientcmdapi.Cluster{contextName: {
-			Server:               clusterAPIURL,
-			CertificateAuthority: userReq.CACert,
-		}},
-		Contexts: map[string]*clientcmdapi.Context{contextName: {
-			Cluster:  contextName,
-			AuthInfo: username,
-		}},
-		CurrentContext: contextName,
-		AuthInfos: map[string]*clientcmdapi.AuthInfo{username: {
-			ClientCertificateData: []byte(userCert.Cert),
-			ClientKeyData:         []byte(userCert.Key),
-		}},
-	}
-	if err := clientcmdapi.FlattenConfig(&kubeconfig); err != nil {
-		return nil, err
-	}
+	return userCert.Key.Use(func(userKey []byte) (secret.Bytes, error) {
+		kubeconfig := clientcmdapi.Config{
+			Clusters: map[string]*clientcmdapi.Cluster{contextName: {
+				Server:               clusterAPIURL,
+				CertificateAuthority: userReq.CACert,
+			}},
+			Contexts: map[string]*clientcmdapi.Context{contextName: {
+				Cluster:  contextName,
+				AuthInfo: username,
+			}},
+			CurrentContext: contextName,
+			AuthInfos: map[string]*clientcmdapi.AuthInfo{username: {
+				ClientCertificateData: []byte(userCert.Cert),
+				ClientKeyData:         userKey,
+			}},
+		}
 
-	return clientcmd.Write(kubeconfig)
+		if err := clientcmdapi.FlattenConfig(&kubeconfig); err != nil {
+			return secret.Bytes{}, err
+		}
+
+		out, err := clientcmd.Write(kubeconfig)
+		return secret.FromBytes(out), err
+	})
 }
