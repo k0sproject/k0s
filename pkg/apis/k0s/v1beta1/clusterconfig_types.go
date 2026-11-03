@@ -479,6 +479,10 @@ func (s *ClusterSpec) Validate() (errs []error) {
 		errs = append(errs, err)
 	}
 
+	if s.Network != nil && s.Network.ControlPlaneLoadBalancing.IsBGP() && s.API != nil && s.API.OnlyBindToAddress {
+		errs = append(errs, field.Forbidden(field.NewPath("network", "controlPlaneLoadBalancing", "type"), "BGP cannot be used in conjunction with spec.api.onlyBindToAddress"))
+	}
+
 	for err := range s.FeatureGates.Validate(field.NewPath("featureGates")) {
 		errs = append(errs, err)
 	}

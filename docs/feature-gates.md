@@ -42,10 +42,12 @@ The feature gates configuration must be consistent across all controllers in the
 
 The following table is a summary of the feature gates that you can set. Each feature is designed for a specific stage of stability:
 
-| Feature           | Default | Stage | Since | Until |
-|-------------------|---------|-------|-------|-------|
-| `IPv6SingleStack` | `false` | Alpha | 1.34  |       |
+| Feature                        | Default | Stage | Since | Until |
+|--------------------------------|---------|-------|-------|-------|
+| `IPv6SingleStack`              | `false` | Alpha | 1.34  |       |
+| `ControlPlaneLoadBalancingBGP` | `false` | Alpha | 1.37  |       |
 
 ### Feature Details
 
 - `IPv6SingleStack`: Enables single-stack IPv6 support in k0s clusters.
+- `ControlPlaneLoadBalancingBGP`: Enables the [BGP](cplb.md#bgp) type of control plane load balancing.

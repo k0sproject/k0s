@@ -296,20 +296,28 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 			logrus.Info("Disabling k0s endpoint reconciler in favor of control plane load balancing")
 		}
 
-		workerInterface.usesIPTables = true
-		nodeComponents.Add(ctx, &iptables.Component{
-			IPTablesMode: c.IPTablesMode,
-			BinDir:       c.K0sVars.BinDir,
-		})
+		if cplbCfg.IsBGP() {
+			nodeComponents.Add(ctx, &cplb.BGP{
+				Config:         cplbCfg.BGP,
+				KubeConfigPath: c.K0sVars.AdminKubeConfigPath,
+				Address:        nodeConfig.Spec.API.Address,
+			})
+		} else {
+			workerInterface.usesIPTables = true
+			nodeComponents.Add(ctx, &iptables.Component{
+				IPTablesMode: c.IPTablesMode,
+				BinDir:       c.K0sVars.BinDir,
+			})
 
-		nodeComponents.Add(ctx, &cplb.Keepalived{
-			K0sVars:         c.K0sVars,
-			Config:          cplbCfg.Keepalived,
-			DetailedLogging: debug,
-			LogConfig:       debug,
-			KubeConfigPath:  c.K0sVars.AdminKubeConfigPath,
-			APIPort:         nodeConfig.Spec.API.Port,
-		})
+			nodeComponents.Add(ctx, &cplb.Keepalived{
+				K0sVars:         c.K0sVars,
+				Config:          cplbCfg.Keepalived,
+				DetailedLogging: debug,
+				LogConfig:       debug,
+				KubeConfigPath:  c.K0sVars.AdminKubeConfigPath,
+				APIPort:         nodeConfig.Spec.API.Port,
+			})
+		}
 	}
 
 	var konnectivityServerCount controller.KonnectivityServerCounter

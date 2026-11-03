@@ -12,6 +12,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/k0sproject/k0s/internal/featuregate"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -33,23 +35,31 @@ type ControlPlaneLoadBalancingSpec struct {
 	Enabled bool `json:"enabled"`
 
 	// type indicates the type of the control plane load balancer to deploy on
-	// controller nodes. Currently, the only supported type is "Keepalived".
+	// controller nodes, either "Keepalived" or "BGP".
 	// +kubebuilder:default=Keepalived
 	Type CPLBType `json:"type,omitempty"`
 
 	// Keepalived contains configuration options related to the "Keepalived" type
 	// of load balancing.
 	Keepalived *KeepalivedSpec `json:"keepalived,omitempty"`
+
+	// BGP contains configuration options related to the "BGP" type of load
+	// balancing.
+	BGP *BGPSpec `json:"bgp,omitempty"`
 }
 
 // CPLBType describes which type of load balancer should be deployed for the
 // control plane load balancing. The default is [CPLBTypeKeepalived].
-// +kubebuilder:validation:Enum=Keepalived
+// +kubebuilder:validation:Enum=Keepalived;BGP
 type CPLBType string
 
 const (
 	// CPLBTypeKeepalived selects Keepalived as the backing load balancer.
 	CPLBTypeKeepalived CPLBType = "Keepalived"
+
+	// CPLBTypeBGP advertises the virtual IPs from every ready controller as
+	// host routes to BGP peers, which balance the traffic with ECMP.
+	CPLBTypeBGP CPLBType = "BGP"
 )
 
 type KeepalivedSpec struct {
@@ -343,6 +353,11 @@ func (s *VirtualServer) validate(path *field.Path) (errs field.ErrorList) {
 	return errs
 }
 
+// IsBGP reports whether control plane load balancing is enabled with type BGP.
+func (c *ControlPlaneLoadBalancingSpec) IsBGP() bool {
+	return c != nil && c.Enabled && c.Type == CPLBTypeBGP
+}
+
 // Validate validates the ControlPlaneLoadBalancingSpec
 func (c *ControlPlaneLoadBalancingSpec) Validate(path *field.Path) (errs field.ErrorList) {
 	if c == nil {
@@ -350,11 +365,23 @@ func (c *ControlPlaneLoadBalancingSpec) Validate(path *field.Path) (errs field.E
 	}
 
 	switch c.Type {
+	case CPLBTypeBGP:
+		if c.Enabled && !featuregate.IsEnabled(featuregate.ControlPlaneLoadBalancingBGP) {
+			errs = append(errs, field.Forbidden(path.Child("type"), "feature gate ControlPlaneLoadBalancingBGP must be explicitly enabled to use BGP"))
+		}
+		if c.Keepalived != nil {
+			errs = append(errs, field.Forbidden(path.Child("keepalived"), "cannot be combined with type BGP"))
+		}
+		return append(errs, c.BGP.Validate(path.Child("bgp"))...)
 	case CPLBTypeKeepalived:
 	case "":
 		c.Type = CPLBTypeKeepalived
 	default:
-		errs = append(errs, field.NotSupported(path.Child("type"), c.Type, []CPLBType{CPLBTypeKeepalived}))
+		errs = append(errs, field.NotSupported(path.Child("type"), c.Type, []CPLBType{CPLBTypeKeepalived, CPLBTypeBGP}))
+	}
+
+	if c.BGP != nil {
+		errs = append(errs, field.Forbidden(path.Child("bgp"), "requires type BGP"))
 	}
 
 	return append(errs, c.Keepalived.Validate(path.Child("keepalived"))...)

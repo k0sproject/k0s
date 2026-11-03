@@ -263,6 +263,15 @@ func (c *Certificates) generateSANList(ctx context.Context) ([]string, error) {
 			}
 		}
 	}
+	if cplb.IsBGP() && cplb.BGP != nil {
+		for _, vip := range cplb.BGP.VirtualIPs {
+			ip, _, err := net.ParseCIDR(vip)
+			if err != nil {
+				return nil, fmt.Errorf("error parsing virtualIP %s: %w", vip, err)
+			}
+			hostnames = append(hostnames, ip.String())
+		}
+	}
 
 	internalAPIAddress, err := c.ClusterSpec.Network.InternalAPIAddresses()
 	if err != nil {

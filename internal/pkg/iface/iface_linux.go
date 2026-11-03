@@ -30,6 +30,10 @@ func interfaceAddrs(i net.Interface) (iter.Seq[*net.IPNet], error) {
 			if a.Flags&unix.IFA_F_SECONDARY != 0 {
 				continue
 			}
+			// skip deprecated addresses, such as the VIPs that CPLB adds to lo in BGP mode
+			if a.Flags&unix.IFA_F_DEPRECATED != 0 {
+				continue
+			}
 
 			if a.IPNet != nil {
 				if !yield(a.IPNet) {

@@ -33,6 +33,8 @@ smoketests := \
 	check-configchange \
 	check-containerd-deprecations \
 	check-containerdimports \
+	check-cplb-bgp \
+	check-cplb-bgp-ipv6 \
 	check-cplb-ipvs \
 	check-cplb-ipvs-ipv6 \
 	check-cplb-userspace \
@@ -96,6 +98,7 @@ air_gapped_smoketests := \
 
 ipv6_smoketests := \
 	check-calico-ipv6 \
+	check-cplb-bgp-ipv6 \
 	check-cplb-ipvs-ipv6 \
 	check-cplb-userspace-ipv6 \
 	check-kuberouter-ipv6 \
