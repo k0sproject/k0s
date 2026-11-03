@@ -508,7 +508,18 @@ func TestReconciler_Patches(t *testing.T) {
 		for _, reactor := range eventReactors {
 			client.PrependReactor("create", "events", reactor)
 		}
-		underTest.newEventClient = func() (kubernetes.Interface, error) { return client, nil }
+		underTest.clientFromKubeconfig = func(path string) (kubernetes.Interface, error) {
+			switch path {
+			case underTest.regularKubeconfigPath:
+				return client, nil
+			default: //nolint:gocritic // fallthrough
+				assert.Failf(t, "Unexpected kubeconfig path: %q", path)
+				fallthrough
+			case underTest.loadBalancedKubeconfigPath:
+				// Just create a throw-away client, so the tests won't perform superfluous network I/O.
+				return fake.NewClientset(), nil
+			}
+		}
 
 		require.NoError(t, underTest.Init(testContext(t)))
 		require.NoError(t, underTest.Start(testContext(t)))

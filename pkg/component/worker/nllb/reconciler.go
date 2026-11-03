@@ -72,8 +72,7 @@ type Reconciler struct {
 	loadBalancer               backend
 	patches                    v1beta1.Patches
 
-	// Creates the client used to record Node events.
-	newEventClient func() (kubernetes.Interface, error)
+	clientFromKubeconfig func(kubeconfigPath string) (kubernetes.Interface, error)
 
 	mu    sync.Mutex
 	state reconcilerState
@@ -137,13 +136,9 @@ func NewReconciler(
 		workerProfile:              workerProfile,
 		regularKubeconfigPath:      k0sVars.KubeletAuthConfigPath,
 		loadBalancedKubeconfigPath: filepath.Join(runtimeDir, "kubeconfig.yaml"),
+		clientFromKubeconfig:       kubeutil.NewClientFromFile,
 
 		state: reconcilerCreated,
-	}
-
-	// Use the regular kubeconfig, as it doesn't depend on the load balancer.
-	r.newEventClient = func() (kubernetes.Interface, error) {
-		return kubeutil.NewClientFromFile(r.regularKubeconfigPath)
 	}
 
 	switch workerProfile.NodeLocalLoadBalancing.Type {
@@ -175,6 +170,8 @@ func (r *Reconciler) GetKubeletKubeconfigPath() string {
 }
 
 // NewClient returns a new Kubernetes client, backed by the node-local load balancer.
+//
+// Deprecated: Not used anywhere in k0s. Will be removed in future versions.
 func (r *Reconciler) NewClient() (kubernetes.Interface, error) {
 	return kubeutil.NewClientFromFile(r.loadBalancedKubeconfigPath)
 }
@@ -315,7 +312,7 @@ func (r *Reconciler) runReconcileLoop(ctx context.Context) {
 
 	go func() {
 		wait.UntilWithContext(ctx, func(ctx context.Context) {
-			client, err := kubeutil.NewClientFromFile(r.loadBalancedKubeconfigPath)
+			client, err := r.clientFromKubeconfig(r.loadBalancedKubeconfigPath)
 			if err != nil {
 				r.log.WithError(err).Error("Failed to create load-balanced Kubernetes client")
 				return
@@ -478,7 +475,8 @@ func (r *Reconciler) reportPatchFailure(ctx context.Context, cause error) {
 // recordPatchFailedEvent records a Warning event on this Node, so that the
 // failure is visible in the cluster, and not only in the worker logs.
 func (r *Reconciler) recordPatchFailedEvent(ctx context.Context, cause error) error {
-	client, err := r.newEventClient()
+	// Use the regular kubeconfig, as it doesn't depend on the load balancer.
+	client, err := r.clientFromKubeconfig(r.regularKubeconfigPath)
 	if err != nil {
 		return fmt.Errorf("failed to create Kubernetes client: %w", err)
 	}
