@@ -7,16 +7,20 @@ import (
 	"context"
 	"errors"
 	"io/fs"
+	"net"
 	"net/url"
 	"os"
 	"path/filepath"
 	"runtime"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"testing"
+	"testing/synctest"
 	"time"
 
-	"github.com/k0sproject/k0s/internal/pkg/net"
+	"github.com/k0sproject/k0s/internal/k0scontext"
+	internalnet "github.com/k0sproject/k0s/internal/pkg/net"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/worker"
 	workerconfig "github.com/k0sproject/k0s/pkg/component/worker/config"
@@ -44,7 +48,7 @@ func TestReconciler_Lifecycle(t *testing.T) {
 		t.Helper()
 		t.Setenv("XDG_RUNTIME_DIR", t.TempDir())
 
-		apiServer, err := net.NewHostPort("127.99.99.99", 6443)
+		apiServer, err := internalnet.NewHostPort("127.99.99.99", 6443)
 		require.NoError(t, err)
 
 		dataDir := t.TempDir()
@@ -56,7 +60,7 @@ func TestReconciler_Lifecycle(t *testing.T) {
 			nil,
 			t.Name(),
 			workerconfig.Profile{
-				APIServerAddresses: []net.HostPort{*apiServer},
+				APIServerAddresses: []internalnet.HostPort{*apiServer},
 				NodeLocalLoadBalancing: &v1beta1.NodeLocalLoadBalancing{
 					Enabled:    true,
 					Type:       v1beta1.NllbTypeEnvoyProxy,
@@ -140,7 +144,7 @@ func TestReconciler_Lifecycle(t *testing.T) {
 		})
 
 		t.Run("start_and_stop_succeed", func(t *testing.T) {
-			apiServer, err := net.NewHostPort("127.99.99.99", 6443)
+			apiServer, err := internalnet.NewHostPort("127.99.99.99", 6443)
 			require.NoError(t, err)
 			underTest := initializedReconciler(t)
 			ctx := testContext(t)
@@ -190,7 +194,7 @@ func TestReconciler_Lifecycle(t *testing.T) {
 	startedReconciler := func(t *testing.T) (_ *Reconciler, allowStop func()) {
 		t.Helper()
 		underTest := initializedReconciler(t)
-		apiServer, err := net.NewHostPort("127.99.99.99", 6443)
+		apiServer, err := internalnet.NewHostPort("127.99.99.99", 6443)
 		require.NoError(t, err)
 		ctx := testContext(t)
 		loadBalancer := underTest.loadBalancer.(*backendMock)
@@ -294,7 +298,7 @@ func TestReconciler_Lifecycle(t *testing.T) {
 }
 
 func TestReconciler_ConfigMgmt(t *testing.T) {
-	newTestInstance := func(t *testing.T, dataDir string, apiServers ...net.HostPort) (*Reconciler, *staticPodMock) {
+	newTestInstance := func(t *testing.T, dataDir string, apiServers ...internalnet.HostPort) (*Reconciler, *staticPodMock) {
 		staticPod := new(staticPodMock)
 		staticPod.On("Drop").Return()
 
@@ -382,7 +386,7 @@ func TestReconciler_ConfigMgmt(t *testing.T) {
 		t.Setenv("XDG_RUNTIME_DIR", runtimeDir)
 		dataDir := t.TempDir()
 		envoyConfig := filepath.Join(runtimeDir, "k0s", "nllb", "envoy", "envoy.yaml")
-		apiServerAddress, err := net.NewHostPort("127.10.10.1", 6443)
+		apiServerAddress, err := internalnet.NewHostPort("127.10.10.1", 6443)
 		require.NoError(t, err)
 
 		// when
@@ -431,12 +435,12 @@ func TestReconciler_APIServerAddressFromKubeconfig(t *testing.T) {
 	t.Setenv("XDG_RUNTIME_DIR", t.TempDir())
 
 	dataDir := t.TempDir()
-	apiServer, err := net.NewHostPort("127.99.99.99", 443)
+	apiServer, err := internalnet.NewHostPort("127.99.99.99", 443)
 	require.NoError(t, err)
 
 	loadBalancer := new(backendMock)
 	loadBalancer.On("init", mock.Anything).Return(nil)
-	loadBalancer.On("start", mock.Anything, mock.Anything, []net.HostPort{*apiServer}).Return(nil)
+	loadBalancer.On("start", mock.Anything, mock.Anything, []internalnet.HostPort{*apiServer}).Return(nil)
 	loadBalancer.On("getAPIServerAddress").Maybe().Return(apiServer, nil)
 	loadBalancer.On("stop", mock.Anything).Return(nil)
 	underTest, err := NewReconciler(
@@ -469,10 +473,6 @@ func TestReconciler_APIServerAddressFromKubeconfig(t *testing.T) {
 }
 
 func TestReconciler_Patches(t *testing.T) {
-	origDelay := eventRetryDelay
-	t.Cleanup(func() { eventRetryDelay = origDelay })
-	eventRetryDelay = time.Millisecond
-
 	const annotation = "test.k0sproject.io/patched"
 
 	// Starts an Envoy reconciler with the given patches and returns the
@@ -508,21 +508,28 @@ func TestReconciler_Patches(t *testing.T) {
 		for _, reactor := range eventReactors {
 			client.PrependReactor("create", "events", reactor)
 		}
+		// Stubbing out the resolver and kubernetes client here, not only to
+		// inject fake implementations, but also to prevent network usage inside
+		// synctest bubbles. The net package uses lazily initialized global
+		// channel variables, e.g. when reading resolv.conf. If initialization
+		// happens inside a bubble, global state becomes bound to it, leaving
+		// behind a broken network stack for everything outside that bubble.
+		ctx := k0scontext.WithValue[ipAddrResolver](t.Context(), loopbackStubResolver{})
 		underTest.clientFromKubeconfig = func(path string) (kubernetes.Interface, error) {
 			switch path {
 			case underTest.regularKubeconfigPath:
 				return client, nil
 			default: //nolint:gocritic // fallthrough
-				assert.Failf(t, "Unexpected kubeconfig path: %q", path)
+				assert.Failf(t, "Unexpected kubeconfig path", "%q", path)
 				fallthrough
 			case underTest.loadBalancedKubeconfigPath:
-				// Just create a throw-away client, so the tests won't perform superfluous network I/O.
+				// Just create a throw-away client.
 				return fake.NewClientset(), nil
 			}
 		}
 
-		require.NoError(t, underTest.Init(testContext(t)))
-		require.NoError(t, underTest.Start(testContext(t)))
+		require.NoError(t, underTest.Init(ctx))
+		require.NoError(t, underTest.Start(ctx))
 		t.Cleanup(func() { assert.NoError(t, underTest.Stop()) })
 
 		require.NotNil(t, staticPods.manifest, "no manifest provisioned")
@@ -556,95 +563,95 @@ func TestReconciler_Patches(t *testing.T) {
 	}
 
 	t.Run("applied", func(t *testing.T) {
-		underTest, client, manifest := startWithPatches(t, v1beta1.Patches{{
-			Target: v1beta1.PatchTarget{Kind: "Pod", Name: "nllb"},
-			Patch: v1beta1.PatchSpec{
-				Type:    v1beta1.MergePatchType,
-				Content: `{"metadata": {"annotations": {"` + annotation + `": "true"}}}`,
-			},
-		}})
+		synctest.Test(t, func(t *testing.T) {
+			underTest, client, manifest := startWithPatches(t, v1beta1.Patches{{
+				Target: v1beta1.PatchTarget{Kind: "Pod", Name: "nllb"},
+				Patch: v1beta1.PatchSpec{
+					Type:    v1beta1.MergePatchType,
+					Content: `{"metadata": {"annotations": {"` + annotation + `": "true"}}}`,
+				},
+			}})
 
-		assert.Equal(t, "true", manifest.Annotations[annotation])
-		assertLoadBalancedKubeconfig(t, underTest)
-		assert.Empty(t, client.Actions(), "no events expected")
+			assert.Equal(t, "true", manifest.Annotations[annotation])
+			assertLoadBalancedKubeconfig(t, underTest)
+			synctest.Wait()
+			assert.Empty(t, client.Actions(), "no events expected")
+		})
 	})
 
 	t.Run("failed_falls_back_to_unpatched", func(t *testing.T) {
-		underTest, client, manifest := startWithPatches(t, brokenPatches)
+		synctest.Test(t, func(t *testing.T) {
+			underTest, client, manifest := startWithPatches(t, brokenPatches)
 
-		// None of the patches got applied, not even the valid one.
-		assert.NotContains(t, manifest.Annotations, annotation)
-		assert.Equal(t, "nllb", manifest.Name)
-		if assert.Len(t, manifest.Spec.Containers, 1) {
-			assert.Equal(t, "nllb", manifest.Spec.Containers[0].Name)
-		}
-		assertLoadBalancedKubeconfig(t, underTest)
+			// None of the patches got applied, not even the valid one.
+			assert.NotContains(t, manifest.Annotations, annotation)
+			assert.Equal(t, "nllb", manifest.Name)
+			if assert.Len(t, manifest.Spec.Containers, 1) {
+				assert.Equal(t, "nllb", manifest.Spec.Containers[0].Name)
+			}
+			assertLoadBalancedKubeconfig(t, underTest)
 
-		event := getEvent(t, client)
-		assert.Equal(t, corev1.ObjectReference{
-			APIVersion: "v1",
-			Kind:       "Node",
-			Name:       "test-node",
-			UID:        "test-node",
-		}, event.InvolvedObject)
-		assert.Equal(t, corev1.EventTypeWarning, event.Type)
-		assert.Equal(t, "NodeLocalLoadBalancingPatchFailed", event.Reason)
-		assert.Equal(t, corev1.EventSource{Component: "nllb", Host: "test-node"}, event.Source)
-		assert.Equal(t,
-			"Failed to apply patches to the node-local load balancer, running it without patches. "+
-				"Fix the patches in the cluster configuration and restart the worker. "+
-				"Error: failed to patch NLLB pod: error patching resource (Pod/nllb): "+
-				"replace operation does not apply: doc is missing key: /spec/doesNotExist: missing value",
-			event.Message,
-		)
+			synctest.Wait()
+			event := getEvent(t, client)
+			assert.Equal(t, corev1.ObjectReference{
+				APIVersion: "v1",
+				Kind:       "Node",
+				Name:       "test-node",
+				UID:        "test-node",
+			}, event.InvolvedObject)
+			assert.Equal(t, corev1.EventTypeWarning, event.Type)
+			assert.Equal(t, "NodeLocalLoadBalancingPatchFailed", event.Reason)
+			assert.Equal(t, corev1.EventSource{Component: "nllb", Host: "test-node"}, event.Source)
+			assert.Equal(t,
+				"Failed to apply patches to the node-local load balancer, running it without patches. "+
+					"Fix the patches in the cluster configuration and restart the worker. "+
+					"Error: failed to patch NLLB pod: error patching resource (Pod/nllb): "+
+					"replace operation does not apply: doc is missing key: /spec/doesNotExist: missing value",
+				event.Message,
+			)
+		})
 	})
 
 	t.Run("rejected_falls_back_to_unpatched", func(t *testing.T) {
-		_, client, manifest := startWithPatches(t, v1beta1.Patches{{
-			Target: v1beta1.PatchTarget{Kind: "Pod", Name: "nllb"},
-			Patch: v1beta1.PatchSpec{
-				Type:    v1beta1.MergePatchType,
-				Content: `{"metadata": {"name": "renamed"}}`,
-			},
-		}})
+		synctest.Test(t, func(t *testing.T) {
+			_, client, manifest := startWithPatches(t, v1beta1.Patches{{
+				Target: v1beta1.PatchTarget{Kind: "Pod", Name: "nllb"},
+				Patch: v1beta1.PatchSpec{
+					Type:    v1beta1.MergePatchType,
+					Content: `{"metadata": {"name": "renamed"}}`,
+				},
+			}})
 
-		assert.Equal(t, "nllb", manifest.Name)
-		assert.Contains(t, getEvent(t, client).Message,
-			`failed to set manifest of patched NLLB pod: attempt to set the manifest to "kube-system/renamed", whereas "kube-system/nllb" was claimed`,
-		)
+			assert.Equal(t, "nllb", manifest.Name)
+			synctest.Wait()
+			assert.Contains(t, getEvent(t, client).Message,
+				`failed to set manifest of patched NLLB pod: attempt to set the manifest to "kube-system/renamed", whereas "kube-system/nllb" was claimed`,
+			)
+		})
 	})
 
 	t.Run("event_creation_is_retried", func(t *testing.T) {
-		attempts := 0
-		// Use a channel to signal when the retry happened via the fake client reactors
-		retried := make(chan struct{})
-		_, client, _ := startWithPatches(t, brokenPatches, func(k8stesting.Action) (bool, k8sruntime.Object, error) {
-			attempts++
-			if attempts == 2 {
-				close(retried)
+		synctest.Test(t, func(t *testing.T) {
+			var attempts atomic.Uint32
+			_, client, _ := startWithPatches(t, brokenPatches, func(k8stesting.Action) (bool, k8sruntime.Object, error) {
+				if attempts.Add(1) == 1 {
+					return true, nil, assert.AnError
+				}
+				return false, nil, nil
+			})
+
+			synctest.Wait()
+			assert.EqualValues(t, 1, attempts.Load(), "Exactly one event creation attempt is expected at this point")
+			if events, err := client.CoreV1().Events(metav1.NamespaceDefault).List(t.Context(), metav1.ListOptions{}); assert.NoError(t, err) {
+				assert.Empty(t, events.Items, "Expected no events to be created yet")
 			}
-			if attempts == 1 {
-				return true, nil, assert.AnError
-			}
-			return false, nil, nil
+
+			// Sleep for the retry delay plus retry-go's default jitter
+			synctest.Sleep(1*time.Second + 100*time.Millisecond)
+			assert.EqualValues(t, 2, attempts.Load(), "Exactly two event creation attempts are expected at this point")
+			_ = getEvent(t, client) // Assert that the event has been created
 		})
-
-		require.Eventually(t, func() bool {
-			select {
-			case <-retried:
-				return true
-			default:
-				return false
-			}
-		}, time.Second, time.Millisecond, "event creation was not retried")
-		assert.Equal(t, 2, attempts)
-
-		require.Eventually(t, func() bool {
-			events, err := client.CoreV1().Events(metav1.NamespaceDefault).List(t.Context(), metav1.ListOptions{})
-			return err == nil && len(events.Items) == 1
-		}, time.Second, time.Millisecond, "event was not recorded")
 	})
-
 }
 
 // getEvent returns the single event that has been recorded in the default
@@ -763,9 +770,9 @@ func newTestLogger(t *testing.T) logrus.FieldLogger {
 
 type backendMock struct{ mock.Mock }
 
-func (m *backendMock) getAPIServerAddress() (*net.HostPort, error) {
+func (m *backendMock) getAPIServerAddress() (*internalnet.HostPort, error) {
 	args := m.Called()
-	return args.Get(0).(*net.HostPort), args.Error(1)
+	return args.Get(0).(*internalnet.HostPort), args.Error(1)
 }
 
 func (m *backendMock) init(ctx context.Context) error {
@@ -773,7 +780,7 @@ func (m *backendMock) init(ctx context.Context) error {
 	return args.Error(0)
 }
 
-func (m *backendMock) start(ctx context.Context, profile workerconfig.Profile, apiServers []net.HostPort) error {
+func (m *backendMock) start(ctx context.Context, profile workerconfig.Profile, apiServers []internalnet.HostPort) error {
 	args := m.Called(ctx, profile, apiServers)
 	return args.Error(0)
 }
@@ -782,7 +789,7 @@ func (m *backendMock) stop() {
 	m.Called()
 }
 
-func (m *backendMock) updateAPIServers(apiServers []net.HostPort) error {
+func (m *backendMock) updateAPIServers(apiServers []internalnet.HostPort) error {
 	args := m.Called(apiServers)
 	return args.Error(0)
 }
@@ -812,4 +819,10 @@ func (m *staticPodMock) Clear() {
 
 func (m *staticPodMock) Drop() {
 	m.Called()
+}
+
+type loopbackStubResolver struct{}
+
+func (loopbackStubResolver) LookupIPAddr(context.Context, string) ([]net.IPAddr, error) {
+	return []net.IPAddr{{IP: net.IP{127, 0, 0, 1}}}, nil
 }

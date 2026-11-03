@@ -17,6 +17,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/k0sproject/k0s/internal/k0scontext"
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	k0snet "github.com/k0sproject/k0s/internal/pkg/net"
@@ -54,9 +55,6 @@ const containerFileLabel string = "system_u:object_r:container_file_t:s0"
 // eventReasonPatchFailed is the reason of the Node event that's recorded
 // when the patches couldn't be applied to the node-local load balancer.
 const eventReasonPatchFailed = "NodeLocalLoadBalancingPatchFailed"
-
-// eventRetryDelay is the delay between attempts to record a Node event.
-var eventRetryDelay = 1 * time.Second
 
 // Reconciler reconciles a static Pod on a worker node that implements
 // node-local load balancing.
@@ -447,8 +445,12 @@ func writePatchedKubeconfig(path string, kubeconfig *clientcmdapi.Config, server
 	return file.WriteContentAtomically(path, bytes, constant.CertSecureMode)
 }
 
+type ipAddrResolver interface {
+	LookupIPAddr(ctx context.Context, host string) ([]net.IPAddr, error)
+}
+
 func getLoopbackIP(ctx context.Context) (net.IP, error) {
-	localIPs, err := net.DefaultResolver.LookupIPAddr(ctx, "localhost")
+	localIPs, err := k0scontext.ValueOr[ipAddrResolver](ctx, net.DefaultResolver).LookupIPAddr(ctx, "localhost")
 	if err != nil {
 		err = fmt.Errorf("failed to resolve localhost: %w", err)
 	} else {
@@ -519,7 +521,7 @@ func (r *Reconciler) recordPatchFailedEvent(ctx context.Context, cause error) er
 		},
 		retry.Context(ctx),
 		retry.Attempts(3),
-		retry.Delay(eventRetryDelay),
+		retry.Delay(time.Second),
 		retry.LastErrorOnly(true),
 	)
 }
