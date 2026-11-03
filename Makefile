@@ -207,10 +207,11 @@ endif
 
 k0s k0s.bare: TARGET_OS = linux
 k0s.exe k0s.bare.exe: TARGET_OS = windows
+k0s.exe k0s.bare.exe: TARGET_ARCH = amd64
 
 .INTERMEDIATE: k0s.bare k0s.bare.exe
 k0s.bare.exe k0s.bare: $(GO_ENV_REQUISITES) go.sum $(codegen_targets) $(GO_SRCS) $(shell find static/manifests/calico static/manifests/windows -type f)
-	CGO_ENABLED=$(BUILD_GO_CGO_ENABLED) CGO_CFLAGS='$(BUILD_CGO_CFLAGS)' GOOS=$(TARGET_OS) $(GO) build $(BUILD_GO_FLAGS) -ldflags='$(LD_FLAGS)' -o '$@' main.go
+	CGO_ENABLED=$(BUILD_GO_CGO_ENABLED) CGO_CFLAGS='$(BUILD_CGO_CFLAGS)' GOOS=$(TARGET_OS) GOARCH=$(TARGET_ARCH) $(GO) build $(BUILD_GO_FLAGS) -ldflags='$(LD_FLAGS)' -o '$@' main.go
 
 k0s: k0s.bare
 k0s.exe: k0s.bare.exe
