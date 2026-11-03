@@ -35,6 +35,7 @@ spec:
   chartName: prometheus-community/prometheus
   version: "14.6.1"
   namespace: default
+  historyMax: 10
   values: |
     alertmanager:
       persistentVolume:
@@ -57,6 +58,7 @@ Apply it: `kubectl apply -f prometheus-chart.yaml`
 | `releaseName`  | -             | Helm release name (defaults to Chart resource name)                            |
 | `values`       | -             | Custom chart values as YAML formatted string                                   |
 | `timeout`      | `10m`         | Timeout to wait for release install                                            |
+| `historyMax`   | `0`           | Maximum number of Helm release revisions to retain; `0` disables the limit     |
 | `forceUpgrade` | `true`        | When set to `false`, disables the use of the `--force` flag when upgrading     |
 | `repository`   | -             | Repository configuration (see below)                                           |
 

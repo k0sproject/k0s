@@ -529,6 +529,7 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv
 				chart.Spec.Namespace,
 				chart.Spec.YamlValues(),
 				timeout,
+				chart.Spec.HistoryMax,
 				status == common.StatusUninstalled,
 			)
 			if err != nil {
@@ -567,6 +568,7 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart helmv
 			chart.Status.Namespace,
 			chart.Spec.YamlValues(),
 			timeout,
+			chart.Spec.HistoryMax,
 			chart.Spec.ShouldForceUpgrade(),
 		)
 		if err != nil {
@@ -668,6 +670,7 @@ func (cr *ChartReconciler) chartNeedsUpgrade(chart helmv1beta1.Chart) bool {
 	return chart.Status.Namespace != chart.Spec.Namespace ||
 		chart.Status.ReleaseName != effectiveChartReleaseName(&chart) ||
 		chart.Status.Version != chart.Spec.Version ||
+		chart.Status.HistoryMax != chart.Spec.HistoryMax ||
 		chart.Status.Error != "" ||
 		chart.Status.ValuesHash != hashChartValues(&chart)
 }
@@ -713,6 +716,7 @@ func (cr *ChartReconciler) updateStatus(ctx context.Context, chart helmv1beta1.C
 		updchart.Status.Namespace = chartRelease.Namespace()
 	}
 	updchart.Status.Updated = time.Now().String()
+	updchart.Status.HistoryMax = chart.Spec.HistoryMax
 	updchart.Status.Error = ""
 	if err != nil {
 		updchart.Status.Error = err.Error()

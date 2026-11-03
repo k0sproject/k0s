@@ -60,6 +60,9 @@ type ChartSpec struct {
 	Timeout     string `json:"timeout,omitempty"`
 	// ForceUpgrade when set to false, disables the use of the "--force" flag when upgrading the chart (default: true).
 	ForceUpgrade *bool `json:"forceUpgrade,omitempty"`
+	// HistoryMax limits the number of revisions retained for the release. "0" disables the limit.
+	// +kubebuilder:validation:Minimum=0
+	HistoryMax   int   `json:"historyMax,omitempty"`
 	Order        int   `json:"order,omitempty"`
 	// Repository configuration for the chart. When specified, the chart will use this
 	// repository configuration instead of looking up a repository from the cluster-level
@@ -95,6 +98,7 @@ type ChartStatus struct {
 	Namespace   string `json:"namespace,omitempty"`
 	Revision    int64  `json:"revision,omitempty"`
 	ValuesHash  string `json:"valuesHash,omitempty"`
+	HistoryMax  int    `json:"historyMax,omitempty"`
 	Error       string `json:"error,omitempty"`
 }
 
