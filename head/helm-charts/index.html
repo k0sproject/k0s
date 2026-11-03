@@ -3425,7 +3425,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 <tr>
 <td><code>forceUpgrade</code></td>
 <td><code>true</code></td>
-<td>When set to <code>false</code>, disables the use of the <code>--force</code> flag when upgrading</td>
+<td>When set to <code>false</code>, disables the use of <code>--force-replace --server-side=false</code> when upgrading</td>
 </tr>
 <tr>
 <td><code>repository</code></td>
@@ -3633,8 +3633,8 @@ kubectl<span class="w"> </span>describe<span class="w"> </span>chart<span class=
 <p>Charts are processed with the following Helm options by default:</p>
 <ul>
 <li><code>--create-namespace</code></li>
-<li><code>--atomic</code></li>
-<li><code>--force</code> (only for the <code>upgrade</code> command)</li>
+<li><code>--rollback-on-failure</code></li>
+<li><code>--force-replace --server-side=false</code> (only for the <code>upgrade</code> command)</li>
 <li><code>--wait</code></li>
 <li><code>--wait-for-jobs</code></li>
 </ul>
@@ -3735,7 +3735,7 @@ kubectl<span class="w"> </span>describe<span class="w"> </span>chart<span class=
 <tr>
 <td><code>forceUpgrade</code></td>
 <td><code>true</code></td>
-<td>When set to <code>false</code>, disables the use of the <code>--force</code> flag when upgrading the chart</td>
+<td>When set to <code>false</code>, disables the use of <code>--force-replace</code> when upgrading the chart</td>
 </tr>
 <tr>
 <td><code>order</code></td>
