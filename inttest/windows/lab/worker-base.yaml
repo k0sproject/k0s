@@ -1,0 +1,40 @@
+# SPDX-FileCopyrightText: 2026 k0s authors
+# SPDX-License-Identifier: Apache-2.0
+
+# Windows Server 2025 base VM of the Windows lab, based on Lima's builtin
+# template:windows-2025. lab.sh installs the Containers feature into it, and
+# each test run clones it into a worker VM.
+#
+# Windows guests are experimental in Lima: QEMU only, plain mode only.
+
+os: "Windows"
+vmType: "qemu"
+arch: "x86_64"
+
+cpus: 4
+memory: "8GiB"
+disk: "100GiB"
+
+images:
+# Already cached by Lima if template:windows-2025 was started before. This is
+# an evaluation ISO that Microsoft replaces without notice, so it cannot be
+# pinned by digest.
+- location: "https://aka.ms/WinServ2025iso-enus"
+  arch: "x86_64"
+
+tpm: null
+
+osOpts:
+  Windows:
+    virtioWin:
+    - location: https://fedorapeople.org/groups/virt/virtio-win/direct-downloads/archive-virtio/virtio-win-0.1.271-1/virtio-win-0.1.271.iso
+      arch: "x86_64"
+
+plain: true
+
+# No Lima networks: qemu-wrapper.sh adds the NIC linking this VM to the
+# controller.
+
+video:
+  # "default" needs a GTK display ("gtk initialization failed" when headless).
+  display: none

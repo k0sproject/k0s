@@ -1,0 +1,14 @@
+# SPDX-FileCopyrightText: 2026 k0s authors
+# SPDX-License-Identifier: Apache-2.0
+
+# Linux controller VM of the Windows lab. Plays the role of WSL in the
+# win-wsl.yaml workflow. Created by lab.sh, which also configures the lab link
+# and k0s, since that needs the lab's network constants.
+
+base: template:ubuntu-24.04
+
+cpus: 4
+memory: "4GiB"
+disk: "30GiB"
+
+mounts: []
