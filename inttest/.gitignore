@@ -2,3 +2,4 @@
 bin/
 .*.stamp
 **/*.tfvars
+windows-local/lima/.work/

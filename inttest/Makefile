@@ -126,3 +126,5 @@ $(smoketests): .bootloose-alpine.stamp
 clean:
 	-[ -x bin/sonobuoy ] && bin/sonobuoy delete
 	rm -rf bin sonobuoy/*_sonobuoy_*.tar.gz .*.stamp
+	-windows-local/lima/check-windows-local.sh clean-all
+	rm -f windows-local/lima/.base.stamp

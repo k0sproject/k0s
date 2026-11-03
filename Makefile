@@ -373,6 +373,19 @@ $(smoketests): k0s
 .PHONY: smoketests
 smoketests: $(smoketests)
 
+# Runs inttest/windows against a Linux controller VM and a Windows worker VM.
+# Needs Lima, QEMU and KVM. Not part of smoketests.
+windows_lab_dir := inttest/windows-local/lima
+
+# Installs Windows into a stopped Lima instance that each test run clones.
+$(windows_lab_dir)/.base.stamp: $(windows_lab_dir)/windows-2025.yaml $(windows_lab_dir)/install-containers.ps1
+	$(windows_lab_dir)/check-windows-local.sh build-base
+	touch -- '$@'
+
+.PHONY: check-windows-local
+check-windows-local: k0s k0s.exe $(windows_lab_dir)/.base.stamp
+	$(windows_lab_dir)/check-windows-local.sh k0s k0s.exe
+
 .PHONY: check-unit
 ifneq (, $(filter $(HOST_ARCH), arm riscv64))
 check-unit: GO_TEST_RACE ?=
