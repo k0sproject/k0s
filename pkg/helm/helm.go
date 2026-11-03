@@ -485,6 +485,12 @@ func (hc *Commands) UpgradeChart(ctx context.Context, chartName string, version 
 	upgrade.WaitForJobs = true
 	upgrade.Install = true
 	upgrade.ForceReplace = force
+	// Helm refuses to replace resources that it applies server-side, which is
+	// what it does by default for releases it installed itself. Apply
+	// client-side when replacing.
+	if force {
+		upgrade.ServerSideApply = "false"
+	}
 	upgrade.RollbackOnFailure = true
 	upgrade.Timeout = timeout
 	chartDir, err := hc.locateChart(chartName, version, cfg.RegistryClient)
