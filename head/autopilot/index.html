@@ -3757,6 +3757,13 @@ additional changes to the plan (other than status) will be recognized.<ul>
 <ul>
 <li>Each <code>update</code> object payload can provide an optional <code>sha256</code> hash of the update content
   (specified in <code>url</code>), which is compared against the update content after it downloads.</li>
+<li>If no <code>sha256</code> hash is provided, the downloaded content is installed as-is,
+  without any integrity verification. Whoever can serve or alter the response
+  for the <code>url</code> then controls what gets installed and run as whatever user k0s
+  runs as (usually root) on the target nodes. Always provide a <code>sha256</code> hash for
+  production plans, and use <code>https</code> URLs so that the download is protected in
+  transit as well. Plain <code>http</code> URLs without a hash are only appropriate in
+  isolated lab environments.</li>
 </ul>
 <h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">#</a></h2>
 <p><strong>Autopilot</strong> relies on a <code>Plan</code> object on its instructions on what to update.</p>
@@ -3840,6 +3847,7 @@ this has not been tested.</li>
 <h4 id="speccommandsk0supdateplatformssha256-string-optional"><code>spec.commands[].k0supdate.platforms.*.sha256 &lt;string&gt; (optional)</code><a class="headerlink" href="#speccommandsk0supdateplatformssha256-string-optional" title="Permanent link">#</a></h4>
 <ul>
 <li>If a SHA256 hash is provided for the binary, the completed downloaded will be verified against it.</li>
+<li>If omitted, the download is not verified. See <a href="#update-payload-verification">Update Payload Verification</a>.</li>
 </ul>
 <h4 id="speccommandsk0supdatetargetscontrollers-object-optional"><code>spec.commands[].k0supdate.targets.controllers &lt;object&gt; (optional)</code><a class="headerlink" href="#speccommandsk0supdatetargetscontrollers-object-optional" title="Permanent link">#</a></h4>
 <ul>
@@ -3881,6 +3889,7 @@ this has not been tested.</li>
 <h4 id="speccommandsairgapupdateplatformssha256-string-optional"><code>spec.commands[].airgapupdate.platforms.*.sha256 &lt;string&gt; (optional)</code><a class="headerlink" href="#speccommandsairgapupdateplatformssha256-string-optional" title="Permanent link">#</a></h4>
 <ul>
 <li>If a SHA256 hash is provided for the binary, the completed downloaded will be verified against it.</li>
+<li>If omitted, the download is not verified. See <a href="#update-payload-verification">Update Payload Verification</a>.</li>
 </ul>
 <h4 id="speccommandsairgapupdateworkers-object-optional"><code>spec.commands[].airgapupdate.workers &lt;object&gt; (optional)</code><a class="headerlink" href="#speccommandsairgapupdateworkers-object-optional" title="Permanent link">#</a></h4>
 <ul>
