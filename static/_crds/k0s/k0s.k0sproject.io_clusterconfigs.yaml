@@ -1010,7 +1010,7 @@ spec:
                       mode:
                         description: |-
                           Mode defines the kube-proxy mode. Supported values are "iptables", "ipvs" and "nftables"
-                          Defaults to "iptables"
+                          Defaults to "iptables". The "ipvs" mode is deprecated (KEP-5495).
                         type: string
                       nftables:
                         description: |-
