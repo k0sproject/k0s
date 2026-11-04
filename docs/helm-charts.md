@@ -49,16 +49,16 @@ Apply it: `kubectl apply -f prometheus-chart.yaml`
 
 #### Spec Fields
 
-| Field          | Default value | Description                                                                    |
-|----------------|---------------|--------------------------------------------------------------------------------|
-| `chartName`    | _(required)_  | Chart reference: `repo/chart`, `oci://registry/chart`, or `/path/to/chart.tgz` |
-| `version`      | _(required)_  | Chart version to install                                                       |
-| `namespace`    | _(required)_  | Target namespace for the release                                               |
-| `releaseName`  | -             | Helm release name (defaults to Chart resource name)                            |
-| `values`       | -             | Custom chart values as YAML formatted string                                   |
-| `timeout`      | `10m`         | Timeout to wait for release install                                            |
-| `forceUpgrade` | `true`        | When set to `false`, disables the use of the `--force` flag when upgrading     |
-| `repository`   | -             | Repository configuration (see below)                                           |
+| Field          | Default value | Description                                                                                   |
+|----------------|---------------|-----------------------------------------------------------------------------------------------|
+| `chartName`    | _(required)_  | Chart reference: `repo/chart`, `oci://registry/chart`, or `/path/to/chart.tgz`                |
+| `version`      | _(required)_  | Chart version to install                                                                      |
+| `namespace`    | _(required)_  | Target namespace for the release                                                              |
+| `releaseName`  | -             | Helm release name (defaults to Chart resource name)                                           |
+| `values`       | -             | Custom chart values as YAML formatted string                                                  |
+| `timeout`      | `10m`         | Timeout to wait for release install                                                           |
+| `forceUpgrade` | `true`        | When set to `false`, disables the use of `--force-replace --server-side=false` when upgrading |
+| `repository`   | -             | Repository configuration (see below)                                                          |
 
 #### Repository Configuration
 
@@ -271,8 +271,8 @@ This approach:
 Charts are processed with the following Helm options by default:
 
 - `--create-namespace`
-- `--atomic`
-- `--force` (only for the `upgrade` command)
+- `--rollback-on-failure`
+- `--force-replace --server-side=false` (only for the `upgrade` command)
 - `--wait`
 - `--wait-for-jobs`
 
@@ -303,7 +303,7 @@ See the configuration tables below for how to customize these options.
 | `timeout`      | -             | Timeout to wait for release install                                                    |
 | `values`       | -             | Custom chart values as YAML formatted string                                           |
 | `namespace`    | -             | Namespace to install the chart into                                                    |
-| `forceUpgrade` | `true`        | When set to `false`, disables the use of the `--force` flag when upgrading the chart   |
+| `forceUpgrade` | `true`        | When set to `false`, disables the use of `--force-replace` when upgrading the chart    |
 | `order`        | `0`           | Order in which to apply the manifest. For equal values, alphanumeric ordering is used. |
 
 ### Example k0s.yaml Configuration

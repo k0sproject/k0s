@@ -610,12 +610,11 @@ func (as *AddonsSuite) doTestAddonUpdate(ctx context.Context, addonName string) 
 		ctx, dyn.Resource(k0sv1beta1.SchemeGroupVersion.WithResource("clusterconfigs")).Namespace(metav1.NamespaceSystem), "k0s",
 		patchOp{"test", "/spec/extensions/helm/charts/0/name", addonName},
 		patchOp{"replace", "/spec/extensions/helm/charts/0", map[string]any{
-			"name":         addonName,
-			"chartname":    "ealenn/echo-server",
-			"values":       `{"replicaCount": 2, "image": {"pullPolicy": "Always"}}`,
-			"version":      "0.5.0",
-			"namespace":    metav1.NamespaceDefault,
-			"forceUpgrade": false,
+			"name":      addonName,
+			"chartname": "ealenn/echo-server",
+			"values":    `{"replicaCount": 2, "image": {"pullPolicy": "Always"}}`,
+			"version":   "0.5.0",
+			"namespace": metav1.NamespaceDefault,
 		}},
 	)
 	as.Require().NoError(err)
