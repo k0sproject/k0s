@@ -89,6 +89,13 @@ additional changes to the plan (other than status) will be recognized.
 
 * Each `update` object payload can provide an optional `sha256` hash of the update content
   (specified in `url`), which is compared against the update content after it downloads.
+* If no `sha256` hash is provided, the downloaded content is installed as-is,
+  without any integrity verification. Whoever can serve or alter the response
+  for the `url` then controls what gets installed and run as whatever user k0s
+  runs as (usually root) on the target nodes. Always provide a `sha256` hash for
+  production plans, and use `https` URLs so that the download is protected in
+  transit as well. Plain `http` URLs without a hash are only appropriate in
+  isolated lab environments.
 
 ## Configuration
 
@@ -174,6 +181,7 @@ this has not been tested.
 #### `spec.commands[].k0supdate.platforms.*.sha256 <string> (optional)`
 
 * If a SHA256 hash is provided for the binary, the completed downloaded will be verified against it.
+* If omitted, the download is not verified. See [Update Payload Verification].
 
 #### `spec.commands[].k0supdate.targets.controllers <object> (optional)`
 
@@ -212,6 +220,7 @@ this has not been tested.
 #### `spec.commands[].airgapupdate.platforms.*.sha256 <string> (optional)`
 
 * If a SHA256 hash is provided for the binary, the completed downloaded will be verified against it.
+* If omitted, the download is not verified. See [Update Payload Verification].
 
 #### `spec.commands[].airgapupdate.workers <object> (optional)`
 
@@ -456,3 +465,5 @@ https://kubernetes.io/releases/version-skew-policy/
 
 > Make sure that your controllers are at the desired version **first** before
 > upgrading workers.
+
+[Update Payload Verification]: #update-payload-verification
