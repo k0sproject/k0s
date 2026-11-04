@@ -3,6 +3,9 @@
 
 base: template:ubuntu-24.04
 
+# QEMU instead of the default vz on macOS: qemu-lab.sh adds the lab NIC to QEMU.
+vmType: "qemu"
+
 cpus: 4
 memory: "4GiB"
 disk: "30GiB"

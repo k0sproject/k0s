@@ -29,6 +29,43 @@ controller='k0s-lab-controller'
 worker='k0s-lab-worker'
 base='k0s-lab-worker-base'
 export QEMU_SYSTEM_X86_64="$labDir/qemu-lab.sh"
+export QEMU_SYSTEM_AARCH64="$labDir/qemu-lab.sh"
+
+# The controller runs natively (Lima's default arch), the Windows worker is
+# always x86_64 (emulated on arm64 hosts).
+case "$(uname -m)" in
+arm64 | aarch64) controllerQemu=qemu-system-aarch64 controllerFirmware=edk2-aarch64-code.fd ;;
+*) controllerQemu=qemu-system-x86_64 controllerFirmware=edk2-x86_64-code.fd ;;
+esac
+
+# Lima looks for the UEFI firmware relative to the QEMU binary it is told to
+# use, which is the wrapper here. Link the firmware of the real QEMU next to it.
+linkFirmware() {
+  for qemuBin in qemu-system-x86_64 "$controllerQemu"; do
+    case "$qemuBin" in
+    qemu-system-aarch64) fwName=edk2-aarch64-code.fd ;;
+    *) fwName=edk2-x86_64-code.fd ;;
+    esac
+    qemu=$(command -v "$qemuBin") || {
+      echo "$qemuBin not found in PATH" >&2
+      return 1
+    }
+    qemuDir=$(cd -- "$(dirname -- "$(realpath -- "$qemu")")" && pwd)
+    found=0
+    for fw in "$qemuDir/../share/qemu/$fwName" "$qemuDir/../share/$fwName"; do
+      if [ -r "$fw" ]; then
+        mkdir -p -- "$labDir/share"
+        ln -sf -- "$fw" "$labDir/share/$fwName"
+        found=1
+        break
+      fi
+    done
+    [ $found -eq 1 ] || {
+      echo "UEFI firmware $fwName not found next to $qemu" >&2
+      return 1
+    }
+  done
+}
 
 instanceExists() {
   limactl list -q 2>/dev/null | grep -qxF -- "$1"
@@ -67,7 +104,7 @@ apiReachable() {
 # Starts a VM with its end of the lab link (see qemu-lab.sh). The MACs are
 # matched by controller.yaml and provision-worker.ps1.
 startLabVM() {
-  K0S_LAB_PORT=$2 K0S_LAB_PEER=$3 K0S_LAB_MAC=$4 limactl start --tty=false --timeout=30m "$1"
+  K0S_LAB_QEMU=$5 K0S_LAB_PORT=$2 K0S_LAB_PEER=$3 K0S_LAB_MAC=$4 limactl start --tty=false --timeout=30m "$1" </dev/null
 }
 
 winScript() {
@@ -98,14 +135,41 @@ build-base)
   trap 'exit 130' INT TERM
 
   # The first start installs Windows from the ISO, which takes a while.
+  linkFirmware
   echo "Starting Windows base VM"
-  limactl start --tty=false --timeout=60m --name="$base" "$labDir/windows-2025.yaml"
+  limactl start --tty=false --timeout=60m --name="$base" "$labDir/windows-2025.yaml" </dev/null
   limactl shell "$base" powershell -NoProfile -Command New-Item -ItemType Directory -Force -Path C:/k0s-lab >/dev/null
   winCopy "$base" "$labDir/install-containers.ps1"
 
   # Fails while the feature is pending and while the VM reboots.
   echo "Installing the Containers feature"
   retry 120 10 winScript "$base" install-containers.ps1
+
+  # Turn off Windows Update and pre-pull the images the clones need. The image
+  # names and the containerd version are taken from the k0s sources.
+  echo "Preparing the base VM"
+  constants="$repoDir/pkg/constant/constant.go"
+  imageRef() {
+    name=$(sed -nE "s/^[[:space:]]*$1[[:space:]]*=[[:space:]]*\"(.*)\"/\1/p" "$constants")
+    version=$(sed -nE "s/^[[:space:]]*${1}Version[[:space:]]*=[[:space:]]*\"(.*)\"/\1/p" "$constants")
+    [ -n "$name" ] && [ -n "$version" ] || {
+      echo "Image $1 not found in $constants" >&2
+      return 1
+    }
+    echo "$name:$version"
+  }
+  mkdir -p -- "$workDir"
+  {
+    for image in KubePauseWindowsContainerImage KubeProxyWindowsImage CalicoCNIWindowsImage \
+      CalicoNodeWindowsImage TraefikImage KonnectivityImage; do
+      imageRef "$image"
+    done
+    # Used by inttest/windows.
+    echo "mcr.microsoft.com/windows/servercore/iis:latest"
+  } >"$workDir/images.txt"
+  containerdVersion=$(sed -nE 's/^containerd_version_and_rev[[:space:]]*=[[:space:]]*([^@[:space:]]+)@.*/\1/p' "$repoDir/embedded-bins/Makefile.variables")
+  winCopy "$base" "$labDir/prepare-base.ps1" "$workDir/images.txt"
+  limactl shell "$base" powershell -NoProfile -ExecutionPolicy Bypass -File C:/k0s-lab/prepare-base.ps1 -ContainerdVersion "$containerdVersion"
 
   limactl stop "$base"
   exit 0
@@ -135,6 +199,7 @@ if apiReachable; then
   exit 1
 fi
 
+linkFirmware
 mkdir -p -- "$workDir"
 cleanup() {
   status=$?
@@ -156,8 +221,8 @@ trap cleanup EXIT
 trap 'exit 130' INT TERM
 
 echo "Starting controller VM"
-limactl create --tty=false --name="$controller" "$labDir/controller.yaml"
-startLabVM "$controller" 10001 10002 52:54:00:77:00:01
+limactl create --tty=false --name="$controller" "$labDir/controller.yaml" </dev/null
+startLabVM "$controller" 10001 10002 52:54:00:77:00:01 "$controllerQemu"
 
 echo "Installing k0s controller"
 limactl copy "$k0s" "$controller:/tmp/k0s"
@@ -170,11 +235,15 @@ retry 120 1 limactl shell "$controller" sudo k0s kubectl get --raw=/readyz >/dev
 retry 30 1 apiReachable
 limactl shell "$controller" sudo k0s kubeconfig admin |
   sed -E 's#(server: https://)[^:/]+(:6443)#\1127.0.0.1\2#' >"$workDir/kubeconfig"
-limactl shell "$controller" sudo k0s token create --role=worker >"$workDir/k0s-worker-token"
+# The status socket that "token create" needs may show up after the API is ready.
+createWorkerToken() {
+  limactl shell "$controller" sudo k0s token create --role=worker >"$workDir/k0s-worker-token"
+}
+retry 120 1 createWorkerToken
 
 echo "Starting Windows worker VM from $base"
-limactl clone --tty=false "$base" "$worker"
-startLabVM "$worker" 10002 10001 52:54:00:77:00:02
+limactl clone --tty=false "$base" "$worker" </dev/null
+startLabVM "$worker" 10002 10001 52:54:00:77:00:02 qemu-system-x86_64
 
 echo "Installing k0s worker"
 winCopy "$worker" "$k0sExe" "$workDir/k0s-worker-token" "$labDir/provision-worker.ps1"
@@ -182,4 +251,4 @@ winScript "$worker" provision-worker.ps1
 
 echo "Running the Windows smoke test"
 cd -- "$repoDir"
-KUBECONFIG="$workDir/kubeconfig" go test -v -count=1 -timeout=60m ./inttest/windows
+KUBECONFIG="$workDir/kubeconfig" go test -v -count=1 -timeout="${K0S_WINDOWS_TEST_TIMEOUT:-3h}" ./inttest/windows

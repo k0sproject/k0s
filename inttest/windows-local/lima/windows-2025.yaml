@@ -9,7 +9,7 @@ os: "Windows"
 vmType: "qemu"
 arch: "x86_64"
 
-cpus: 4
+cpus: 8
 memory: "8GiB"
 disk: "100GiB"
 

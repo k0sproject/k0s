@@ -379,7 +379,7 @@ smoketests: $(smoketests)
 windows_lab_dir := inttest/windows-local/lima
 
 # Installs Windows into a stopped Lima instance that each test run clones.
-$(windows_lab_dir)/.base.stamp: $(windows_lab_dir)/windows-2025.yaml $(windows_lab_dir)/install-containers.ps1
+$(windows_lab_dir)/.base.stamp: $(windows_lab_dir)/windows-2025.yaml $(windows_lab_dir)/install-containers.ps1 $(windows_lab_dir)/prepare-base.ps1
 	$(windows_lab_dir)/check-windows-local.sh build-base
 	touch -- '$@'
 
