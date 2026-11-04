@@ -3245,6 +3245,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 <p><strong>Note</strong>: Refer to the <a href="https://github.com/k0sproject/k0sctl#configuration-file-spec-fields">k0sctl documentation</a> for k0sctl configuration specifications.</p>
 <h3 id="3-deploy-the-cluster">3. Deploy the cluster<a class="headerlink" href="#3-deploy-the-cluster" title="Permanent link">#</a></h3>
 <p>Run <code>k0sctl apply</code> to perform the cluster deployment:</p>
+<p><strong>Note</strong> k0sctl uses <code>k0sctl.yaml</code> by default. You can specify a different file with <code>--config &lt;path&gt;</code></p>
 <div class="highlight"><pre><span></span><code><span class="gp">$ </span>k0sctl<span class="w"> </span>apply<span class="w"> </span>--config<span class="w"> </span>k0sctl.yaml
 
 <span class="go">⠀⣿⣿⡇⠀⠀⢀⣴⣾⣿⠟⠁⢸⣿⣿⣿⣿⣿⣿⣿⡿⠛⠁⠀⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀█████████ █████████ ███</span>
@@ -3291,7 +3292,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 </code></pre></div>
 <h3 id="4-access-the-cluster">4. Access the cluster<a class="headerlink" href="#4-access-the-cluster" title="Permanent link">#</a></h3>
 <p>To access your k0s cluster, use k0sctl to generate a <code>kubeconfig</code> for the purpose.</p>
-<div class="highlight"><pre><span></span><code>k0sctl<span class="w"> </span>kubeconfig<span class="w"> </span>&gt;<span class="w"> </span>kubeconfig
+<div class="highlight"><pre><span></span><code>k0sctl<span class="w"> </span>kubeconfig<span class="w"> </span>--config<span class="w"> </span>k0sctl.yaml<span class="w"> </span>&gt;<span class="w"> </span>kubeconfig
 </code></pre></div>
 <p>With the <code>kubeconfig</code>, you can access your cluster using either kubectl or <a href="https://k8slens.dev/">Lens</a>.</p>
 <div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>get<span class="w"> </span>pods<span class="w"> </span>--kubeconfig<span class="w"> </span>kubeconfig<span class="w"> </span>-A
