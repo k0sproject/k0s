@@ -148,7 +148,11 @@ type PlanResourceURL struct {
 	// URL is the URL of a downloadable resource.
 	URL string `json:"url"`
 
-	// Sha256 provides an optional SHA256 hash of the URL's content for verification.
+	// Sha256 provides an optional SHA-256 hash of the URL's content for
+	// verification. If omitted, the downloaded content is installed as-is,
+	// without any integrity verification. Whoever can serve or alter the
+	// response for the URL then controls what gets installed and run on the
+	// target nodes.
 	Sha256 string `json:"sha256,omitempty"`
 }
 
