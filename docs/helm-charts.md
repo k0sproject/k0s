@@ -295,16 +295,16 @@ See the configuration tables below for how to customize these options.
 
 ### Chart configuration
 
-| Field          | Default value | Description                                                                            |
-|----------------|---------------|----------------------------------------------------------------------------------------|
-| `name`         | -             | Release name                                                                           |
-| `chartname`    | -             | Chart name in form `repository/chartname` or path to tgz file                          |
-| `version`      | -             | Chart version to install                                                               |
-| `timeout`      | -             | Timeout to wait for release install                                                    |
-| `values`       | -             | Custom chart values as YAML formatted string                                           |
-| `namespace`    | -             | Namespace to install the chart into                                                    |
-| `forceUpgrade` | `true`        | When set to `false`, disables the use of `--force-replace` when upgrading the chart    |
-| `order`        | `0`           | Order in which to apply the manifest. For equal values, alphanumeric ordering is used. |
+| Field          | Default value | Description                                                                                   |
+|----------------|---------------|-----------------------------------------------------------------------------------------------|
+| `name`         | -             | Release name                                                                                  |
+| `chartname`    | -             | Chart name in form `repository/chartname` or path to tgz file                                 |
+| `version`      | -             | Chart version to install                                                                      |
+| `timeout`      | -             | Timeout to wait for release install                                                           |
+| `values`       | -             | Custom chart values as YAML formatted string                                                  |
+| `namespace`    | -             | Namespace to install the chart into                                                           |
+| `forceUpgrade` | `true`        | When set to `false`, disables the use of `--force-replace --server-side=false` when upgrading |
+| `order`        | `0`           | Order in which to apply the manifest. For equal values, alphanumeric ordering is used.        |
 
 ### Example k0s.yaml Configuration
 
