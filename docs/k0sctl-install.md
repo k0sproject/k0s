@@ -62,6 +62,8 @@ k0sctl is a single binary, the instructions for downloading and installing of wh
 
 Run `k0sctl apply` to perform the cluster deployment:
 
+**Note** k0sctl uses `k0sctl.yaml` by default. You can specify a different file with `--config <path>`
+
 ```console
 $ k0sctl apply --config k0sctl.yaml
 
@@ -113,7 +115,7 @@ INFO      k0sctl kubeconfig
 To access your k0s cluster, use k0sctl to generate a `kubeconfig` for the purpose.
 
 ```shell
-k0sctl kubeconfig > kubeconfig
+k0sctl kubeconfig --config k0sctl.yaml > kubeconfig
 ```
 
 With the `kubeconfig`, you can access your cluster using either kubectl or [Lens](https://k8slens.dev/).
