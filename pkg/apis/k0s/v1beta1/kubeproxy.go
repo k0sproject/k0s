@@ -16,16 +16,15 @@ import (
 var _ Validateable = (*KubeProxy)(nil)
 
 const (
-	ModeIptables  = "iptables"
-	ModeIPVS      = "ipvs"
-	ModeUSerspace = "userspace"
-	ModeNFT       = "nftables"
+	ModeIptables = "iptables"
+	ModeIPVS     = "ipvs"
+	ModeNFT      = "nftables"
 )
 
 // KubeProxy defines the configuration for kube-proxy
 type KubeProxy struct {
 	Disabled bool `json:"disabled,omitempty"`
-	// Mode defines the kube-proxy mode. Supported values are "iptables", "ipvs", "userspace" and "nft"
+	// Mode defines the kube-proxy mode. Supported values are "iptables", "ipvs" and "nftables"
 	// Defaults to "iptables"
 	Mode               string `json:"mode,omitempty"`
 	MetricsBindAddress string `json:"metricsBindAddress,omitempty"`
@@ -115,7 +114,7 @@ func (k *KubeProxy) Validate() []error {
 	if k.Disabled {
 		return errors
 	}
-	if k.Mode != ModeIptables && k.Mode != ModeIPVS && k.Mode != ModeUSerspace && k.Mode != ModeNFT {
+	if k.Mode != ModeIptables && k.Mode != ModeIPVS && k.Mode != ModeNFT {
 		errors = append(errors, fmt.Errorf("unsupported mode %s for kubeProxy config", k.Mode))
 	}
 	if _, err := net.ParseHostPort(k.HealthzBindAddress); err != nil {

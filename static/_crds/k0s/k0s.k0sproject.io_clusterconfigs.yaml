@@ -1009,7 +1009,7 @@ spec:
                         type: string
                       mode:
                         description: |-
-                          Mode defines the kube-proxy mode. Supported values are "iptables", "ipvs", "userspace" and "nft"
+                          Mode defines the kube-proxy mode. Supported values are "iptables", "ipvs" and "nftables"
                           Defaults to "iptables"
                         type: string
                       nftables:
