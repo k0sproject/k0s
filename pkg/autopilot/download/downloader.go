@@ -24,11 +24,19 @@ type Downloader interface {
 }
 
 type Config struct {
-	URL          string
+	URL string
+
+	// Hex-encoded hash the downloaded content must have according to
+	// [Config.Hasher]. If empty, the content is not verified at all.
 	ExpectedHash string
-	Hasher       hash.Hash
-	DownloadDir  string
-	Filename     string
+
+	// The hash function used to verify the downloaded content against
+	// [Config.ExpectedHash]. If nil, the content is not verified at all, even
+	// if an expected hash has been set.
+	Hasher hash.Hash
+
+	DownloadDir string
+	Filename    string
 }
 
 type downloader struct {

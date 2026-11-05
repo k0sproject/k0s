@@ -64,8 +64,12 @@ spec:
                             description: PlanResourceURL is a remote URL resource.
                             properties:
                               sha256:
-                                description: Sha256 provides an optional SHA256 hash
-                                  of the URL's content for verification.
+                                description: |-
+                                  Sha256 provides an optional SHA-256 hash of the URL's content for
+                                  verification. If omitted, the downloaded content is installed as-is,
+                                  without any integrity verification. Whoever can serve or alter the
+                                  response for the URL then controls what gets installed and run on the
+                                  target nodes.
                                 type: string
                               url:
                                 description: URL is the URL of a downloadable resource.
@@ -148,8 +152,12 @@ spec:
                             description: PlanResourceURL is a remote URL resource.
                             properties:
                               sha256:
-                                description: Sha256 provides an optional SHA256 hash
-                                  of the URL's content for verification.
+                                description: |-
+                                  Sha256 provides an optional SHA-256 hash of the URL's content for
+                                  verification. If omitted, the downloaded content is installed as-is,
+                                  without any integrity verification. Whoever can serve or alter the
+                                  response for the URL then controls what gets installed and run on the
+                                  target nodes.
                                 type: string
                               url:
                                 description: URL is the URL of a downloadable resource.
