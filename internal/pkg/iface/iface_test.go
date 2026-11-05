@@ -40,9 +40,34 @@ func TestFirstPublicAddress(t *testing.T) {
 			expected: "2001:db8::2",
 		},
 		{
-			name:     "link-local IPv4 is used if it comes first",
+			name:     "link-local IPv4 on an earlier interface is skipped",
 			ifaces:   []iface{{"eth0", []string{"169.254.10.20/16"}}, {"eth1", []string{"192.168.1.2/24"}}},
+			expected: "192.168.1.2",
+		},
+		{
+			name:     "link-local IPv4 before a global IPv4 on the same interface is skipped",
+			ifaces:   []iface{{"eth0", []string{"169.254.10.20/16", "10.0.0.2/24"}}},
+			expected: "10.0.0.2",
+		},
+		{
+			name:     "global IPv6 is preferred over link-local IPv4",
+			ifaces:   []iface{{"eth0", []string{"169.254.10.20/16"}}, {"eth1", []string{"2001:db8::2/64"}}},
+			expected: "2001:db8::2",
+		},
+		{
+			name:     "link-local IPv6 is skipped",
+			ifaces:   []iface{{"eth0", []string{"fe80::1/64", "2001:db8::2/64"}}},
+			expected: "2001:db8::2",
+		},
+		{
+			name:     "link-local IPv4 is used as a last resort",
+			ifaces:   []iface{{"eth0", []string{"fe80::1/64", "169.254.10.20/16"}}},
 			expected: "169.254.10.20",
+		},
+		{
+			name:     "only link-local IPv6",
+			ifaces:   []iface{{"eth0", []string{"fe80::1/64"}}},
+			expected: "127.0.0.1",
 		},
 		{
 			name: "pod network interfaces are skipped",

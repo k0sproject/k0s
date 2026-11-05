@@ -12,8 +12,15 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// FirstPublicAddress return the first found non-local IPv4 address that's not part of pod network
-// if any interface does not have any IPv4 address then return the first found non-local IPv6 address
+// FirstPublicAddress returns the first IP address found on the host's network
+// interfaces that is suitable as the default address of this node, skipping
+// loopback addresses and the interfaces of the pod network.
+//
+// Global IPv4 addresses are preferred over global IPv6 addresses. Link-local
+// addresses (169.254.0.0/16, fe80::/10) are only used when there's nothing
+// better: an IPv4 link-local address is returned as a last resort, with a
+// warning. IPv6 link-local addresses are never returned, as they're not usable
+// without a zone. If no suitable address is found, 127.0.0.1 is returned.
 func FirstPublicAddress() (string, error) {
 	ifs, err := net.Interfaces()
 	if err != nil {
@@ -24,7 +31,7 @@ func FirstPublicAddress() (string, error) {
 }
 
 func firstPublicAddress(ifs []net.Interface, interfaceAddrs func(net.Interface) (iter.Seq[*net.IPNet], error)) string {
-	ipv6addr := ""
+	var ipv6addr, linkLocalIPv4addr string
 	for _, i := range ifs {
 		switch {
 		// Skip calico CNI interface
@@ -53,9 +60,15 @@ func firstPublicAddress(ifs []net.Interface, interfaceAddrs func(net.Interface) 
 			// check the address type and skip if loopback
 			if !a.IP.IsLoopback() {
 				if a.IP.To4() != nil {
-					return a.IP.String()
+					if !a.IP.IsLinkLocalUnicast() {
+						return a.IP.String()
+					}
+					if linkLocalIPv4addr == "" {
+						linkLocalIPv4addr = a.IP.String()
+					}
+					continue
 				}
-				if a.IP.To16() != nil && ipv6addr == "" {
+				if a.IP.To16() != nil && ipv6addr == "" && !a.IP.IsLinkLocalUnicast() {
 					ipv6addr = a.IP.String()
 				}
 			}
@@ -63,6 +76,10 @@ func firstPublicAddress(ifs []net.Interface, interfaceAddrs func(net.Interface) 
 	}
 	if ipv6addr != "" {
 		return ipv6addr
+	}
+	if linkLocalIPv4addr != "" {
+		logrus.Warnf("Found only the link-local address %s on host, using it as the public address", linkLocalIPv4addr)
+		return linkLocalIPv4addr
 	}
 
 	logrus.Warn("failed to find any non-local, non podnetwork addresses on host, defaulting public address to 127.0.0.1")
