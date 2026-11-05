@@ -5,6 +5,7 @@ package iface
 
 import (
 	"fmt"
+	"iter"
 	"net"
 	"strings"
 
@@ -18,6 +19,11 @@ func FirstPublicAddress() (string, error) {
 	if err != nil {
 		return "127.0.0.1", fmt.Errorf("failed to list network interfaces: %w", err)
 	}
+
+	return firstPublicAddress(ifs, interfaceAddrs), nil
+}
+
+func firstPublicAddress(ifs []net.Interface, interfaceAddrs func(net.Interface) (iter.Seq[*net.IPNet], error)) string {
 	ipv6addr := ""
 	for _, i := range ifs {
 		switch {
@@ -47,7 +53,7 @@ func FirstPublicAddress() (string, error) {
 			// check the address type and skip if loopback
 			if !a.IP.IsLoopback() {
 				if a.IP.To4() != nil {
-					return a.IP.String(), nil
+					return a.IP.String()
 				}
 				if a.IP.To16() != nil && ipv6addr == "" {
 					ipv6addr = a.IP.String()
@@ -56,9 +62,9 @@ func FirstPublicAddress() (string, error) {
 		}
 	}
 	if ipv6addr != "" {
-		return ipv6addr, nil
+		return ipv6addr
 	}
 
 	logrus.Warn("failed to find any non-local, non podnetwork addresses on host, defaulting public address to 127.0.0.1")
-	return "127.0.0.1", nil
+	return "127.0.0.1"
 }
