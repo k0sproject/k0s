@@ -175,8 +175,7 @@ type ExternalCluster struct {
 func DefaultEtcdConfig() *EtcdConfig {
 	addr, err := iface.FirstPublicAddress()
 	if err != nil {
-		logrus.Warnf("failed to resolve etcd peering address automatically, using loopback")
-		addr = "127.0.0.1"
+		logrus.WithError(err).Warn("Failed to determine the etcd peer address automatically")
 	}
 	return &EtcdConfig{
 		ExternalCluster: nil,

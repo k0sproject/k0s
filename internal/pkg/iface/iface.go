@@ -18,19 +18,23 @@ import (
 //
 // Global IPv4 addresses are preferred over global IPv6 addresses. Link-local
 // addresses (169.254.0.0/16, fe80::/10) are only used when there's nothing
-// better: an IPv4 link-local address is returned as a last resort, with a
-// warning. IPv6 link-local addresses are never returned, as they're not usable
-// without a zone. If no suitable address is found, 127.0.0.1 is returned.
+// better: an IPv4 link-local address is returned as a last resort. IPv6
+// link-local addresses are never returned, as they're not usable without a
+// zone. If no suitable address is found, 127.0.0.1 is returned.
+//
+// When no global unicast address is found, the fallback address is returned
+// together with an error, since Kubernetes accepts neither link-local nor
+// loopback addresses as the API server endpoint or the node IP.
 func FirstPublicAddress() (string, error) {
 	ifs, err := net.Interfaces()
 	if err != nil {
 		return "127.0.0.1", fmt.Errorf("failed to list network interfaces: %w", err)
 	}
 
-	return firstPublicAddress(ifs, interfaceAddrs), nil
+	return firstPublicAddress(ifs, interfaceAddrs)
 }
 
-func firstPublicAddress(ifs []net.Interface, interfaceAddrs func(net.Interface) (iter.Seq[*net.IPNet], error)) string {
+func firstPublicAddress(ifs []net.Interface, interfaceAddrs func(net.Interface) (iter.Seq[*net.IPNet], error)) (string, error) {
 	var ipv6addr, linkLocalIPv4addr string
 	for _, i := range ifs {
 		switch {
@@ -61,7 +65,7 @@ func firstPublicAddress(ifs []net.Interface, interfaceAddrs func(net.Interface) 
 			if !a.IP.IsLoopback() {
 				if a.IP.To4() != nil {
 					if !a.IP.IsLinkLocalUnicast() {
-						return a.IP.String()
+						return a.IP.String(), nil
 					}
 					if linkLocalIPv4addr == "" {
 						linkLocalIPv4addr = a.IP.String()
@@ -75,13 +79,12 @@ func firstPublicAddress(ifs []net.Interface, interfaceAddrs func(net.Interface) 
 		}
 	}
 	if ipv6addr != "" {
-		return ipv6addr
-	}
-	if linkLocalIPv4addr != "" {
-		logrus.Warnf("Found only the link-local address %s on host, using it as the public address", linkLocalIPv4addr)
-		return linkLocalIPv4addr
+		return ipv6addr, nil
 	}
 
-	logrus.Warn("failed to find any non-local, non podnetwork addresses on host, defaulting public address to 127.0.0.1")
-	return "127.0.0.1"
+	fallback := "127.0.0.1"
+	if linkLocalIPv4addr != "" {
+		fallback = linkLocalIPv4addr
+	}
+	return fallback, fmt.Errorf("no global unicast address found on the host's network interfaces, using %s: Kubernetes requires a global unicast address", fallback)
 }

@@ -23,6 +23,8 @@ func TestFirstPublicAddress(t *testing.T) {
 		name     string
 		ifaces   []iface
 		expected string
+		// fallback is set when no global unicast address exists, which is reported as an error
+		fallback bool
 	}{
 		{
 			name:     "IPv4",
@@ -63,11 +65,13 @@ func TestFirstPublicAddress(t *testing.T) {
 			name:     "link-local IPv4 is used as a last resort",
 			ifaces:   []iface{{"eth0", []string{"fe80::1/64", "169.254.10.20/16"}}},
 			expected: "169.254.10.20",
+			fallback: true,
 		},
 		{
 			name:     "only link-local IPv6",
 			ifaces:   []iface{{"eth0", []string{"fe80::1/64"}}},
 			expected: "127.0.0.1",
+			fallback: true,
 		},
 		{
 			name: "pod network interfaces are skipped",
@@ -82,6 +86,7 @@ func TestFirstPublicAddress(t *testing.T) {
 			name:     "no addresses",
 			ifaces:   []iface{{"lo", []string{"127.0.0.1/8"}}},
 			expected: "127.0.0.1",
+			fallback: true,
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
@@ -101,7 +106,13 @@ func TestFirstPublicAddress(t *testing.T) {
 				return slices.Values(addrs[i.Name]), nil
 			}
 
-			assert.Equal(t, test.expected, firstPublicAddress(ifs, interfaceAddrs))
+			addr, err := firstPublicAddress(ifs, interfaceAddrs)
+			assert.Equal(t, test.expected, addr)
+			if test.fallback {
+				assert.ErrorContains(t, err, "Kubernetes requires a global unicast address")
+			} else {
+				assert.NoError(t, err)
+			}
 		})
 	}
 }

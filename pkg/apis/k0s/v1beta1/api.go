@@ -17,6 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/asaskevich/govalidator"
+	"github.com/sirupsen/logrus"
 )
 
 var _ Validateable = (*APISpec)(nil)
@@ -200,7 +201,11 @@ func (a *APISpec) UnmarshalJSON(data []byte) error {
 
 func (a *APISpec) setDefaults() {
 	if a.Address == "" {
-		a.Address, _ = iface.FirstPublicAddress()
+		var err error
+		a.Address, err = iface.FirstPublicAddress()
+		if err != nil {
+			logrus.WithError(err).Warn("Failed to determine the API address automatically")
+		}
 	}
 	if a.K0sAPIPort == 0 {
 		a.K0sAPIPort = 9443
