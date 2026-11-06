@@ -14,11 +14,11 @@ import (
 	"testing/synctest"
 
 	aptu "github.com/k0sproject/k0s/internal/autopilot/testutil"
+	"github.com/k0sproject/k0s/internal/leaderelection"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	aproot "github.com/k0sproject/k0s/pkg/autopilot/controller/root"
 	apsigk0s "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/k0s"
 	"github.com/k0sproject/k0s/pkg/autopilot/controller/updates"
-	"github.com/k0sproject/k0s/pkg/leaderelection"
 	"github.com/k0sproject/k0s/static"
 
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
