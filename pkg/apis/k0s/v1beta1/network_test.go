@@ -8,6 +8,7 @@ import (
 
 	"github.com/k0sproject/k0s/internal/featuregate"
 	"github.com/stretchr/testify/suite"
+	"sigs.k8s.io/yaml"
 )
 
 type NetworkSuite struct {
@@ -171,6 +172,43 @@ spec:
 	s.Equal(1550, n.Calico.MTU)
 	s.Equal(CalicoModeVXLAN, n.Calico.Mode)
 	s.Equal("Never", n.Calico.Overlay)
+}
+
+func (s *NetworkSuite) TestCalicoMTURoundTrip() {
+	for _, test := range []struct {
+		name     string
+		mtu      string
+		expected int
+	}{
+		{"unset", "", 1450},
+		{"auto", "mtu: 0", 0},
+		{"explicit", "mtu: 1400", 1400},
+	} {
+		s.Run(test.name, func() {
+			c, err := ConfigFromBytes([]byte(`
+apiVersion: k0s.k0sproject.io/v1beta1
+kind: ClusterConfig
+spec:
+  network:
+    provider: calico
+    calico:
+      mode: vxlan
+      ` + test.mtu + `
+`))
+			s.Require().NoError(err)
+			s.Equal(test.expected, c.Spec.Network.Calico.MTU)
+
+			// The config gets written out and read back, e.g. when it's
+			// stored in the API server. The MTU must survive this.
+			data, err := yaml.Marshal(c)
+			s.Require().NoError(err)
+			c, err = ConfigFromBytes(data)
+			s.Require().NoError(err)
+			s.Equal(test.expected, c.Spec.Network.Calico.MTU)
+		})
+	}
+
+	s.Equal(1450, DefaultCalico().MTU)
 }
 
 func (s *NetworkSuite) TestKubeRouterDefaultsAfterMarshaling() {
