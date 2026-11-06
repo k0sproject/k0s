@@ -95,6 +95,13 @@ func TestCSRApprover(t *testing.T) {
 		return []runtime.Object{claiming}
 	}
 
+	// Returns the valid template with an additional IP address.
+	templateWithIP := func(address string) *x509.CertificateRequest {
+		t := validTemplate()
+		t.IPAddresses = append(t.IPAddresses, net.ParseIP(address))
+		return t
+	}
+
 	type reviewMode uint8
 	const (
 		reviewModeAllow reviewMode = iota
@@ -371,6 +378,56 @@ func TestCSRApprover(t *testing.T) {
 				return t
 			}(),
 			expectedErr: `DNSNames[1]: forbidden: "foo.bar.example.com": reserved for in-cluster services`,
+		},
+		// Addresses that kubelets never claim for themselves are rejected, even
+		// if the node reports them.
+		{
+			testCase:    "certificate for a loopback address",
+			objects:     nodeClaiming("127.0.0.1"),
+			template:    templateWithIP("127.0.0.1"),
+			expectedErr: `IPAddresses[1]: forbidden: "127.0.0.1": is a loopback address`,
+		},
+		{
+			testCase:    "certificate for an IPv6 loopback address",
+			objects:     nodeClaiming("::1"),
+			template:    templateWithIP("::1"),
+			expectedErr: `IPAddresses[1]: forbidden: "::1": is a loopback address`,
+		},
+		{
+			testCase:    "certificate for a link-local address",
+			objects:     nodeClaiming("169.254.169.254"),
+			template:    templateWithIP("169.254.169.254"),
+			expectedErr: `IPAddresses[1]: forbidden: "169.254.169.254": is a link-local address`,
+		},
+		{
+			testCase:    "certificate for an IPv6 link-local address",
+			objects:     nodeClaiming("fe80::1"),
+			template:    templateWithIP("fe80::1"),
+			expectedErr: `IPAddresses[1]: forbidden: "fe80::1": is a link-local address`,
+		},
+		{
+			testCase:    "certificate for a multicast address",
+			objects:     nodeClaiming("224.0.0.251"),
+			template:    templateWithIP("224.0.0.251"),
+			expectedErr: `IPAddresses[1]: forbidden: "224.0.0.251": is a multicast address`,
+		},
+		{
+			testCase:    "certificate for an IPv6 interface-local multicast address",
+			objects:     nodeClaiming("ff01::1"),
+			template:    templateWithIP("ff01::1"),
+			expectedErr: `IPAddresses[1]: forbidden: "ff01::1": is a multicast address`,
+		},
+		{
+			testCase:    "certificate for the unspecified address",
+			objects:     nodeClaiming("0.0.0.0"),
+			template:    templateWithIP("0.0.0.0"),
+			expectedErr: `IPAddresses[1]: forbidden: "0.0.0.0": is an unspecified address`,
+		},
+		{
+			testCase:    "certificate for the IPv6 unspecified address",
+			objects:     nodeClaiming("::"),
+			template:    templateWithIP("::"),
+			expectedErr: `IPAddresses[1]: forbidden: "::": is an unspecified address`,
 		},
 	} {
 		t.Run(tt.testCase, func(t *testing.T) {
