@@ -13,6 +13,8 @@ import (
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/prober"
 	"github.com/k0sproject/k0s/pkg/config"
+
+	corev1 "k8s.io/api/core/v1"
 )
 
 type K0sStatus struct {
@@ -29,10 +31,20 @@ type K0sStatus struct {
 	WorkerToAPIConnectionStatus ProbeStatus
 	ClusterConfig               *v1beta1.ClusterConfig
 	K0sVars                     *config.CfgVars
+	Conditions                  []Condition
 }
+
 type ProbeStatus struct {
 	Message string
 	Success bool
+}
+
+// Condition is a Kubernetes-style status condition. CNIReady is the first type.
+type Condition struct {
+	Type    string
+	Status  corev1.ConditionStatus
+	Reason  string
+	Message string
 }
 
 // GetStatus returns the status of the k0s process using the status socket
