@@ -7,6 +7,8 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 You can create a k0s cluster on top of Docker.
 
+To package your own changes, see [Build a custom k0s image](build-custom-image.md).
+
 ## Prerequisites
 
 You will require a [Docker environment](https://docs.docker.com/get-docker/) running on a Mac, Windows, or Linux system.
