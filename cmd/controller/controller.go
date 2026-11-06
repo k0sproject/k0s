@@ -309,6 +309,7 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 			LogConfig:       debug,
 			KubeConfigPath:  c.K0sVars.AdminKubeConfigPath,
 			APIPort:         nodeConfig.Spec.API.Port,
+			Address:         nodeConfig.Spec.API.Address,
 		})
 	}
 
