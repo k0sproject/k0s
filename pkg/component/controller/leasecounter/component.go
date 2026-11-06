@@ -6,6 +6,7 @@ package leasecounter
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 	"strconv"
@@ -110,13 +111,13 @@ func (c *Component) Start(context.Context) error {
 		return err
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancelCause(context.Background())
 	var wg sync.WaitGroup
 
 	wg.Add(2)
 	go func() { defer wg.Done(); c.runLeaderElection(ctx, client) }()
 	go func() { defer wg.Done(); c.runLeaseCounter(ctx, kubeClient, leaseName) }()
-	c.stop = func() { cancel(); wg.Wait() }
+	c.stop = func() { cancel(errors.New("component is stopping")); wg.Wait() }
 
 	return nil
 }
@@ -135,7 +136,11 @@ func (c *Component) runLeaderElection(ctx context.Context, client *leaderelectio
 		if status == leaderelection.StatusLeading {
 			c.log.Info("Holding the controller lease")
 		} else {
-			c.log.Error("Lost the controller lease")
+			if err := context.Cause(ctx); err != nil {
+				c.log.Info("Lost the controller lease: ", err)
+			} else {
+				c.log.Error("Lost the controller lease")
+			}
 		}
 	})
 }
