@@ -1,0 +1,50 @@
+# Linux controller VM for the windows-local test. Plays the role of WSL in the
+# win-wsl.yaml workflow. Started by check-windows-local.sh.
+
+base: template:ubuntu-24.04
+
+# QEMU instead of the default vz on macOS: qemu-lab.sh adds the lab NIC to QEMU.
+vmType: "qemu"
+
+cpus: 4
+memory: "4GiB"
+disk: "30GiB"
+
+mounts: []
+
+# No Lima networks: qemu-lab.sh adds the NIC linking this VM to the Windows
+# worker. The k0s API, kubelet and Calico are all pinned to that link.
+provision:
+- mode: data
+  path: /etc/netplan/99-k0s-lab.yaml
+  permissions: 600
+  content: |
+    network:
+      version: 2
+      ethernets:
+        lab0:
+          match:
+            macaddress: "52:54:00:77:00:01"
+          set-name: lab0
+          dhcp4: false
+          addresses: [10.77.0.1/24]
+- mode: system
+  script: |
+    #!/bin/sh
+    set -eu
+    netplan apply
+- mode: data
+  path: /etc/k0s/k0s.yaml
+  content: |
+    spec:
+      api:
+        address: 10.77.0.1
+      storage:
+        type: kine
+      network:
+        provider: calico
+        calico:
+          ipAutodetectionMethod: cidr=10.77.0.0/24
+        nodeLocalLoadBalancing:
+          enabled: true
+          type: Traefik

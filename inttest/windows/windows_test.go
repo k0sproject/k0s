@@ -79,6 +79,7 @@ func TestWindows(t *testing.T) {
 					if condition.Type == corev1.NodeReady {
 						t.Logf("Node %s condition %s is %s", node.Name, condition.Type, condition.Status)
 						if condition.Status != corev1.ConditionTrue {
+							t.Logf("Node %s is not ready: %s: %s", node.Name, condition.Reason, condition.Message)
 							return false, nil
 						}
 					}
