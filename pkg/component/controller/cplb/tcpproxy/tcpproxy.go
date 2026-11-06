@@ -325,8 +325,9 @@ func (r *Route) HandleConn(src net.Conn) {
 	errc := make(chan error, 2)
 	go proxyCopy(errc, src, dst)
 	go proxyCopy(errc, dst, src)
-	<-errc
-	<-errc
+	// Errors are intentionally ignored, wait for both copy goroutines.
+	_ = <-errc
+	_ = <-errc
 }
 
 func (r *Route) sendProxyHeader(w io.Writer, src net.Conn) error {
