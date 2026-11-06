@@ -21,11 +21,11 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/client-go/metadata"
 
+	"github.com/k0sproject/k0s/internal/constant"
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
-	"github.com/k0sproject/k0s/pkg/constant"
 	k8sutil "github.com/k0sproject/k0s/pkg/kubernetes"
 )
 

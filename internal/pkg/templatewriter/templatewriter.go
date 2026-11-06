@@ -11,10 +11,10 @@ import (
 
 	"github.com/Masterminds/sprig"
 
+	"github.com/k0sproject/k0s/internal/constant"
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/internal/pkg/patches"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
-	"github.com/k0sproject/k0s/pkg/constant"
 )
 
 // TemplateWriter is a helper to write templated kube manifests
