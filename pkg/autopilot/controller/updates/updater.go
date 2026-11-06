@@ -11,18 +11,21 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/robfig/cron"
-	"github.com/sirupsen/logrus"
-	"k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	crcli "sigs.k8s.io/controller-runtime/pkg/client"
-
+	"github.com/k0sproject/k0s/internal/secret"
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
 	uc "github.com/k0sproject/k0s/pkg/autopilot/updater"
 	"github.com/k0sproject/k0s/pkg/build"
 	"github.com/k0sproject/k0s/pkg/component/status"
+
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	crcli "sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/robfig/cron"
+	"github.com/sirupsen/logrus"
 )
 
 type updater interface {
@@ -54,7 +57,29 @@ var patchOpts = []crcli.PatchOption{
 	crcli.ForceOwnership,
 }
 
-func newUpdater(parentCtx context.Context, updateConfig apv1beta2.UpdateConfig, k8sClient crcli.Client, apClientFactory apcli.FactoryInterface, clusterID string, collector *ClusterInfoCollector, updateServerToken string) (updater, error) {
+// Fetches the update server token from its well-known Secret.
+// The token is zero if the Secret holds none, or if there is no Secret.
+func getUpdateServerToken(ctx context.Context, clients interface {
+	GetClient() (kubernetes.Interface, error)
+}) (token secret.String, _ error) {
+	client, err := clients.GetClient()
+	if err != nil {
+		return token, err
+	}
+
+	s, err := client.CoreV1().Secrets(metav1.NamespaceSystem).Get(ctx, "update-server-token", metav1.GetOptions{})
+	if err == nil {
+		if rawToken := s.Data["token"]; len(rawToken) > 0 {
+			token.Store(string(rawToken))
+		}
+	} else if errors.IsNotFound(err) {
+		err = nil
+	}
+
+	return token, err
+}
+
+func newUpdater(parentCtx context.Context, updateConfig apv1beta2.UpdateConfig, k8sClient crcli.Client, apClientFactory apcli.FactoryInterface, clusterID string, collector *ClusterInfoCollector, updateServerToken secret.String) (updater, error) {
 	updateClient, err := uc.NewClient(updateConfig.Spec.UpdateServer, updateServerToken)
 	if err != nil {
 		return nil, err
@@ -163,11 +188,11 @@ func (u *cronUpdater) needToUpdate() bool {
 
 func (u *cronUpdater) toPlan(nextVersion *uc.Update) apv1beta2.Plan {
 	p := apv1beta2.Plan{
-		TypeMeta: v1.TypeMeta{
+		TypeMeta: metav1.TypeMeta{
 			Kind:       "Plan",
 			APIVersion: "autopilot.k0sproject.io/v1beta2",
 		},
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name: "autopilot",
 		},
 		Spec: apv1beta2.PlanSpec{},
