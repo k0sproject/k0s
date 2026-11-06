@@ -6,6 +6,7 @@ package keepalived
 import (
 	"errors"
 	"fmt"
+	"net"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -13,12 +14,15 @@ import (
 	"syscall"
 
 	"github.com/spf13/cobra"
+	"golang.org/x/sys/unix"
 )
 
 func NewKeepalivedSetStateCmd() *cobra.Command {
 	var (
-		rundir string
-		state  string
+		rundir     string
+		state      string
+		iface      string
+		virtualIPs []string
 	)
 
 	cmd := &cobra.Command{
@@ -33,6 +37,20 @@ func NewKeepalivedSetStateCmd() *cobra.Command {
 			// Verify that rundir is a valid directory
 			if err := validateRundir(rundir); err != nil {
 				return err
+			}
+
+			lock, err := os.OpenFile(filepath.Join(rundir, "keepalived-setstate.lock"), os.O_CREATE|os.O_RDWR, 0600)
+			if err != nil {
+				return err
+			}
+			defer lock.Close()
+			if err = unix.Flock(int(lock.Fd()), unix.LOCK_EX); err != nil {
+				return fmt.Errorf("failed to lock %s: %w", lock.Name(), err)
+			}
+			if iface != "" {
+				if state, err = stateOf(iface, virtualIPs); err != nil {
+					return err
+				}
 			}
 
 			// generatedVirtualServers doesn't need to exist in order to be linked
@@ -70,12 +88,42 @@ func NewKeepalivedSetStateCmd() *cobra.Command {
 	// Add flags
 	cmd.Flags().StringVarP(&rundir, "run-dir", "r", "", "Path to the run-dir (required)")
 	cmd.Flags().StringVarP(&state, "state", "s", "", "State to set (MASTER or BACKUP) (required)")
+	cmd.Flags().StringVar(&iface, "interface", "", "Interface of the VRRP instance, if set the state is MASTER when it holds any --virtual-ip and BACKUP otherwise")
+	cmd.Flags().StringArrayVar(&virtualIPs, "virtual-ip", nil, "Virtual IP of the VRRP instance, in CIDR notation")
+	cmd.MarkFlagsRequiredTogether("interface", "virtual-ip")
 
 	// Mark flags as required
 	_ = cmd.MarkFlagRequired("rundir")
 	_ = cmd.MarkFlagRequired("state")
 
 	return cmd
+}
+
+func stateOf(iface string, virtualIPs []string) (string, error) {
+	link, err := net.InterfaceByName(iface)
+	if err != nil {
+		return "", fmt.Errorf("failed to get interface %s: %w", iface, err)
+	}
+	addrs, err := link.Addrs()
+	if err != nil {
+		return "", fmt.Errorf("failed to list the addresses of %s: %w", iface, err)
+	}
+	return stateFromAddrs(addrs, virtualIPs)
+}
+
+func stateFromAddrs(addrs []net.Addr, virtualIPs []string) (string, error) {
+	for _, virtualIP := range virtualIPs {
+		ip, _, err := net.ParseCIDR(virtualIP)
+		if err != nil {
+			return "", err
+		}
+		for _, addr := range addrs {
+			if ipNet, ok := addr.(*net.IPNet); ok && ipNet.IP.Equal(ip) {
+				return "MASTER", nil
+			}
+		}
+	}
+	return "BACKUP", nil
 }
 
 func createSymlink(rundir string, sourceFile string) error {

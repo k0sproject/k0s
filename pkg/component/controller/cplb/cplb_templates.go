@@ -24,8 +24,8 @@ vrrp_instance k0s-vip-{{$i}} {
     {{ if and ($ipvsLoadBalancer) (eq $VRRPInstancesLen 1) }}
     # Required to prevent routing loops when we use keepalived
     # virtual_servers: https://github.com/k0sproject/k0s/issues/5178
-    notify_master "'{{ $k0s }}' keepalived-setstate -r '{{ $runDir }}' -s MASTER"
-    notify_backup "'{{ $k0s }}' keepalived-setstate -r '{{ $runDir }}' -s BACKUP"
+    notify_master "'{{ $k0s }}' keepalived-setstate -r '{{ $runDir }}' -s MASTER --interface '{{ .Interface }}'{{ range .VirtualIPs }} --virtual-ip '{{ . }}'{{ end }}"
+    notify_backup "'{{ $k0s }}' keepalived-setstate -r '{{ $runDir }}' -s BACKUP --interface '{{ .Interface }}'{{ range .VirtualIPs }} --virtual-ip '{{ . }}'{{ end }}"
     {{ end }}
 
 	#advertisement interval, 1 second by default
