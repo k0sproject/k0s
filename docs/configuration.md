@@ -386,14 +386,16 @@ Configuration options related to k0s's [control plane load balancing] feature
 
 Configuration options related to keepalived in [control plane load balancing]
 
-| Element                  | Description                                                                                                                     |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
-| `vrrpInstances`          | Configuration options related to the VRRP. This is an array which allows to configure multiple virtual IPs.                     |
-| `virtualServers`         | Configuration options related to load balancing. This is an array which allows to configure multiple load balancers.            |
-| `userSpaceProxyBindPort` | The port the user space proxy will bind to. This port is for internal use only, but listens on every interface. Default: `6444` |
-| `disableLoadBalancer`    | Disables the load balancer. Default: `false`                                                                                    |
-| `configTemplateVRRP`     | Path to a custom Keepalived configuration template for VRRP. Default: empty .                                                   |
-| `configTemplateVS`       | Path to a custom Keepalived configuration template for Virtual Servers. Default: empty                                          |
+| Element                              | Description                                                                                                                     |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| `vrrpInstances`                      | Configuration options related to the VRRP. This is an array which allows to configure multiple virtual IPs.                     |
+| `virtualServers`                     | Configuration options related to load balancing. This is an array which allows to configure multiple load balancers.            |
+| `userSpaceProxyBindPort`             | The port the user space proxy will bind to. This port is for internal use only, but listens on every interface. Default: `6444` |
+| `userSpaceProxyKonnectivityBindPort` | Load balances the konnectivity agent port on the VIPs, the user space proxy binds to this port. Default: disabled               |
+| `userSpaceProxyK0sApiBindPort`       | Load balances the k0s API port on the VIPs, the user space proxy binds to this port. Default: disabled                          |
+| `disableLoadBalancer`                | Disables the load balancer. Default: `false`                                                                                    |
+| `configTemplateVRRP`                 | Path to a custom Keepalived configuration template for VRRP. Default: empty .                                                   |
+| `configTemplateVS`                   | Path to a custom Keepalived configuration template for Virtual Servers. Default: empty                                          |
 
 ##### `spec.network.controlPlaneLoadBalancing.keepalived.vrrpInstances`
 
@@ -421,6 +423,8 @@ Configuration options required for using VRRP to configure VIPs in control plane
 | `lbAlgo`                    | Algorithm used by keepalived. Supported algorithms: `rr`, `wrr`, `lc`, `wlc`, `lblc`, `dh`, `sh`, `sed`, `nq`. Default: `rr`.              |
 | `lbKind`                    | Kind of IPVS load balancer. Supported values: `NAT`, `DR`, `TUN`. Default: `DR`.                                                           |
 | `persistenceTimeoutSeconds` | Timeout for persistent connections in seconds. Must be in the range of 1-2678400 (31 days). If not specified, defaults to 360 (6 minutes). |
+| `konnectivity`              | Load balances the konnectivity agent port on the virtual IP, without persistence. Default: `false`.                                        |
+| `k0sApi`                    | Load balances the k0s API port on the virtual IP. Default: `false`.                                                                        |
 
 ### `spec.controllerManager`
 

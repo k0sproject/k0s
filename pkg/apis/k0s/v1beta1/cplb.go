@@ -67,6 +67,20 @@ type KeepalivedSpec struct {
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:validation:Maximum=65535
 	UserSpaceProxyPort int `json:"userSpaceProxyBindPort,omitempty"`
+	// UserSpaceProxyKonnectivityBindPort enables load balancing of the konnectivity agent port on the
+	// virtual IPs. The userspace proxy binds to it on every interface. Can't be combined with virtual servers.
+	//
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=65535
+	// +optional
+	UserSpaceProxyKonnectivityBindPort int `json:"userSpaceProxyKonnectivityBindPort,omitempty"`
+	// UserSpaceProxyK0sAPIBindPort enables load balancing of the k0s API port on the virtual IPs.
+	// The userspace proxy binds to it on every interface. Can't be combined with virtual servers.
+	//
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=65535
+	// +optional
+	UserSpaceProxyK0sAPIBindPort int `json:"userSpaceProxyK0sApiBindPort,omitempty"`
 	// DisableLoadBalancer disables the load balancer.
 	DisableLoadBalancer bool `json:"disableLoadBalancer,omitempty"`
 	// ConfigTemplateVRRP specifies the path to a custom Keepalived configuration template for VRRP.
@@ -250,6 +264,13 @@ type VirtualServer struct {
 	// +kubebuilder:validation:Maximum=2678400
 	// +kubebuilder:default=360
 	PersistenceTimeoutSeconds int `json:"persistenceTimeoutSeconds,omitempty"`
+	// Konnectivity enables load balancing of the konnectivity agent port on the virtual IP, without
+	// persistence, so that every agent reaches every konnectivity server.
+	// +optional
+	Konnectivity bool `json:"konnectivity,omitempty"`
+	// K0sAPI enables load balancing of the k0s API port on the virtual IP.
+	// +optional
+	K0sAPI bool `json:"k0sApi,omitempty"`
 }
 
 // KeepalivedLBAlgo describes the load balancing algorithm.
@@ -374,6 +395,28 @@ func (k *KeepalivedSpec) Validate(path *field.Path) (errs field.ErrorList) {
 		for _, msg := range validation.IsValidPortNum(k.UserSpaceProxyPort) {
 			errs = append(errs, field.Invalid(path.Child("userSpaceProxyBindPort"), k.UserSpaceProxyPort, msg))
 		}
+	}
+	bindPorts := map[int]bool{k.UserSpaceProxyPort: true}
+	for _, p := range []struct {
+		name string
+		port int
+	}{
+		{"userSpaceProxyKonnectivityBindPort", k.UserSpaceProxyKonnectivityBindPort},
+		{"userSpaceProxyK0sApiBindPort", k.UserSpaceProxyK0sAPIBindPort},
+	} {
+		if p.port == 0 {
+			continue
+		}
+		for _, msg := range validation.IsValidPortNum(p.port) {
+			errs = append(errs, field.Invalid(path.Child(p.name), p.port, msg))
+		}
+		if len(k.VirtualServers) > 0 {
+			errs = append(errs, field.Forbidden(path.Child(p.name), "cannot be combined with virtualServers"))
+		}
+		if bindPorts[p.port] {
+			errs = append(errs, field.Duplicate(path.Child(p.name), p.port))
+		}
+		bindPorts[p.port] = true
 	}
 
 	return errs
