@@ -3572,7 +3572,7 @@ k0sctl</a> and the <a href="https://github.com/k0sproject/k0sctl/blob/main/READM
 <tbody>
 <tr>
 <td><code>address</code></td>
-<td>IP Address used by cluster components to talk to the API server. Also serves as one of the addresses pushed on the k0s create service certificate on the API. Defaults to first non-local address found on the node.</td>
+<td>IP Address used by cluster components to talk to the API server. Also serves as one of the addresses pushed on the k0s create service certificate on the API. Defaults to the first address on the node, skipping loopback and link-local addresses and preferring IPv4.</td>
 </tr>
 <tr>
 <td><code>onlyBindToAddress</code></td>
