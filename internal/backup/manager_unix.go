@@ -71,7 +71,7 @@ func (bm *Manager) discoverSteps(configFilePath string, nodeSpec *v1beta1.Cluste
 		if nodeSpec.Storage.Etcd.IsExternalClusterUsed() {
 			logrus.Warnf("%s is not supported for an external etcd cluster, it must be done manually", action)
 		} else {
-			bm.Add(newEtcdStep(bm.tmpDir, vars.CertRootDir, vars.EtcdCertDir, nodeSpec.Storage.Etcd.PeerAddress, vars.EtcdDataDir))
+			bm.Add(newEtcdStep(bm.tmpDir, vars.CertRootDir, vars.EtcdCertDir, vars.EtcdSocketPath, nodeSpec.Storage.Etcd.PeerAddress, vars.EtcdDataDir))
 		}
 
 	case v1beta1.KineStorageType:

@@ -176,6 +176,60 @@ spec:
 | `kine.extraArgs`                  | Map of key-values (strings) for any extra arguments to pass down to kine process. `extraArgs` are recommended over `rawArgs` if the use case allows it. Any behavior triggered by these parameters is outside k0s support.                         |
 | `kine.rawArgs`                    | Slice of strings for any raw arguments to pass down to the kine process. These are appended after `extraArgs`. Any behavior triggered by these parameters is outside k0s support. (default: empty)                                                 |
 
+#### `spec.storage.etcd.extraArgs` client URLs
+
+k0s components on a controller, including kube-apiserver, connect to the local
+etcd member over a TLS unix socket. See [Run directory
+layout](directories.md#run-directory-layout) for its path. By default, etcd also
+listens on `https://127.0.0.1:2379`, so that existing local tools that connect
+to it keep working.
+
+**Deprecated**: The default `https://127.0.0.1:2379` listener will be removed in
+k0s v1.40. Move local tools to the unix socket, or configure the TCP listener
+explicitly, as shown below.
+
+You can set etcd's `listen-client-urls` and `advertise-client-urls` in
+`etcd.extraArgs`. Your values replace the defaults, and k0s adds the socket URL
+to them, even if you don't list it.
+
+To keep the TCP listener in k0s v1.40 and later, configure it explicitly:
+
+```yaml
+spec:
+  storage:
+    etcd:
+      extraArgs:
+        listen-client-urls: https://127.0.0.1:2379
+        advertise-client-urls: https://127.0.0.1:2379
+```
+
+To drop the TCP listener now, set both flags to the socket URL only. This
+example uses the socket path of k0s running as root:
+
+```yaml
+spec:
+  storage:
+    etcd:
+      extraArgs:
+        listen-client-urls: unixs:///run/k0s/etcd/localhost:2379
+        advertise-client-urls: unixs:///run/k0s/etcd/localhost:2379
+```
+
+**Note**: The `https://127.0.0.1:2379` listener requires an IPv4 loopback
+address. On nodes without one, etcd fails to start. Drop the TCP listener as
+shown above, or set both flags to `https://[::1]:2379` instead.
+
+**Note**: etcd doesn't create directories for unix socket URLs. The parent
+directory of any additional unix socket in `listen-client-urls` must exist and
+be writable by the etcd user (`spec.installConfig.users.etcdUser`).
+
+**Note**: Set client URLs in `etcd.extraArgs`, not in `etcd.rawArgs`. k0s
+doesn't merge `etcd.rawArgs`, so `--listen-client-urls` there replaces the
+socket URL and etcd stops listening on the socket. k0s components, including
+kube-apiserver, connect to etcd only through the socket, so the controller
+doesn't start. The same happens with `--config-file`, because etcd then ignores
+all other flags.
+
 #### `spec.storage.etcd.externalCluster`
 
 k0s can also work with an externally managed Etcd cluster. If this is configured, k0s will NOT set up etcd, it has to be managed manually.

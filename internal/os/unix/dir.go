@@ -24,6 +24,10 @@ type Path interface {
 	Name() string               // Delegates to [os.File.Name].
 	Stat() (os.FileInfo, error) // Delegates to [os.File.Stat].
 
+	// Changes the mode of the path this handle is referring to. In contrast to
+	// [os.File.Chmod], this also works for handles opened with O_PATH.
+	Chmod(mode os.FileMode) error
+
 	// Converts this pointer to an [*os.File] without any additional checks.
 	//
 	// Note that both [os.File.ReadDir] and [os.File.Readdir] will NOT work,
@@ -168,6 +172,7 @@ func (f *pathFD) Name() string                          { return (*os.File)(f).N
 func (f *pathFD) SyscallConn() (syscall.RawConn, error) { return (*os.File)(f).SyscallConn() }
 func (f *pathFD) Read(b []byte) (int, error)            { return (*os.File)(f).Read(b) }
 func (f *pathFD) Stat() (fs.FileInfo, error)            { return (*os.File)(f).Stat() }
+func (f *pathFD) Chmod(mode os.FileMode) error          { return chmod((*os.File)(f), mode) }
 func (f *pathFD) UnwrapFile() *os.File                  { return (*os.File)(f) }
 func (f *pathFD) UnwrapDir() *Dir                       { return (*Dir)(f) }
 

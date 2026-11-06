@@ -63,3 +63,10 @@ with the `/108` pod CIDR) but each node would receive 256 IP addresses.
 ### Important Notes for Kube-router
 
 Currently kube-router on IPv6 doesn't pass the kubernetes network conformance tests.
+
+### Important Notes for etcd
+
+By default, etcd also listens on `https://127.0.0.1:2379`, which requires an
+IPv4 loopback address. On nodes without one, etcd fails to start. Drop that
+listener or replace it with `https://[::1]:2379`, as described in [etcd client
+URLs](configuration.md#specstorageetcdextraargs-client-urls).
