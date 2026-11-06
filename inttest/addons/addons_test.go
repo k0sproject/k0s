@@ -10,18 +10,23 @@ import (
 	"context"
 	"crypto"
 	"crypto/sha256"
+	"crypto/tls"
 	"crypto/x509"
 	"encoding/hex"
 	"encoding/json"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"io"
 	"io/fs"
+	"net"
+	"net/http"
 	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -68,6 +73,12 @@ import (
 const (
 	registryCACertContainerPath = "/tmp/registry-ca.crt"
 	echoServerTgzPath           = "./testdata/chart/echo-server-0.5.0.tgz"
+
+	mtlsRegistryNodeName      = "TestAddonsSuite-mtlsregistry0"
+	mtlsRegistryContainerPort = 5000
+	mtlsRegistryCAPath        = "/tmp/mtls-registry-ca.crt"
+	mtlsClientCertPath        = "/tmp/mtls-client.crt"
+	mtlsClientKeyPath         = "/tmp/mtls-client.key"
 )
 
 type AddonsSuite struct {
@@ -92,26 +103,34 @@ func initCA(t *testing.T) (cert *x509.Certificate, key crypto.Signer) {
 	return
 }
 
-func issueServerCertsWithSelfSignedCA(t *testing.T, certsDir, registryHost string) []byte {
-	caCert, caKey := initCA(t)
-
-	s, err := local.NewSigner(caKey, caCert, signer.DefaultSigAlgo(caKey), &config.Signing{
-		Default: &config.SigningProfile{
-			Usage: []string{
-				"digital signature",
-				"key encipherment",
-				"server auth",
-			},
+func newRegistrySigner(t *testing.T, caCert *x509.Certificate, caKey crypto.Signer, clientAuth bool) *local.Signer {
+	serverProfile := &config.SigningProfile{
+		Usage:        []string{"digital signature", "key encipherment", "server auth"},
+		Expiry:       helpers.OneDay,
+		ExpiryString: helpers.OneDay.String(),
+	}
+	profiles := map[string]*config.SigningProfile{}
+	if clientAuth {
+		profiles["client"] = &config.SigningProfile{
+			Usage:        []string{"digital signature", "key encipherment", "client auth"},
 			Expiry:       helpers.OneDay,
 			ExpiryString: helpers.OneDay.String(),
-		},
+		}
+	}
+
+	s, err := local.NewSigner(caKey, caCert, signer.DefaultSigAlgo(caKey), &config.Signing{
+		Default:  serverProfile,
+		Profiles: profiles,
 	})
 	require.NoError(t, err)
+	return s
+}
 
+func issueServerCert(t *testing.T, s *local.Signer, certsDir string, hosts ...string) []byte {
 	serverCertCSR, serverKey, err := csr.ParseRequest(&csr.CertificateRequest{
 		KeyRequest: csr.NewKeyRequest(),
 		CN:         "Test Registry",
-		Hosts:      []string{registryHost},
+		Hosts:      hosts,
 	})
 	require.NoError(t, err)
 
@@ -124,22 +143,46 @@ func issueServerCertsWithSelfSignedCA(t *testing.T, certsDir, registryHost strin
 	return serverCert
 }
 
-// pushChartToLocalRegistry pushes a pre-downloaded echo-server chart to the local registry
-func (as *AddonsSuite) pushChartToLocalRegistry() {
+func issueServerCertsWithSelfSignedCA(t *testing.T, certsDir, registryHost string) []byte {
+	caCert, caKey := initCA(t)
+
+	return issueServerCert(t, newRegistrySigner(t, caCert, caKey, false), certsDir, registryHost)
+}
+
+func issueMTLSRegistryCerts(t *testing.T, certsDir, registryHost string) (caPEM, clientCertPEM, clientKeyPEM []byte) {
+	caCert, caKey := initCA(t)
+	caPEM = pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: caCert.Raw})
+
+	s := newRegistrySigner(t, caCert, caKey, true)
+	issueServerCert(t, s, certsDir, registryHost, "localhost")
+	require.NoError(t, os.WriteFile(filepath.Join(certsDir, "client-ca.crt"), caPEM, 0644))
+
+	clientCertCSR, clientKey, err := csr.ParseRequest(&csr.CertificateRequest{
+		KeyRequest: csr.NewKeyRequest(),
+		CN:         "Test Client",
+	})
+	require.NoError(t, err)
+
+	clientCert, err := s.Sign(signer.SignRequest{Request: string(clientCertCSR), Profile: "client"})
+	require.NoError(t, err)
+
+	return caPEM, clientCert, clientKey
+}
+
+func (as *AddonsSuite) pushChart(hostPort int, opts ...action.PushOpt) {
 	helmEnv := cli.New()
 
 	cfg := &action.Configuration{}
 	err := cfg.Init(helmEnv.RESTClientGetter(), "", "memory")
 	as.Require().NoError(err)
 
-	pushAction := action.NewPushWithOpts(
+	pushAction := action.NewPushWithOpts(append([]action.PushOpt{
 		action.WithPushConfig(cfg),
 		action.WithPushOptWriter(os.Stdout),
-		action.WithInsecureSkipTLSVerify(true),
-	)
+	}, opts...)...)
 	pushAction.Settings = helmEnv
 
-	_, err = pushAction.Run(echoServerTgzPath, fmt.Sprintf("oci://localhost:%d/charts", as.GetRegistryHostPort()))
+	_, err = pushAction.Run(echoServerTgzPath, fmt.Sprintf("oci://localhost:%d/charts", hostPort))
 	as.Require().NoError(err)
 }
 
@@ -151,7 +194,7 @@ func (as *AddonsSuite) uploadRegistryCAToControllers() {
 }
 
 func (as *AddonsSuite) SetupTest() {
-	as.pushChartToLocalRegistry()
+	as.pushChart(as.GetRegistryHostPort(), action.WithInsecureSkipTLSVerify(true))
 	as.uploadRegistryCAToControllers()
 }
 
@@ -190,6 +233,7 @@ func (as *AddonsSuite) TestHelmBasedAddons() {
 
 	as.Run("Rename chart in Helm extension", func() { as.renameChart() })
 	as.Run("Secret-based authentication", func() { as.testSecretBasedAuth(kc) })
+	as.Run("mTLS OCI registry", func() { as.testMTLSAuth() })
 	as.Run("Controller restart recovery", func() { as.testControllerRestartRecovery(kc) })
 	as.Run("Chart ordering", func() { as.testChartOrdering() })
 
@@ -339,6 +383,207 @@ func (as *AddonsSuite) testSecretBasedAuth(kc *k8s.Clientset) {
 		}
 		if err != nil {
 			as.T().Log("Error while getting chart: ", err)
+		}
+		return false, nil
+	}))
+}
+
+func (as *AddonsSuite) testMTLSAuth() {
+	ctx := as.TContext()
+
+	if out, err := exec.Command("docker", "rm", "-f", mtlsRegistryNodeName).CombinedOutput(); err != nil {
+		as.Require().Containsf(string(out), "No such container", "Failed to remove stale mTLS registry container: %v", err)
+	}
+
+	certsDir := filepath.Join(as.T().TempDir(), "mtls-registry")
+	as.Require().NoError(os.MkdirAll(certsDir, 0755))
+
+	caPEM, clientCertPEM, clientKeyPEM := issueMTLSRegistryCerts(as.T(), certsDir, mtlsRegistryNodeName)
+
+	caFile := filepath.Join(certsDir, "ca.crt")
+	clientCertFile := filepath.Join(certsDir, "client.crt")
+	clientKeyFile := filepath.Join(certsDir, "client.key")
+	as.Require().NoError(os.WriteFile(caFile, caPEM, 0644))
+	as.Require().NoError(os.WriteFile(clientCertFile, clientCertPEM, 0644))
+	as.Require().NoError(os.WriteFile(clientKeyFile, clientKeyPEM, 0600))
+
+	out, err := exec.Command(
+		"docker", "run", "-d", "--name", mtlsRegistryNodeName,
+		"--network", as.Networks[0],
+		"-p", fmt.Sprintf("0:%d", mtlsRegistryContainerPort),
+		"-v", certsDir+":/tls",
+		"-e", fmt.Sprintf("REGISTRY_HTTP_ADDR=0.0.0.0:%d", mtlsRegistryContainerPort),
+		"-e", "REGISTRY_HTTP_TLS_CERTIFICATE=/tls/tls.crt",
+		"-e", "REGISTRY_HTTP_TLS_KEY=/tls/tls.key",
+		"-e", `REGISTRY_HTTP_TLS_CLIENTCAS=["/tls/client-ca.crt"]`,
+		"docker.io/library/registry:3.1.2@sha256:ddf754342cfc8acc51a56d5d0ab6af06826461864460636d8bd5c546dab2a7b8",
+	).CombinedOutput()
+	as.T().Cleanup(func() {
+		if out, err := exec.Command("docker", "rm", "-f", mtlsRegistryNodeName).CombinedOutput(); err != nil {
+			as.T().Logf("Failed to remove mTLS registry container %s: %v: %s", mtlsRegistryNodeName, err, out)
+		}
+	})
+	as.Require().NoErrorf(err, "mTLS registry should start: %s", out)
+
+	portOut, err := exec.Command("docker", "port", mtlsRegistryNodeName, strconv.Itoa(mtlsRegistryContainerPort)).CombinedOutput()
+	as.Require().NoErrorf(err, "mTLS registry port should be determined: %s", portOut)
+	fields := strings.Fields(string(portOut))
+	as.Require().NotEmpty(fields, "mTLS registry should have a port mapping: %s", portOut)
+	_, port, err := net.SplitHostPort(fields[0])
+	as.Require().NoErrorf(err, "mTLS registry port mapping should be parseable: %s", portOut)
+	hostPort, err := strconv.Atoi(port)
+	as.Require().NoError(err)
+
+	clientCert, err := tls.X509KeyPair(clientCertPEM, clientKeyPEM)
+	as.Require().NoError(err)
+	pool := x509.NewCertPool()
+	as.Require().True(pool.AppendCertsFromPEM(caPEM))
+	httpClient := &http.Client{Transport: &http.Transport{
+		TLSClientConfig: &tls.Config{RootCAs: pool, Certificates: []tls.Certificate{clientCert}},
+	}}
+	defer httpClient.CloseIdleConnections()
+
+	as.T().Log("Waiting for mTLS registry to come up")
+	as.Require().NoErrorf(wait.PollUntilContextCancel(ctx, time.Second, true, func(context.Context) (bool, error) {
+		resp, err := httpClient.Get(fmt.Sprintf("https://localhost:%d/v2/", hostPort))
+		if err != nil {
+			as.T().Logf("mTLS registry not ready yet: %v", err)
+			return false, nil
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			as.T().Logf("mTLS registry not ready yet: HTTP %d", resp.StatusCode)
+			return false, nil
+		}
+		return true, nil
+	}), "mTLS registry should become ready at localhost:%d", hostPort)
+
+	unauthenticatedClient := &http.Client{Transport: &http.Transport{
+		TLSClientConfig: &tls.Config{RootCAs: pool},
+	}}
+	defer unauthenticatedClient.CloseIdleConnections()
+
+	unauthResp, unauthErr := unauthenticatedClient.Get(fmt.Sprintf("https://localhost:%d/v2/", hostPort))
+	if unauthResp != nil {
+		unauthResp.Body.Close()
+	}
+	var remoteErr *net.OpError
+	as.Require().ErrorAs(unauthErr, &remoteErr, "registry should reject a request without a client certificate")
+	as.Require().Equal("remote error", remoteErr.Op, "registry should reject the TLS handshake")
+
+	as.pushChart(hostPort, action.WithTLSClientConfig(clientCertFile, clientKeyFile, caFile))
+
+	as.PutFile(as.ControllerNode(0), mtlsRegistryCAPath, string(caPEM))
+	as.PutFile(as.ControllerNode(0), mtlsClientCertPath, string(clientCertPEM))
+	as.PutFile(as.ControllerNode(0), mtlsClientKeyPath, string(clientKeyPEM))
+
+	as.T().Cleanup(func() {
+		cleanupCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		ssh, err := as.SSH(cleanupCtx, as.ControllerNode(0))
+		if err != nil {
+			as.T().Logf("Failed to connect to controller to remove mTLS credentials: %v", err)
+			return
+		}
+		defer ssh.Disconnect()
+
+		rm := "rm -f " + strings.Join([]string{mtlsRegistryCAPath, mtlsClientCertPath, mtlsClientKeyPath}, " ")
+		if _, err := ssh.ExecWithOutput(cleanupCtx, rm); err != nil {
+			as.T().Logf("Failed to remove mTLS credentials from controller: %v", err)
+		}
+	})
+
+	restConfig, err := as.GetKubeConfig(as.ControllerNode(0))
+	as.Require().NoError(err)
+	chartClient, err := client.New(restConfig, client.Options{Scheme: k0sscheme.Scheme})
+	as.Require().NoError(err)
+
+	releaseName := "mtls-oci-addon"
+	chartName := "k0s-addon-chart-" + releaseName
+	chart := &helmv1beta1.Chart{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      chartName,
+			Namespace: metav1.NamespaceSystem,
+			Finalizers: []string{
+				"helm.k0sproject.io/uninstall-helm-release",
+			},
+		},
+		Spec: helmv1beta1.ChartSpec{
+			ChartName:   fmt.Sprintf("oci://%s/charts/echo-server", net.JoinHostPort(mtlsRegistryNodeName, strconv.Itoa(mtlsRegistryContainerPort))),
+			ReleaseName: releaseName,
+			Version:     "0.5.0",
+			Namespace:   metav1.NamespaceDefault,
+			Timeout:     "5m0s",
+			Repository: &helmv1beta1.RepositorySpec{
+				CAFile:   mtlsRegistryCAPath,
+				CertFile: mtlsClientCertPath,
+				KeyFile:  mtlsClientKeyPath,
+			},
+		},
+	}
+
+	as.T().Logf("Creating mTLS Chart %s/%s", chart.Namespace, chart.Name)
+	as.Require().NoError(chartClient.Create(ctx, chart))
+
+	deleteChart := func() {
+		cleanupCtx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+		defer cancel()
+
+		if err := chartClient.Delete(cleanupCtx, chart); err != nil && !apierrors.IsNotFound(err) {
+			as.T().Logf("Failed to delete mTLS Chart %s/%s: %v", chart.Namespace, chart.Name, err)
+			return
+		}
+
+		err := wait.PollUntilContextCancel(cleanupCtx, time.Second, true, func(ctx context.Context) (bool, error) {
+			var found helmv1beta1.Chart
+			err := chartClient.Get(ctx, client.ObjectKey{Namespace: chart.Namespace, Name: chart.Name}, &found)
+			if apierrors.IsNotFound(err) {
+				return true, nil
+			}
+			if err != nil {
+				as.T().Logf("Failed to get mTLS Chart %s/%s: %v", chart.Namespace, chart.Name, err)
+			}
+			return false, nil
+		})
+		if err != nil {
+			as.T().Logf("Timed out waiting for mTLS Chart %s/%s to be deleted: %v", chart.Namespace, chart.Name, err)
+		}
+	}
+	as.T().Cleanup(deleteChart)
+
+	mtlsKC, err := as.AutopilotClient(as.ControllerNode(0))
+	as.Require().NoError(err)
+	var reconciledChart helmv1beta1.Chart
+	as.Require().NoError(watch.Charts(mtlsKC.HelmV1beta1().Charts(metav1.NamespaceSystem)).
+		WithObjectName(chartName).
+		Until(ctx, func(item *helmv1beta1.Chart) (bool, error) {
+			if item.Status.Error != "" {
+				return false, fmt.Errorf("mTLS chart %s should install without errors: %s", chartName, item.Status.Error)
+			}
+			if item.Status.ReleaseName == "" || item.Generation != 1 || item.Status.Revision != 1 {
+				as.T().Logf("mTLS Chart not ready yet (version %q): releaseName=%q generation=%d revision=%d",
+					item.ResourceVersion, item.Status.ReleaseName, item.Generation, item.Status.Revision)
+				return false, nil
+			}
+			reconciledChart = *item
+			return true, nil
+		}))
+	as.Require().Equal(metav1.NamespaceDefault, reconciledChart.Status.Namespace)
+	as.Require().Equal("0.6.0", reconciledChart.Status.AppVersion, "mTLS Chart should reconcile to app version 0.6.0")
+
+	as.T().Logf("Cleaning up mTLS test - deleting Chart")
+	as.Require().NoError(chartClient.Delete(ctx, chart))
+	as.Require().NoError(wait.PollUntilContextCancel(ctx, time.Second, true, func(ctx context.Context) (bool, error) {
+		var found helmv1beta1.Chart
+		err := chartClient.Get(ctx, client.ObjectKey{Namespace: chart.Namespace, Name: chart.Name}, &found)
+		if apierrors.IsNotFound(err) {
+			as.T().Log("Chart has been deleted")
+			return true, nil
+		}
+		if err != nil {
+			as.T().Logf("Failed to get mTLS Chart %s/%s: %v", chart.Namespace, chart.Name, err)
+			return false, err
 		}
 		return false, nil
 	}))
