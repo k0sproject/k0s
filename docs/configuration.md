@@ -278,7 +278,7 @@ CALICO_IPV6POOL_CIDR: "{{ spec.network.dualStack.IPv6podCIDR }}"
 | Element              | Description                                                                                                                                                                                                                                                               |
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `disabled`           | Disable kube-proxy altogether (default: `false`).                                                                                                                                                                                                                         |
-| `mode`               | Kube proxy operating mode, supported modes `iptables`, `ipvs`, `nftables`¹, `userspace` (default: `iptables`)                                                                                                                                                             |
+| `mode`               | Kube proxy operating mode, supported modes `iptables`, `ipvs`¹, `nftables`² (default: `iptables`)                                                                                                                                                                         |
 | `iptables`           | Kube proxy iptables settings                                                                                                                                                                                                                                              |
 | `ipvs`               | Kube proxy IPVS settings                                                                                                                                                                                                                                                  |
 | `nftables`           | Kube proxy nftables settings                                                                                                                                                                                                                                              |
@@ -288,7 +288,13 @@ CALICO_IPV6POOL_CIDR: "{{ spec.network.dualStack.IPv6podCIDR }}"
 | `extraArgs`          | Map of key-values (strings) for any extra arguments to pass down to kube-proxy process. `extraArgs` are recommended over `rawArgs` if the use case allows it. Any behavior triggered by these parameters is outside k0s support. (default: empty)                         |
 | `rawArgs`            | Slice of strings for any raw arguments to pass down to the kube-proxy process. These are appended after `extraArgs`. If possible, it's recommended to use `extraArgs` over `rawArgs`. Any behavior triggered by these parameters is outside k0s support. (default: empty) |
 
-¹ For nftables, the kube-proxy container's nftables version needs to be less
+¹ The `ipvs` mode is deprecated. Starting with Kubernetes 1.40, users must
+explicitly enable the Kubernetes `KubeProxyIPVS` feature gate in
+`spec.featureGates`. IPVS will be removed entirely in Kubernetes 1.43. Use
+`nftables` or `iptables` instead. See
+[KEP-5495](https://github.com/kubernetes/enhancements/blob/master/keps/sig-network/5495-deprecate-ipvs-mode-in-kube-proxy/README.md) for details.
+
+² For nftables, the kube-proxy container's nftables version needs to be less
 than or equal to the host OS's in order to avoid segmentation faults. For
 example, a host OS with nftables v1.1.1 requires
 `quay.io/k0sproject/kube-proxy:{# no auto-bumps-here #}{{{ "v1.33.2" }}}` or
@@ -304,7 +310,7 @@ iptables:
   syncPeriod: 0s
 ```
 
-Default kube-proxy IPVS settings:
+Default kube-proxy IPVS settings (deprecated, see above):
 
 ```yaml
 ipvs:

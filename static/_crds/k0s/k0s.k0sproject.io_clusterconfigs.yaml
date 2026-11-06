@@ -1009,8 +1009,8 @@ spec:
                         type: string
                       mode:
                         description: |-
-                          Mode defines the kube-proxy mode. Supported values are "iptables", "ipvs", "userspace" and "nft"
-                          Defaults to "iptables"
+                          Mode defines the kube-proxy mode. Supported values are "iptables", "ipvs" and "nftables"
+                          Defaults to "iptables". The "ipvs" mode is deprecated (KEP-5495).
                         type: string
                       nftables:
                         description: |-
