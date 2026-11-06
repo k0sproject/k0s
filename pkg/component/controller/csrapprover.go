@@ -283,7 +283,7 @@ func (a *CSRApprover) authorizeKubeletServingCSR(ctx context.Context, csr *certi
 	// cluster's control plane or other in-cluster services, nor for addresses
 	// that no kubelet claims for itself, before even checking what the node
 	// reports.
-	if err := a.denyInClusterSANs(cr); err != nil {
+	if err := a.denyReservedSANs(cr); err != nil {
 		return nil, err
 	}
 
@@ -343,7 +343,7 @@ func (a *CSRApprover) verifyNodeIdentity(csr *certificatesv1.CertificateSigningR
 	return nodeName, nil
 }
 
-func (a *CSRApprover) denyInClusterSANs(cr *x509.CertificateRequest) error {
+func (a *CSRApprover) denyReservedSANs(cr *x509.CertificateRequest) error {
 	for i, dnsName := range cr.DNSNames {
 		if !govalidator.IsDNSName(dnsName) {
 			return fmt.Errorf("DNSNames[%d]: invalid: %q", i, dnsName)
@@ -391,11 +391,9 @@ func (a *CSRApprover) denyInClusterSANs(cr *x509.CertificateRequest) error {
 	return nil
 }
 
-// nonNodeAddressClass describes the address class of ip if it's one that a
-// kubelet never claims for itself, and returns the empty string otherwise. A
-// kubelet never uses a loopback, link-local, multicast or unspecified address
-// as its node IP, so such an address can only show up in a node's status via a
-// cloud provider or a manual status update.
+// Checks if ip belongs to a class of addresses that a kubelet never claims for
+// itself. Returns the human-readable description of that class or the empty
+// string otherwise.
 func nonNodeAddressClass(ip netip.Addr) string {
 	switch {
 	case ip.IsUnspecified():
