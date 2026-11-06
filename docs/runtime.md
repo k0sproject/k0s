@@ -158,7 +158,7 @@ For more details on how to configure registry hosts, please refer to the
 3. Start and join the worker into the cluster, as normal:
 
     ```shell
-    k0s worker $token
+    k0s worker --token-file /path/to/token
     ```
 
 4. Register containerd to the Kubernetes side to make gVisor runtime usable for workloads (by default, containerd uses normal runc as the runtime):
