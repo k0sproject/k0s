@@ -653,7 +653,7 @@ jobs:
     uses: ./.github/workflows/ostests-e2e.yaml
     with:
       e2e-concurrency-level: 1
-      os: debian_12
+      os: debian_13
       arch: ${{ matrix.arch }}
       network-provider: kuberouter
       fail-fast: true
