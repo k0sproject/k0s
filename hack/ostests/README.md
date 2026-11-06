@@ -75,26 +75,25 @@ tofu apply
 ### `os`: Operating system stack
 
 * `al2023`: Amazon Linux 2023
-* `alpine_3_21`: Alpine Linux 3.21
+* `alpine_3_22`: Alpine Linux 3.22
 * `alpine_3_24`: Alpine Linux 3.24
 * `centos_9`: CentOS Stream 9
 * `centos_10`: CentOS Stream 10 (Coughlan)
-* `debian_11`: Debian GNU/Linux 11 (bullseye) ([supported until 2026-08-31][debian-lts])
 * `debian_12`: Debian GNU/Linux 12 (bookworm) ([supported until 2028-06-30][debian-lts])
+* `debian_13`: Debian GNU/Linux 13 (trixie) ([supported until 2030-06-30][debian-lts])
 * `fcos_stable`: [Fedora CoreOS stable stream](https://docs.fedoraproject.org/en-US/fedora-coreos/getting-started/#_streams)
-* `fedora_41`: Fedora Linux 41 (Cloud Edition)
+* `fedora_45`: Fedora Linux 45 (Cloud Edition)
 * `flatcar`: Flatcar Container Linux by Kinvolk
-* `oracle_8_9`: Oracle Linux Server 8.9
-* `oracle_9_3`: Oracle Linux Server 9.3
-* `rhel_7`: Red Hat Enterprise Linux Server 7.9 (Maipo)
 * `rhel_8`: Red Hat Enterprise Linux 8.10 (Ootpa)
 * `rhel_9`: Red Hat Enterprise Linux 9.7 (Plow)
+* `rhel_10`: Red Hat Enterprise Linux 10.2 (Coughlan)
 * `rocky_8`: Rocky Linux 8.10 (Green Obsidian)
 * `rocky_9`: Rocky Linux 9.5 (Blue Onyx)
+* `rocky_10`: Rocky Linux 10.2 (Red Quartz)
 * `sles_15`: SUSE Linux Enterprise Server 15 SP6
-* `ubuntu_2004`: Ubuntu 20.04 LTS
 * `ubuntu_2204`: Ubuntu 22.04 LTS
-* `ubuntu_2404`: Ubuntu 24.04
+* `ubuntu_2404`: Ubuntu 24.04 LTS
+* `ubuntu_2604`: Ubuntu 26.04 LTS
 * `windows_server_2022`: Windows Server 2022 (runs the control plane on Alpine 3.23)
 
 [debian-lts]: https://wiki.debian.org/LTS

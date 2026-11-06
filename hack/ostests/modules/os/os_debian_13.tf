@@ -1,20 +1,20 @@
-# https://wiki.debian.org/Cloud/AmazonEC2Image/Bullseye
+# https://wiki.debian.org/Cloud/AmazonEC2Image/Trixie
 
-data "aws_ami" "debian_11" {
-  count = var.os == "debian_11" ? 1 : 0
+data "aws_ami" "debian_13" {
+  count = var.os == "debian_13" ? 1 : 0
 
   owners      = ["136693071363"]
-  name_regex  = "^debian-11-amd64-\\d+-\\d+$"
+  name_regex  = "^debian-13-(amd64|arm64)-\\d+-\\d+$"
   most_recent = true
 
   filter {
     name   = "name"
-    values = ["debian-11-amd64-*-*"]
+    values = ["debian-13-*-*-*"]
   }
 
   filter {
     name   = "architecture"
-    values = ["x86_64"]
+    values = [var.arch]
   }
 
   filter {
@@ -26,20 +26,13 @@ data "aws_ami" "debian_11" {
     name   = "virtualization-type"
     values = ["hvm"]
   }
-
-  lifecycle {
-    precondition {
-      condition     = var.arch == "x86_64"
-      error_message = "Unsupported architecture for Debian GNU/Linux 11 (bullseye)."
-    }
-  }
 }
 
 locals {
-  os_debian_11 = var.os != "debian_11" ? {} : {
+  os_debian_13 = var.os != "debian_13" ? {} : {
     node_configs = {
       default = {
-        ami_id = one(data.aws_ami.debian_11.*.id)
+        ami_id = one(data.aws_ami.debian_13.*.id)
 
         user_data = format("#cloud-config\n%s", jsonencode({
           runcmd = ["truncate -s0 /etc/motd", ]
