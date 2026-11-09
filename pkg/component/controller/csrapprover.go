@@ -280,9 +280,10 @@ func (a *CSRApprover) authorizeKubeletServingCSR(ctx context.Context, csr *certi
 	}
 
 	// Never issue certificates for names and addresses that identify the
-	// cluster's control plane or other in-cluster services, before even
-	// checking what the node reports.
-	if err := a.denyInClusterSANs(cr); err != nil {
+	// cluster's control plane or other in-cluster services, nor for addresses
+	// that no kubelet claims for itself, before even checking what the node
+	// reports.
+	if err := a.denyReservedSANs(cr); err != nil {
 		return nil, err
 	}
 
@@ -342,7 +343,7 @@ func (a *CSRApprover) verifyNodeIdentity(csr *certificatesv1.CertificateSigningR
 	return nodeName, nil
 }
 
-func (a *CSRApprover) denyInClusterSANs(cr *x509.CertificateRequest) error {
+func (a *CSRApprover) denyReservedSANs(cr *x509.CertificateRequest) error {
 	for i, dnsName := range cr.DNSNames {
 		if !govalidator.IsDNSName(dnsName) {
 			return fmt.Errorf("DNSNames[%d]: invalid: %q", i, dnsName)
@@ -378,6 +379,9 @@ func (a *CSRApprover) denyInClusterSANs(cr *x509.CertificateRequest) error {
 		// Unmap IPv4-mapped IPv6 addresses, as they get compared against
 		// unmapped prefixes. Otherwise, they wouldn't match an IPv4 prefix.
 		ip = ip.Unmap()
+		if class := nonNodeAddressClass(ip); class != "" {
+			return fmt.Errorf("IPAddresses[%d]: forbidden: %q: is %s", i, address, class)
+		}
 		for _, cidr := range a.serviceCIDRs {
 			if cidr.Contains(ip) {
 				return fmt.Errorf("IPAddresses[%d]: forbidden: %q: is inside a cluster service CIDR", i, address)
@@ -385,6 +389,24 @@ func (a *CSRApprover) denyInClusterSANs(cr *x509.CertificateRequest) error {
 		}
 	}
 	return nil
+}
+
+// Checks if ip belongs to a class of addresses that a kubelet never claims for
+// itself. Returns the human-readable description of that class or the empty
+// string otherwise.
+func nonNodeAddressClass(ip netip.Addr) string {
+	switch {
+	case ip.IsUnspecified():
+		return "an unspecified address"
+	case ip.IsLoopback():
+		return "a loopback address"
+	case ip.IsLinkLocalUnicast():
+		return "a link-local address"
+	case ip.IsMulticast():
+		return "a multicast address"
+	default:
+		return ""
+	}
 }
 
 func (a *CSRApprover) verifyNode(ctx context.Context, nodeName string, cr *x509.CertificateRequest) error {
