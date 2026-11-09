@@ -3226,6 +3226,8 @@ the following conditions:</p>
   plane or other in-cluster services: no IP address may be inside the service
   CIDR(s), and no DNS name may be <code>kubernetes</code>, <code>kubernetes.default</code>, or a name
   within the <code>svc</code> or cluster domains.</li>
+<li>No requested IP address is a loopback, link-local, multicast or unspecified
+  address. Kubelets never claim such addresses for themselves.</li>
 <li>The node exists in the cluster.</li>
 <li>The node's <code>status.addresses</code> contains no more than 4096 entries.</li>
 <li>The requested DNS names and IP addresses are all listed in the node's
