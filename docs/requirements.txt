@@ -1,5 +1,5 @@
 babel==2.18.0
-backrefs==8.1
+backrefs==8.2
 bracex==3.2
 certifi==2026.10.23
 charset-normalizer==3.4.7
