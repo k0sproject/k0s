@@ -1,15 +1,15 @@
 # https://ubuntu.com/server/docs/cloud-images/amazon-ec2
 
-data "aws_ami" "ubuntu_2004" {
-  count = var.os == "ubuntu_2004" ? 1 : 0
+data "aws_ami" "ubuntu_2604" {
+  count = var.os == "ubuntu_2604" ? 1 : 0
 
   owners      = ["099720109477"]
-  name_regex  = "ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-\\d+"
+  name_regex  = "ubuntu/images/hvm-ssd-gp3/ubuntu-resolute-26.04-amd64-server-\\d+"
   most_recent = true
 
   filter {
     name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"]
+    values = ["ubuntu/images/hvm-ssd-gp3/ubuntu-resolute-26.04-amd64-server-*"]
   }
 
   filter {
@@ -30,16 +30,16 @@ data "aws_ami" "ubuntu_2004" {
   lifecycle {
     precondition {
       condition     = var.arch == "x86_64"
-      error_message = "Unsupported architecture for Ubuntu 20.04 LTS."
+      error_message = "Unsupported architecture for Ubuntu 26.04 LTS."
     }
   }
 }
 
 locals {
-  os_ubuntu_2004 = var.os != "ubuntu_2004" ? {} : {
+  os_ubuntu_2604 = var.os != "ubuntu_2604" ? {} : {
     node_configs = {
       default = {
-        ami_id = one(data.aws_ami.ubuntu_2004.*.id)
+        ami_id = one(data.aws_ami.ubuntu_2604.*.id)
 
         user_data = format("#cloud-config\n%s", jsonencode({
           runcmd = [

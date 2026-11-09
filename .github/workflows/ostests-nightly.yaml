@@ -13,16 +13,16 @@ env:
   DISTRIBUTIONS: >-
     [
       ["al2023"],
-      ["alpine_3_21", "alpine_3_24"],
+      ["alpine_3_22", "alpine_3_24"],
       ["centos_9", "centos_10"],
-      ["debian_11", "debian_12"],
+      ["debian_12", "debian_13"],
       ["fcos_stable"],
-      ["fedora_41"],
+      ["fedora_45"],
       ["flatcar"],
-      ["rhel_7", "rhel_8", "rhel_9"],
-      ["rocky_8", "rocky_9"],
+      ["rhel_8", "rhel_9", "rhel_10"],
+      ["rocky_8", "rocky_9", "rocky_10"],
       ["sles_15"],
-      ["ubuntu_2004", "ubuntu_2204", "ubuntu_2404"]
+      ["ubuntu_2204", "ubuntu_2404", "ubuntu_2604"]
     ]
   NETWORK_PROVIDERS: >-
     [

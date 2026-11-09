@@ -13,13 +13,13 @@ findPathToK0s() {
     fi
   done
 
-  which k0s
+  command -v k0s
 }
 
 kubectl() {
   set -- "$k0s" kubectl "$@"
   for cmd in sudo doas; do
-    if which -- "$cmd" >/dev/null 2>/dev/null; then
+    if command -v "$cmd" >/dev/null 2>&1; then
       set -- "$cmd" "$@"
       break
     fi

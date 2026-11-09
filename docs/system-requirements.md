@@ -59,16 +59,16 @@ The following operating systems are automatically tested as part of our CI:
 | Operating System              | Version/Notes                                                                           |
 |-------------------------------|-----------------------------------------------------------------------------------------|
 | Amazon Linux                  | 2023                                                                                    |
-| Alpine Linux                  | 3.21, 3.23                                                                              |
+| Alpine Linux                  | 3.22, 3.24                                                                              |
 | CentOS Stream                 | 9, 10 (Coughlan)                                                                        |
-| Debian GNU/Linux              | 11 (bullseye) (supported until 2026-08-31), 12 (bookworm) (supported until 2028-06-30)  |
+| Debian GNU/Linux              | 12 (bookworm) (supported until 2028-06-30), 13 (trixie) (supported until 2030-06-30)    |
 | Fedora CoreOS                 | stable stream                                                                           |
-| Fedora Linux                  | 41 (Cloud Edition)                                                                      |
+| Fedora Linux                  | 45 (Cloud Edition)                                                                      |
 | Flatcar Container Linux       | by Kinvolk                                                                              |
-| Red Hat Enterprise Linux      | 7.9 (Maipo), 8.10 (Ootpa), 9.7 (Plow)                                                   |
-| Rocky Linux                   | 8.10 (Green Obsidian), 9.5 (Blue Onyx)                                                  |
+| Red Hat Enterprise Linux      | 8.10 (Ootpa), 9.7 (Plow), 10.2 (Coughlan)                                               |
+| Rocky Linux                   | 8.10 (Green Obsidian), 9.5 (Blue Onyx), 10.2 (Red Quartz)                               |
 | SUSE Linux Enterprise Server  | 15 SP6                                                                                  |
-| Ubuntu                        | 20.04 LTS, 22.04 LTS, 24.04                                                             |
+| Ubuntu                        | 22.04 LTS, 24.04 LTS, 26.04 LTS                                                         |
 
 **Note:** For detailed Linux-specific requirements, please refer to the [Linux specific requirements].
 
