@@ -13,6 +13,7 @@ import (
 	"github.com/k0sproject/k0s/internal/k0scontext"
 	internallog "github.com/k0sproject/k0s/internal/pkg/log"
 	"github.com/k0sproject/k0s/internal/supervised"
+	"github.com/k0sproject/k0s/pkg/component/worker/containerd"
 	"github.com/k0sproject/k0s/pkg/supervisor"
 )
 
@@ -22,6 +23,7 @@ var loggingBackend, shutdownLogging = internallog.InitLogging()
 
 func main() {
 	supervisor.TerminationHelperHook()
+	containerd.DumpContainerAppArmorDefaultProfileHook()
 
 	ctx := context.Background()
 	if loggingBackend != nil {

@@ -40,6 +40,7 @@ type Config struct {
 	K0sBinDir, K0sRunDir, K0sDataDir string
 	LogLevel                         string
 	Profile                          *workerconfig.Profile
+	AppArmor                         AppArmorConfig
 }
 
 // Component implements the component interface to manage containerd as a k0s component.
@@ -49,6 +50,7 @@ type Component struct {
 
 	supervisor     *supervisor.Supervisor
 	executablePath string
+	starter        supervisor.ProcessStarter
 	confPath       string
 	importsPath    string
 
@@ -79,6 +81,13 @@ func (c *Component) Init(ctx context.Context) error {
 			return err
 		})
 	}
+	g.Go(func() (err error) {
+		if c.starter, err = c.setupAppArmor(ctx); err != nil {
+			return fmt.Errorf("failed to set up AppArmor: %w", err)
+		}
+		return nil
+	})
+
 	return g.Wait()
 }
 
@@ -103,6 +112,7 @@ func (c *Component) Start(ctx context.Context) (err error) {
 			"--log-level=" + c.cfg.LogLevel,
 			"--config=" + c.confPath,
 		},
+		Starter: c.starter,
 	}
 
 	if err := c.supervisor.Supervise(ctx); err != nil {

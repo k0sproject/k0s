@@ -42,7 +42,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type Command config.CLIOptions
+type Command struct {
+	*config.CLIOptions
+	AppArmorFlags *internal.AppArmorFlags
+}
 
 // Interface between an embedded worker and its embedding controller.
 type EmbeddingController interface {
@@ -53,7 +56,8 @@ type EmbeddingController interface {
 
 func NewWorkerCmd() *cobra.Command {
 	var (
-		debugFlags internal.DebugFlags
+		debugFlags    internal.DebugFlags
+		appArmorFlags internal.AppArmorFlags
 	)
 
 	cmd := &cobra.Command{
@@ -82,7 +86,7 @@ func NewWorkerCmd() *cobra.Command {
 				return fmt.Errorf("failed to initialize logging: %w", err)
 			}
 
-			c := (*Command)(opts)
+			c := Command{opts, &appArmorFlags}
 			if len(args) > 0 {
 				c.TokenArg = args[0]
 			}
@@ -142,6 +146,7 @@ func NewWorkerCmd() *cobra.Command {
 	flags := cmd.Flags()
 	flags.AddFlagSet(config.GetPersistentFlagSet())
 	flags.AddFlagSet(config.GetWorkerFlags())
+	appArmorFlags.AddToFlagSet(flags)
 
 	return cmd
 }
@@ -280,6 +285,7 @@ func (c *Command) Start(ctx context.Context, nodeName apitypes.NodeName, kubelet
 			K0sRunDir:  c.K0sVars.RunDir,
 			K0sDataDir: c.K0sVars.DataDir,
 			Profile:    workerConfig,
+			AppArmor:   c.AppArmorFlags.ContainerdConfig(),
 		}))
 		componentManager.Add(ctx, worker.NewOCIBundleReconciler(c.K0sVars))
 		componentManager.Add(ctx, containerd.NewDeprecationMonitor(

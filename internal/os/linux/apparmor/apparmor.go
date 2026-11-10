@@ -6,6 +6,7 @@
 package apparmor
 
 import (
+	"bytes"
 	"errors"
 	"os"
 )
@@ -35,4 +36,20 @@ func Status() (string, error) {
 	}
 
 	return Disabled, nil
+}
+
+// Reports whether the kernel restricts what unprivileged unconfined tasks may
+// do. The second return value is false if the kernel doesn't support the
+// restriction.
+//
+// See: https://gitlab.com/apparmor/apparmor/-/wikis/unprivileged_unconfined_restriction#checking-the-current-state-of-restricted-unprivileged-unconfined-restrictions
+func UnprivilegedUnconfinedRestricted() (restricted, supported bool, err error) {
+	value, err := os.ReadFile("/proc/sys/kernel/apparmor_restrict_unprivileged_unconfined")
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return false, false, nil
+		}
+		return false, false, err
+	}
+	return string(bytes.TrimSpace(value)) == "1", true, nil
 }
