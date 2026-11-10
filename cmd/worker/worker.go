@@ -274,7 +274,13 @@ func (c *Command) Start(ctx context.Context, nodeName apitypes.NodeName, kubelet
 	}
 
 	if c.CriSocket == "" {
-		componentManager.Add(ctx, containerd.NewComponent(c.LogLevels.Containerd, c.K0sVars, workerConfig))
+		componentManager.Add(ctx, containerd.NewComponent(&containerd.Config{
+			LogLevel:   c.LogLevels.Containerd,
+			K0sBinDir:  c.K0sVars.BinDir,
+			K0sRunDir:  c.K0sVars.RunDir,
+			K0sDataDir: c.K0sVars.DataDir,
+			Profile:    workerConfig,
+		}))
 		componentManager.Add(ctx, worker.NewOCIBundleReconciler(c.K0sVars))
 		componentManager.Add(ctx, containerd.NewDeprecationMonitor(
 			containerd.Address(c.K0sVars.RunDir),
