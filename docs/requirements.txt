@@ -37,5 +37,5 @@ super_collections==0.6.2
 termcolor==3.3.0
 urllib3==2.7.0
 verspec==0.2.1
-watchdog==7.0.0
+watchdog==7.1.0
 wcmatch==11.2
