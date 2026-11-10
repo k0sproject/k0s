@@ -6,31 +6,29 @@
 package linux
 
 import (
-	"os"
-	"strings"
-
+	"github.com/k0sproject/k0s/internal/os/linux/apparmor"
 	"github.com/k0sproject/k0s/internal/pkg/sysinfo/probes"
-
-	"github.com/k0sproject/k0s/internal/pkg/dir"
 )
 
-func checkAppArmor() string {
-	if dir.IsDirectory("/sys/kernel/security/apparmor") {
-		return "active"
-	}
-	lsm, err := os.ReadFile("/sys/kernel/security/lsm")
-	if err == nil && strings.Contains(string(lsm), "apparmor") {
-		return "inactive"
-	}
-	return "unavailable"
-
-}
 func (l *LinuxProbes) AssertAppArmor() {
 	l.Set("AppArmor", func(path probes.ProbePath, _ probes.Probe) probes.Probe {
 		return probes.ProbeFn(func(r probes.Reporter) error {
 			desc := probes.NewProbeDesc("AppArmor", path)
-			prop := probes.StringProp(checkAppArmor())
-			return r.Pass(desc, prop)
+
+			status, err := apparmor.Status()
+			if err != nil {
+				return r.Warn(desc, probes.ErrorProp(err), "")
+			}
+			switch status {
+			case apparmor.Unavailable:
+				return r.Pass(desc, probes.StringProp("unavailable"))
+			case apparmor.Disabled:
+				return r.Pass(desc, probes.StringProp("disabled"))
+			case apparmor.Active:
+				return r.Pass(desc, probes.StringProp("active"))
+			default:
+				return r.Warn(desc, probes.StringProp(status), "unknown")
+			}
 		})
 	})
 }
