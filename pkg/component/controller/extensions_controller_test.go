@@ -4,21 +4,29 @@
 package controller
 
 import (
+	"context"
+	"io"
+	"net"
+	"net/http"
 	"path/filepath"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"testing/synctest"
 	"time"
 
+	"github.com/k0sproject/k0s/internal/sync/value"
 	"github.com/k0sproject/k0s/pkg/apis/helm/v1beta1"
 	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
+	"github.com/k0sproject/k0s/pkg/leaderelection"
 	"sigs.k8s.io/yaml"
 
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/rest"
 
 	"github.com/k0sproject/k0s/internal/testutil"
 	"github.com/stretchr/testify/assert"
@@ -242,21 +250,7 @@ status: {}
 		t.Run(tt.name, func(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
 				cf := testutil.NewFakeClientFactory()
-
-				// Automatically mark all added CRDs as established.
-				cf.DynamicClient.PrependReactor("create", "customresourcedefinitions", func(action clientgotesting.Action) (handled bool, ret runtime.Object, err error) {
-					crd := action.(clientgotesting.CreateAction).GetObject().(*unstructured.Unstructured)
-					if err := unstructured.SetNestedSlice(crd.Object, []any{
-						map[string]any{
-							"type":   string(apiextensionsv1.Established),
-							"status": string(apiextensionsv1.ConditionTrue),
-						},
-					}, "status", "conditions"); !assert.NoError(t, err) {
-						return true, nil, err
-					}
-
-					return false, nil, nil
-				})
+				establishCRDsOnCreate(t, cf)
 
 				underTest := NewExtensionsController(cf, leaderelector.Off())
 
@@ -302,6 +296,152 @@ status: {}
 			})
 		})
 	}
+}
+
+func TestExtensionsController_runsNewManagerWhenLeadIsRetaken(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		var chartWatches atomic.Int32
+		transport := startHTTPPipeServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			switch r.URL.Path {
+			case "/api":
+				_, _ = io.WriteString(w, `{"versions":["v1"]}`)
+			case "/apis":
+				_, _ = io.WriteString(w, `{"groups":[{"name":"helm.k0sproject.io","versions":[{"groupVersion":"helm.k0sproject.io/v1beta1","version":"v1beta1"}]}]}`)
+			case "/apis/helm.k0sproject.io/v1beta1":
+				_, _ = io.WriteString(w, `{"groupVersion":"helm.k0sproject.io/v1beta1","resources":[{"name":"charts","namespaced":true,"kind":"Chart","verbs":["list","watch"]}]}`)
+			case "/apis/helm.k0sproject.io/v1beta1/charts":
+				if r.URL.Query().Get("watch") != "true" {
+					_, _ = io.WriteString(w, `{"apiVersion":"helm.k0sproject.io/v1beta1","kind":"ChartList","metadata":{"resourceVersion":"1"}}`)
+					return
+				}
+				chartWatches.Add(1)
+				defer chartWatches.Add(-1)
+				_, _ = io.WriteString(w, `{"type":"BOOKMARK","object":{"apiVersion":"helm.k0sproject.io/v1beta1","kind":"Chart","metadata":{"resourceVersion":"1","annotations":{"k8s.io/initial-events-end":"true"}}}}`)
+				w.(http.Flusher).Flush()
+				<-r.Context().Done()
+			default:
+				http.NotFound(w, r)
+			}
+		}))
+
+		clients := &restConfigClientFactory{testutil.NewFakeClientFactory(), &rest.Config{Host: "http://pipe", Transport: transport}}
+		establishCRDsOnCreate(t, clients.FakeClientFactory)
+		leaderElector := &fakeLeaderElector{}
+		leaderElector.status.Set(leaderelection.StatusLeading)
+
+		underTest := NewExtensionsController(clients, leaderElector)
+		require.NoError(t, underTest.Reconcile(t.Context(), &k0sv1beta1.ClusterConfig{
+			Spec: &k0sv1beta1.ClusterSpec{Extensions: &k0sv1beta1.ClusterExtensions{}},
+		}))
+		require.NoError(t, underTest.Start(t.Context()))
+		t.Cleanup(func() { assert.NoError(t, underTest.Stop()) })
+
+		synctest.Wait()
+		require.Equal(t, int32(1), chartWatches.Load(), "Charts should be watched once the lead is taken")
+
+		leaderElector.status.Set(leaderelection.StatusPending)
+		synctest.Wait()
+		require.Zero(t, chartWatches.Load(), "Charts should no longer be watched once the lead is lost")
+
+		leaderElector.status.Set(leaderelection.StatusLeading)
+		synctest.Wait()
+		require.Equal(t, int32(1), chartWatches.Load(), "Charts should be watched again once the lead is retaken")
+	})
+}
+
+// Automatically marks all CRDs created via the fake clients as established.
+func establishCRDsOnCreate(t *testing.T, clients *testutil.FakeClientFactory) {
+	clients.DynamicClient.PrependReactor("create", "customresourcedefinitions", func(action clientgotesting.Action) (handled bool, ret runtime.Object, err error) {
+		crd := action.(clientgotesting.CreateAction).GetObject().(*unstructured.Unstructured)
+		if err := unstructured.SetNestedSlice(crd.Object, []any{
+			map[string]any{
+				"type":   string(apiextensionsv1.Established),
+				"status": string(apiextensionsv1.ConditionTrue),
+			},
+		}, "status", "conditions"); !assert.NoError(t, err) {
+			return true, nil, err
+		}
+
+		return false, nil, nil
+	})
+}
+
+type restConfigClientFactory struct {
+	*testutil.FakeClientFactory
+	restConfig *rest.Config
+}
+
+func (f *restConfigClientFactory) GetRESTConfig() (*rest.Config, error) {
+	return f.restConfig, nil
+}
+
+type fakeLeaderElector struct {
+	leaderelector.Interface
+	status value.Latest[leaderelection.Status]
+}
+
+func (e *fakeLeaderElector) CurrentStatus() (leaderelection.Status, <-chan struct{}) {
+	return e.status.Peek()
+}
+
+// Serves handler over in-memory pipes, so that it can be used in synctest
+// bubbles. The returned transport connects to it, regardless of the address.
+func startHTTPPipeServer(t *testing.T, handler http.Handler) *http.Transport {
+	// Draining closed HTTP/1 response bodies (Go 1.27+) can stall the bubble.
+	var protocols http.Protocols
+	protocols.SetUnencryptedHTTP2(true)
+
+	listener := pipeListener{conns: make(chan net.Conn), done: make(chan struct{})}
+	server := http.Server{Handler: handler, Protocols: &protocols}
+
+	serverDone := make(chan error, 1)
+	go func() { serverDone <- server.Serve(&listener) }()
+	t.Cleanup(func() {
+		assert.NoError(t, server.Close())
+		assert.ErrorIs(t, <-serverDone, http.ErrServerClosed)
+	})
+
+	return &http.Transport{
+		Protocols: &protocols,
+		DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
+			client, server := net.Pipe()
+			select {
+			case listener.conns <- server:
+				return client, nil
+			case <-listener.done:
+				return nil, net.ErrClosed
+			case <-ctx.Done():
+				return nil, context.Cause(ctx)
+			}
+		},
+	}
+}
+
+type pipeListener struct {
+	conns chan net.Conn
+	done  chan struct{}
+}
+
+// Accept implements [net.Listener].
+func (l *pipeListener) Accept() (net.Conn, error) {
+	select {
+	case conn := <-l.conns:
+		return conn, nil
+	case <-l.done:
+		return nil, net.ErrClosed
+	}
+}
+
+// Addr implements [net.Listener].
+func (l *pipeListener) Addr() net.Addr {
+	panic("unimplemented")
+}
+
+// Close implements [net.Listener].
+func (l *pipeListener) Close() error {
+	close(l.done)
+	return nil
 }
 
 func TestExtractRepositoryIdentifier(t *testing.T) {
