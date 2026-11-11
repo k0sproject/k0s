@@ -6,6 +6,8 @@
 package linux
 
 import (
+	"slices"
+
 	"github.com/k0sproject/k0s/internal/os/linux/apparmor"
 	"github.com/k0sproject/k0s/internal/pkg/sysinfo/probes"
 )
@@ -25,9 +27,24 @@ func (l *LinuxProbes) AssertAppArmor() {
 			case apparmor.Disabled:
 				return r.Pass(desc, probes.StringProp("disabled"))
 			case apparmor.Active:
-				return r.Pass(desc, probes.StringProp("active"))
+				if err := r.Pass(desc, probes.StringProp("active")); err != nil {
+					return err
+				}
 			default:
 				return r.Warn(desc, probes.StringProp(status), "unknown")
+			}
+
+			desc = probes.NewProbeDesc("Unprivileged unconfined tasks restricted", append(slices.Clone(path), "unprivileged-unconfined-restricted"))
+			restricted, supported, err := apparmor.UnprivilegedUnconfinedRestricted()
+			switch {
+			case err != nil:
+				return r.Warn(desc, probes.ErrorProp(err), "")
+			case !supported:
+				return r.Pass(desc, probes.StringProp("unsupported"))
+			case restricted:
+				return r.Pass(desc, probes.StringProp("yes"))
+			default:
+				return r.Pass(desc, probes.StringProp("no"))
 			}
 		})
 	})
