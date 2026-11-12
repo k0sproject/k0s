@@ -4,8 +4,10 @@
 package containerd
 
 import (
+	"io/fs"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
@@ -38,6 +40,12 @@ func Test_isK0sManagedConfig(t *testing.T) {
 
 		require.NoError(t, err)
 		require.FileExists(t, defaultConfigPath, "The generated config file is missing.")
+		if runtime.GOOS != "windows" {
+			criConfigPath := filepath.Join(underTest.K0sVars.RunDir, "containerd-cri.toml")
+			info, err := os.Stat(criConfigPath)
+			require.NoError(t, err, "The merged CRI config file is missing.")
+			require.Equal(t, fs.FileMode(0600), info.Mode().Perm(), "The merged CRI config may contain registry credentials.")
+		}
 
 		isManaged, err := isK0sManagedConfig(defaultConfigPath)
 		require.NoError(t, err)
