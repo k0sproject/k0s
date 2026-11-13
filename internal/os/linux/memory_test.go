@@ -1,7 +1,9 @@
+//go:build linux
+
 // SPDX-FileCopyrightText: 2022 k0s authors
 // SPDX-License-Identifier: Apache-2.0
 
-package probes
+package linux
 
 import (
 	"bufio"
@@ -13,8 +15,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestTotalMemoryProber(t *testing.T) {
-	ram, err := newTotalMemoryProber()()
+func TestTotalMemory(t *testing.T) {
+	ram, err := TotalMemory()
 	require.NoError(t, err)
 
 	procMeminfo, err := os.Open("/proc/meminfo")
