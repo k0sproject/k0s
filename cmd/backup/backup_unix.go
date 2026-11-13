@@ -6,6 +6,7 @@
 package backup
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"io"
@@ -49,7 +50,11 @@ func NewBackupCmd() *cobra.Command {
 			if nodeConfig.Spec.Storage.Etcd.IsExternalClusterUsed() {
 				return errors.New("command 'k0s backup' does not support external etcd cluster")
 			}
-			return c.backup(nodeConfig, savePath, cmd.OutOrStdout())
+			out := bufio.NewWriter(cmd.OutOrStdout())
+			if err := c.backup(nodeConfig, savePath, out); err != nil {
+				return err
+			}
+			return out.Flush()
 		},
 	}
 

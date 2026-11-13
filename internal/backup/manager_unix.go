@@ -6,6 +6,7 @@
 package backup
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"os"
@@ -56,13 +57,16 @@ func (bm *Manager) RunBackup(nodeSpec *v1beta1.ClusterSpec, vars *config.CfgVars
 	now := time.Now().UTC()
 	backupFileName := fmt.Sprintf("k0s_backup_%s_%03dZ.tar.gz",
 		now.Format("2006-01-02T15_04_05"), now.Nanosecond()/int(time.Millisecond))
-	if err := bm.save(backupFileName, assets); err != nil {
-		return fmt.Errorf("failed to create archive `%s`: %w", backupFileName, err)
-	}
-	srcBackupFile := filepath.Join(bm.tmpDir, backupFileName)
 	destBackupFile := filepath.Join(savePathDir, backupFileName)
-	if err := file.Copy(srcBackupFile, destBackupFile); err != nil {
-		return fmt.Errorf("failed to rename temporary archive: %w", err)
+	// Write the backup file as owner-only, as it contains all the cluster's key material.
+	if err := file.WriteAtomically(destBackupFile, 0600, func(unbuffered io.Writer) error {
+		out := bufio.NewWriter(unbuffered)
+		if err := createArchive(out, assets, bm.dataDir); err != nil {
+			return err
+		}
+		return out.Flush()
+	}); err != nil {
+		return fmt.Errorf("failed to create archive `%s`: %w", destBackupFile, err)
 	}
 	logrus.Infof("archive %s created successfully", destBackupFile)
 	return nil
@@ -112,28 +116,6 @@ func (bm *Manager) Add(step Backuper) {
 		return
 	}
 	bm.steps = append(bm.steps, step)
-}
-
-func (bm Manager) save(backupFileName string, assets []string) error {
-	archiveFile := filepath.Join(bm.tmpDir, backupFileName)
-	logrus.Debugf("creating temporary archive file: %v", archiveFile)
-	out, err := os.Create(archiveFile)
-	if err != nil {
-		return fmt.Errorf("error creating archive file: %w", err)
-	}
-	defer out.Close()
-	// Create the archive and write the output to the "out" Writer
-	err = createArchive(out, assets, bm.dataDir)
-	if err != nil {
-		return fmt.Errorf("error creating archive: %w", err)
-	}
-
-	destinationFile := filepath.Join(bm.tmpDir, backupFileName)
-	err = file.Copy(archiveFile, destinationFile)
-	if err != nil {
-		return fmt.Errorf("failed to copy archive file from temporary directory: %w", err)
-	}
-	return nil
 }
 
 // RunRestore restores cluster
