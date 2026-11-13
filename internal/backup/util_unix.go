@@ -13,12 +13,9 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 )
-
-const timeStampLayout = "2006-01-02T15_04_05_000Z"
 
 // createArchive compresses and adds files to the backup archive file
 func createArchive(archive io.Writer, files []string, baseDir string) error {
@@ -79,8 +76,4 @@ func addToArchive(tw *tar.Writer, filename string, baseDir string) error {
 		}
 	}
 	return nil
-}
-
-func timeStamp() string {
-	return time.Now().Format(timeStampLayout)
 }

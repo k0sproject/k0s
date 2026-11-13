@@ -10,6 +10,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/sirupsen/logrus"
 
@@ -52,7 +53,9 @@ func (bm *Manager) RunBackup(nodeSpec *v1beta1.ClusterSpec, vars *config.CfgVars
 		return createArchive(out, assets, bm.dataDir)
 	}
 
-	backupFileName := fmt.Sprintf("k0s_backup_%s.tar.gz", timeStamp())
+	now := time.Now().UTC()
+	backupFileName := fmt.Sprintf("k0s_backup_%s_%03dZ.tar.gz",
+		now.Format("2006-01-02T15_04_05"), now.Nanosecond()/int(time.Millisecond))
 	if err := bm.save(backupFileName, assets); err != nil {
 		return fmt.Errorf("failed to create archive `%s`: %w", backupFileName, err)
 	}
