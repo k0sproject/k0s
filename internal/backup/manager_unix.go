@@ -7,6 +7,7 @@ package backup
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -30,7 +31,7 @@ type Manager struct {
 }
 
 // RunBackup backups cluster
-func (bm *Manager) RunBackup(nodeSpec *v1beta1.ClusterSpec, vars *config.CfgVars, savePathDir string, out io.Writer) error {
+func (bm *Manager) RunBackup(ctx context.Context, nodeSpec *v1beta1.ClusterSpec, vars *config.CfgVars, savePathDir string, out io.Writer) error {
 	_, err := vars.NodeConfig()
 	if err != nil {
 		return err
@@ -43,7 +44,7 @@ func (bm *Manager) RunBackup(nodeSpec *v1beta1.ClusterSpec, vars *config.CfgVars
 	logrus.Info("Starting backup")
 	for _, step := range bm.steps {
 		logrus.Info("Backup step: ", step.Name())
-		result, err := step.Backup()
+		result, err := step.Backup(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to create backup on step `%s`: %w", step.Name(), err)
 		}
@@ -51,7 +52,7 @@ func (bm *Manager) RunBackup(nodeSpec *v1beta1.ClusterSpec, vars *config.CfgVars
 	}
 
 	if savePathDir == "-" {
-		return createArchive(out, assets, bm.dataDir)
+		return createArchive(ctx, out, assets, bm.dataDir)
 	}
 
 	now := time.Now().UTC()
@@ -61,7 +62,7 @@ func (bm *Manager) RunBackup(nodeSpec *v1beta1.ClusterSpec, vars *config.CfgVars
 	// Write the backup file as owner-only, as it contains all the cluster's key material.
 	if err := file.WriteAtomically(destBackupFile, 0600, func(unbuffered io.Writer) error {
 		out := bufio.NewWriter(unbuffered)
-		if err := createArchive(out, assets, bm.dataDir); err != nil {
+		if err := createArchive(ctx, out, assets, bm.dataDir); err != nil {
 			return err
 		}
 		return out.Flush()
@@ -184,7 +185,7 @@ func NewBackupManager() (*Manager, error) {
 // Backuper defines interface for backup-restore step
 type Backuper interface {
 	Name() string
-	Backup() (StepResult, error)
+	Backup(ctx context.Context) (StepResult, error)
 	Restore(from, to string) error
 }
 

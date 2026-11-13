@@ -41,8 +41,7 @@ func (e etcdStep) Name() string {
 	return "etcd"
 }
 
-func (e etcdStep) Backup() (StepResult, error) {
-	ctx := context.TODO()
+func (e etcdStep) Backup(ctx context.Context) (StepResult, error) {
 	etcdClient, err := etcd.NewClient(e.certRootDir, e.etcdCertDir, nil)
 	if err != nil {
 		return StepResult{}, err

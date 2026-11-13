@@ -8,19 +8,26 @@ package backup
 import (
 	"archive/tar"
 	"compress/gzip"
+	"context"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
 
+	internalio "github.com/k0sproject/k0s/internal/io"
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 )
 
 // createArchive compresses and adds files to the backup archive file
-func createArchive(archive io.Writer, files []string, baseDir string) error {
+func createArchive(ctx context.Context, archive io.Writer, files []string, baseDir string) error {
 	gw := gzip.NewWriter(archive)
-	tw := tar.NewWriter(gw)
+	tw := tar.NewWriter(internalio.WriterFunc(func(p []byte) (int, error) {
+		if err := context.Cause(ctx); err != nil {
+			return 0, err
+		}
+		return gw.Write(p)
+	}))
 
 	// Iterate over files and add them to the tar archive
 	for _, file := range files {

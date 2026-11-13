@@ -7,6 +7,7 @@ package backup
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -51,7 +52,7 @@ func NewBackupCmd() *cobra.Command {
 				return errors.New("command 'k0s backup' does not support external etcd cluster")
 			}
 			out := bufio.NewWriter(cmd.OutOrStdout())
-			if err := c.backup(nodeConfig, savePath, out); err != nil {
+			if err := c.backup(cmd.Context(), nodeConfig, savePath, out); err != nil {
 				return err
 			}
 			return out.Flush()
@@ -67,7 +68,7 @@ func NewBackupCmd() *cobra.Command {
 	return cmd
 }
 
-func (c *command) backup(nodeConfig *k0sv1beta1.ClusterConfig, savePath string, out io.Writer) error {
+func (c *command) backup(ctx context.Context, nodeConfig *k0sv1beta1.ClusterConfig, savePath string, out io.Writer) error {
 	if os.Geteuid() != 0 {
 		return errors.New("this command must be run as root")
 	}
@@ -91,7 +92,7 @@ func (c *command) backup(nodeConfig *k0sv1beta1.ClusterConfig, savePath string, 
 		if err != nil {
 			return err
 		}
-		return mgr.RunBackup(nodeConfig.Spec, c.K0sVars, savePath, out)
+		return mgr.RunBackup(ctx, nodeConfig.Spec, c.K0sVars, savePath, out)
 	}
 	return fmt.Errorf("backup command must be run on the controller node, have `%s`", status.Role)
 }

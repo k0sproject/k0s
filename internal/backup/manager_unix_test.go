@@ -41,7 +41,7 @@ func TestManager_RunBackup(t *testing.T) {
 
 			underTest, err := backup.NewBackupManager()
 			require.NoError(t, err)
-			require.NoError(t, underTest.RunBackup(nodeSpec, vars, saveDir, nil))
+			require.NoError(t, underTest.RunBackup(t.Context(), nodeSpec, vars, saveDir, nil))
 		})
 
 		entries, err := os.ReadDir(saveDir)
