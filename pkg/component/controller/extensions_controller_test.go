@@ -4,8 +4,10 @@
 package controller
 
 import (
+	"io/fs"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -281,6 +283,11 @@ spec:
 			contents, err := os.ReadFile(path)
 			require.NoError(t, err)
 			assert.Equal(t, strings.TrimSpace(tt.want), strings.TrimSpace(string(contents)))
+			if runtime.GOOS != "windows" {
+				info, err := os.Stat(path)
+				require.NoError(t, err)
+				assert.Equal(t, fs.FileMode(0600), info.Mode().Perm(), "the manifest may embed repository credentials")
+			}
 		})
 	}
 }
