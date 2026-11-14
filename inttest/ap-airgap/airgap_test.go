@@ -9,12 +9,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/k0sproject/k0s/internal/constant"
 	"github.com/k0sproject/k0s/pkg/airgap"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
 	k0sclientset "github.com/k0sproject/k0s/pkg/client/clientset"
-	"github.com/k0sproject/k0s/pkg/constant"
 
 	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

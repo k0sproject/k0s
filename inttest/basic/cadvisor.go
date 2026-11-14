@@ -15,7 +15,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/internal/constant"
 
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
