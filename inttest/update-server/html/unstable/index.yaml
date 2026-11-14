@@ -1,11 +1,15 @@
 name: unstable
 version: v99.99.99+k0s.0
 downloadURLs:
-  k0s:
-    linux-amd64: ..../k0s-amd64
-    linux-arm64: ..../k0s-arm64
-    linux-arm: ..../k0s-arm
-  airgap:
-    linux-amd64: ..../k0s-images-amd64
-    linux-arm64: ..../k0s-images-arm64
-    linux-arm: ..../k0s-images-arm
+  - arch: amd64
+    os: linux
+    k0s: ..../k0s-amd64
+    airgapBundle: ..../k0s-images-amd64
+  - arch: arm64
+    os: linux
+    k0s: ..../k0s-arm64
+    airgapBundle: ..../k0s-images-arm64
+  - arch: arm
+    os: linux
+    k0s: ..../k0s-arm
+    airgapBundle: ..../k0s-images-arm
