@@ -114,8 +114,8 @@ func loadDaemonSet(t *testing.T, manifestsDir string) *appsv1.DaemonSet {
 		Infos()
 	require.NoError(t, err)
 
-	require.Len(t, objects, 3)
-	daemonSet, ok := objects[2].Object.(*appsv1.DaemonSet)
-	require.Truef(t, ok, "unexpected type: %T", objects[2].Object)
+	require.Len(t, objects, 4)
+	daemonSet, ok := objects[3].Object.(*appsv1.DaemonSet)
+	require.Truef(t, ok, "unexpected type: %T", objects[3].Object)
 	return daemonSet
 }
