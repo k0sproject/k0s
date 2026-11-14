@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/bombsimon/logrusr/v4"
+	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	helmv1beta1 "github.com/k0sproject/k0s/pkg/apis/helm/v1beta1"
 	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
@@ -152,7 +153,8 @@ func (ec *ExtensionsController) writeChartManifestFile(chart k0sv1beta1.Chart, f
 			Finalizer: finalizerName,
 		},
 	}
-	if err := tw.Write(); err != nil {
+	// The manifest may embed repository credentials, so keep it readable by root only.
+	if err := file.WriteAtomically(tw.Path, 0600, tw.WriteToBuffer); err != nil {
 		return "", err
 	}
 	return tw.Path, nil

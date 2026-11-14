@@ -174,8 +174,9 @@ func (c *Component) setupConfig() error {
 
 	criConfigPath := filepath.Join(c.K0sVars.RunDir, "containerd-cri.toml")
 
+	// Merged drop-ins may carry registry credentials, so keep the file readable by root only.
 	if err = file.AtomicWithTarget(criConfigPath).
-		WithPermissions(0644).
+		WithPermissions(0600).
 		WriteString(config.CRIConfig); err != nil {
 		return fmt.Errorf("can't create containerd CRI config: %w", err)
 	}
