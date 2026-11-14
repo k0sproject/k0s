@@ -57,10 +57,10 @@ func NewMetrics(k0sVars *config.CfgVars, clientCF kubeutil.ClientFactoryInterfac
 	}
 
 	var restClient rest.Interface
-	if client, err := clientCF.GetDiscoveryClient(); err != nil {
+	if client, err := clientCF.GetClient(); err != nil {
 		return nil, fmt.Errorf("error getting REST client for metrics: %w", err)
 	} else {
-		restClient = client.RESTClient()
+		restClient = client.Discovery().RESTClient()
 	}
 	if restClient == nil {
 		return nil, errors.New("no REST client for metrics")
