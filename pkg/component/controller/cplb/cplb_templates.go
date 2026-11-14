@@ -64,29 +64,32 @@ include keepalived-virtualservers-generated.conf
 `
 
 const KeepalivedVirtualServersConfigTemplate = `
-{{ $APIServerPort := .APIServerPort }}
 {{ $RealServers := .RealServers }}
 {{ if gt (len $RealServers) 0 }}
-{{ range .VirtualServers }}
-virtual_server {{ .IPAddress }} {{ $APIServerPort }} {
-    delay_loop {{ .DelayLoop.Seconds }}
-    lb_algo {{ .LBAlgo }}
-    lb_kind {{ .LBKind }}
-    persistence_timeout {{ .PersistenceTimeoutSeconds }}
+{{ range $vs := .VirtualServers }}
+{{ range $port := $.Ports $vs }}
+virtual_server {{ $vs.IPAddress }} {{ $port }} {
+    delay_loop {{ $vs.DelayLoop.Seconds }}
+    lb_algo {{ $vs.LBAlgo }}
+    lb_kind {{ $vs.LBKind }}
+    {{- if ne $port $.KonnectivityAgentPort }}
+    persistence_timeout {{ $vs.PersistenceTimeoutSeconds }}
+    {{- end }}
     protocol TCP
 
     {{ range $RealServers }}
-    real_server {{ . }} {{ $APIServerPort }} {
+    real_server {{ . }} {{ $port }} {
         weight 1
         TCP_CHECK {
             warmup 0
             retry 1
             connect_timeout 3
-            connect_port {{ $APIServerPort }}
+            connect_port {{ $port }}
         }
     }
     {{end}}
 }
+{{ end }}
 {{ end }}
 {{ end }}
 `

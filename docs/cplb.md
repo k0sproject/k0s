@@ -43,6 +43,30 @@ plane load balancing implicitly
 reconciler component, just as if the `--disable-components=endpoint-reconciler`
 flag had been specified.
 
+If the external address is a VIP, the konnectivity agents connect through it as well, and each agent needs a
+connection to every controller. With the userspace reverse proxy, set `userSpaceProxyKonnectivityBindPort` so that
+the konnectivity agent port is load balanced on the VIPs too, and `userSpaceProxyK0sApiBindPort` for the k0s API
+port that joining controllers use:
+
+```yaml
+spec:
+  api:
+    externalAddress: <VIP address>
+  network:
+    controlPlaneLoadBalancing:
+      enabled: true
+      type: Keepalived
+      keepalived:
+        vrrpInstances:
+        - virtualIPs: ["<VIP address>/<netmask>"]
+          authPass: "<my password>"
+        userSpaceProxyKonnectivityBindPort: 8134
+        userSpaceProxyK0sApiBindPort: 9444
+```
+
+With virtual servers, set `konnectivity` and `k0sApi` on the virtual servers instead. The konnectivity agent port is
+load balanced without persistence, so that the connections of an agent reach every server.
+
 ### Node Local load balancing
 
 CPLB is fully compatible with [NLLB](nllb.md), however NLLB is incompatible with [`spec.api.externalAddress`](configuration.md#specapi).
@@ -531,7 +555,8 @@ controller0:/# netstat -tlpn | grep 6444
 tcp        0      0 :::6444                 :::*                    LISTEN      345/k0s
 ```
 
-Then the requests to the VIP on the apiserver port are forwarded to this socket using one iptables rule:
+Then the requests to the VIP on the apiserver port are forwarded to this socket using one iptables rule, and the
+konnectivity agent and k0s API ports to theirs if they are load balanced:
 
 ```console
 -A PREROUTING -d <VIP>/32 -p tcp -m tcp --dport <apiserver port> -j REDIRECT --to-ports <userspace proxy port>
@@ -653,10 +678,15 @@ The templates are only read during the k0s bootstrap. If a template is changed i
 | Variable                                      | Description                                             |
 |-----------------------------------------------|---------------------------------------------------------|
 | `.APIServerPort`                              | Kubernetes API server port.                             |
+| `.KonnectivityAgentPort`                      | Konnectivity agent port.                                |
+| `.K0sAPIPort`                                 | k0s API port.                                           |
+| `.Ports`                                      | Ports load balanced by a virtual server.                |
 | `.RealServers`                                | List of real server IP addresses (control plane nodes). |
 | `.VirtualServers`                             | Array of virtual server configurations.                 |
 | `.VirtualServers[].DelayLoop`                 | Delay timer for check polling.                          |
 | `.VirtualServers[].IPAddress`                 | Virtual IP address used by the virtual server.          |
+| `.VirtualServers[].K0sAPI`                    | Whether the k0s API port is load balanced.              |
+| `.VirtualServers[].Konnectivity`              | Whether the konnectivity agent port is load balanced.   |
 | `.VirtualServers[].LBAlgo`                    | Load balancing algorithm.                               |
 | `.VirtualServers[].LBKind`                    | Load balancing forwarding method.                       |
 | `.VirtualServers[].PersistenceTimeoutSeconds` | Timeout value for persistent connections in seconds.    |
