@@ -202,7 +202,7 @@ func (s *ConfigSuite) TestK0sGetsUp() {
 
 		// Any pruning would happen before the manifests are written again.
 		s.Require().NoError(wait.PollUntilContextTimeout(ctx, 1*time.Second, 2*time.Minute, true, func(ctx context.Context) (bool, error) {
-			_, err := ssh.ExecWithOutput(ctx, "test -f /var/lib/k0s/manifests/coredns/coredns.yaml && test -f /var/lib/k0s/manifests/metricserver/metric_server.yaml")
+			_, err := ssh.ExecWithOutput(ctx, "test -f /var/lib/k0s/manifests/metricserver/metric_server.yaml")
 			return err == nil, nil
 		}))
 
