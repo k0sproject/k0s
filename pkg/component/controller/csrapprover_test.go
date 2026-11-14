@@ -38,7 +38,6 @@ import (
 	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	kubernetesfake "k8s.io/client-go/kubernetes/fake"
 	k8stesting "k8s.io/client-go/testing"
 )
 
@@ -390,7 +389,7 @@ func TestCSRApprover(t *testing.T) {
 
 			synctest.Test(t, func(t *testing.T) {
 				fakeFactory := testutil.NewFakeClientFactory(tt.objects...)
-				client := fakeFactory.Client.(*kubernetesfake.Clientset)
+				client := fakeFactory.Client
 
 				if tt.reviewMode != reviewModeNone {
 					// Allow the SubjectAccessReview, so that it's actually the
@@ -471,7 +470,7 @@ func TestCSRApprover(t *testing.T) {
 
 		synctest.Test(t, func(t *testing.T) {
 			fakeFactory := testutil.NewFakeClientFactory(objects...)
-			client := fakeFactory.Client.(*kubernetesfake.Clientset)
+			client := fakeFactory.Client
 
 			client.PrependReactor("create", "subjectaccessreviews", func(action k8stesting.Action) (bool, runtime.Object, error) {
 				sar := action.(k8stesting.CreateAction).GetObject().(*authorizationv1.SubjectAccessReview)
@@ -509,7 +508,7 @@ func TestCSRApprover(t *testing.T) {
 
 		synctest.Test(t, func(t *testing.T) {
 			fakeFactory := testutil.NewFakeClientFactory(node, csr1, csr2, csr3)
-			client := fakeFactory.Client.(*kubernetesfake.Clientset)
+			client := fakeFactory.Client
 
 			client.PrependReactor("create", "subjectaccessreviews", func(action k8stesting.Action) (bool, runtime.Object, error) {
 				sar := action.(k8stesting.CreateAction).GetObject().(*authorizationv1.SubjectAccessReview)
