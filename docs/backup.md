@@ -47,7 +47,7 @@ To output the backup archive to standard output, use `-` as the save path.
 To restore cluster state from the archive use the following command on the controller node:
 
 ```shell
-k0s restore /tmp/k0s_backup_2021-04-26T19_51_57_000Z.tar.gz
+k0s restore /tmp/k0s_backup_2021-04-26T19_51_57_137Z.tar.gz
 ```
 
 The command would fail if the data directory for the current controller has overlapping data with the backup archive content.

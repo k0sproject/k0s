@@ -6,6 +6,7 @@
 package backup
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"net/url"
@@ -36,8 +37,8 @@ func openDB(path string) (*sqliteDB, error) {
 	return &sqliteDB{DB: db}, nil
 }
 
-func (db *sqliteDB) Backup(path string) error {
-	_, err := db.Exec("VACUUM INTO ?", path)
+func (db *sqliteDB) Backup(ctx context.Context, path string) error {
+	_, err := db.ExecContext(ctx, "VACUUM INTO ?", path)
 	return err
 }
 
@@ -57,7 +58,7 @@ func (s *sqliteStep) Name() string {
 	return "sqlite db path " + s.dbPath
 }
 
-func (s *sqliteStep) Backup() (StepResult, error) {
+func (s *sqliteStep) Backup(ctx context.Context) (StepResult, error) {
 	kineDB, err := openDB(s.dbPath)
 	if err != nil {
 		return StepResult{}, err
@@ -74,7 +75,7 @@ func (s *sqliteStep) Backup() (StepResult, error) {
 		return StepResult{}, fmt.Errorf("failed to close kine backup: %w", err)
 	}
 	// create a hot backup of the kine db
-	err = kineDB.Backup(path)
+	err = kineDB.Backup(ctx, path)
 	if err != nil {
 		return StepResult{}, fmt.Errorf("failed to back-up kine db: %w", err)
 	}

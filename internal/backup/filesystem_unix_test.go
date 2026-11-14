@@ -28,7 +28,7 @@ func TestFileSystemStepBackup(t *testing.T) {
 	t.Run("tree", func(t *testing.T) {
 		step := NewFileSystemStep(tempDir)
 
-		result, err := step.Backup()
+		result, err := step.Backup(t.Context())
 		require.NoError(t, err)
 		require.ElementsMatch(t, []string{tempDir, file1Path, file2Path, dirPath}, result.filesForBackup)
 	})
@@ -36,7 +36,7 @@ func TestFileSystemStepBackup(t *testing.T) {
 	t.Run("file", func(t *testing.T) {
 		step := NewFileSystemStep(file2Path)
 
-		result, err := step.Backup()
+		result, err := step.Backup(t.Context())
 		require.NoError(t, err)
 		require.ElementsMatch(t, []string{file2Path}, result.filesForBackup)
 	})
@@ -45,7 +45,7 @@ func TestFileSystemStepBackup(t *testing.T) {
 		nonExistingPath := filepath.Join(tempDir, "no-existing")
 		step := NewFileSystemStep(nonExistingPath)
 
-		result, err := step.Backup()
+		result, err := step.Backup(t.Context())
 		require.NoError(t, err)
 		require.ElementsMatch(t, []string{}, result.filesForBackup)
 	})

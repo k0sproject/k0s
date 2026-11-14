@@ -8,47 +8,54 @@ package backup
 import (
 	"archive/tar"
 	"compress/gzip"
+	"context"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
+	internalio "github.com/k0sproject/k0s/internal/io"
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 )
 
-const timeStampLayout = "2006-01-02T15_04_05_000Z"
-
 // createArchive compresses and adds files to the backup archive file
-func createArchive(archive io.Writer, files []string, baseDir string) error {
+func createArchive(ctx context.Context, archive io.Writer, files []string, baseDir string) error {
 	gw := gzip.NewWriter(archive)
-	defer gw.Close()
-	tw := tar.NewWriter(gw)
-	defer tw.Close()
+	tw := tar.NewWriter(internalio.WriterFunc(func(p []byte) (int, error) {
+		if err := context.Cause(ctx); err != nil {
+			return 0, err
+		}
+		return gw.Write(p)
+	}))
 
 	// Iterate over files and add them to the tar archive
 	for _, file := range files {
 		err := addToArchive(tw, file, baseDir)
 		if err != nil {
-			return fmt.Errorf("failed to add file to backup archive: %w", err)
+			return fmt.Errorf("failed to add path %s: %w", file, err)
 		}
 	}
-	return nil
+
+	if err := tw.Close(); err != nil {
+		return err
+	}
+
+	return gw.Close()
 }
 
 func addToArchive(tw *tar.Writer, filename string, baseDir string) error {
 	// Open the file which will be written into the archive
 	file, err := os.Open(filename)
 	if err != nil {
-		return fmt.Errorf("failed to open file: %w", err)
+		return err
 	}
 	defer file.Close()
 
 	// Get FileInfo about our file providing file size, mode, etc.
 	info, err := file.Stat()
 	if err != nil {
-		return fmt.Errorf("failed to fetch file info: %w", err)
+		return err
 	}
 
 	// Create a tar Header from the FileInfo data
@@ -73,14 +80,10 @@ func addToArchive(tw *tar.Writer, filename string, baseDir string) error {
 
 	if !dir.IsDirectory(filename) {
 		// Copy file content to tar archive
-		_, err = io.Copy(tw, file)
-		if err != nil {
-			return fmt.Errorf("failed to copy file contents info archive: %w", err)
+		if _, err = io.Copy(tw, file); err != nil {
+			return err
 		}
 	}
-	return nil
-}
 
-func timeStamp() string {
-	return time.Now().Format(timeStampLayout)
+	return tw.Flush() // detect short reads early
 }
