@@ -39,7 +39,10 @@ ARG TARGET_OS \
   BUILD_GO_LDFLAGS \
   CONTAINERD_BINS
 
-RUN make \
+# Windows binaries are always built for amd64, regardless of the build host.
+RUN if [ "${TARGET_OS}" = windows ]; then GOARCH=amd64; else GOARCH=$(go env GOARCH); fi; \
+  make \
+	GOARCH="${GOARCH}" \
 	CGO_ENABLED=${BUILD_GO_CGO_ENABLED} \
 	SHIM_CGO_ENABLED=${BUILD_SHIM_GO_CGO_ENABLED} \
 	GO_BUILDTAGS="${BUILD_GO_TAGS}" \

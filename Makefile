@@ -207,10 +207,11 @@ endif
 
 k0s k0s.bare: TARGET_OS = linux
 k0s.exe k0s.bare.exe: TARGET_OS = windows
+k0s.exe k0s.bare.exe: TARGET_ARCH = amd64
 
 .INTERMEDIATE: k0s.bare k0s.bare.exe
 k0s.bare.exe k0s.bare: $(GO_ENV_REQUISITES) go.sum $(codegen_targets) $(GO_SRCS) $(shell find static/manifests/calico static/manifests/windows -type f)
-	CGO_ENABLED=$(BUILD_GO_CGO_ENABLED) CGO_CFLAGS='$(BUILD_CGO_CFLAGS)' GOOS=$(TARGET_OS) $(GO) build $(BUILD_GO_FLAGS) -ldflags='$(LD_FLAGS)' -o '$@' main.go
+	CGO_ENABLED=$(BUILD_GO_CGO_ENABLED) CGO_CFLAGS='$(BUILD_CGO_CFLAGS)' GOOS=$(TARGET_OS) GOARCH=$(TARGET_ARCH) $(GO) build $(BUILD_GO_FLAGS) -ldflags='$(LD_FLAGS)' -o '$@' main.go
 
 k0s: k0s.bare
 k0s.exe: k0s.bare.exe
@@ -372,6 +373,19 @@ $(smoketests): k0s
 
 .PHONY: smoketests
 smoketests: $(smoketests)
+
+# Runs inttest/windows against a Linux controller VM and a Windows worker VM.
+# Needs Lima, QEMU and KVM. Not part of smoketests.
+windows_lab_dir := inttest/windows-local/lima
+
+# Installs Windows into a stopped Lima instance that each test run clones.
+$(windows_lab_dir)/.base.stamp: $(windows_lab_dir)/windows-2025.yaml $(windows_lab_dir)/install-containers.ps1 $(windows_lab_dir)/prepare-base.ps1
+	$(windows_lab_dir)/check-windows-local.sh build-base
+	touch -- '$@'
+
+.PHONY: check-windows-local
+check-windows-local: k0s k0s.exe $(windows_lab_dir)/.base.stamp
+	$(windows_lab_dir)/check-windows-local.sh k0s k0s.exe
 
 .PHONY: check-unit
 ifneq (, $(filter $(HOST_ARCH), arm riscv64))

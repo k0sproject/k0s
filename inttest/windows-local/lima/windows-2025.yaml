@@ -1,0 +1,35 @@
+# Windows Server 2025 worker VM for the windows-local test.
+# Based on Lima's builtin template:windows-2025.
+#
+# Started by check-windows-local.sh.
+#
+# Windows guests are experimental in Lima: QEMU only, plain mode only.
+
+os: "Windows"
+vmType: "qemu"
+arch: "x86_64"
+
+cpus: 8
+memory: "8GiB"
+disk: "100GiB"
+
+images:
+# Already cached by Lima if template:windows-2025 was started before.
+- location: "https://aka.ms/WinServ2025iso-enus"
+  arch: "x86_64"
+
+tpm: null
+
+osOpts:
+  Windows:
+    virtioWin:
+    - location: https://fedorapeople.org/groups/virt/virtio-win/direct-downloads/archive-virtio/virtio-win-0.1.271-1/virtio-win-0.1.271.iso
+      arch: "x86_64"
+
+plain: true
+
+# No Lima networks: qemu-lab.sh adds the NIC linking this VM to the controller.
+
+video:
+  # "default" needs a GTK display ("gtk initialization failed" when headless).
+  display: none
