@@ -416,7 +416,7 @@ func (as *AddonsSuite) testMTLSAuth() {
 		"-e", "REGISTRY_HTTP_TLS_CERTIFICATE=/tls/tls.crt",
 		"-e", "REGISTRY_HTTP_TLS_KEY=/tls/tls.key",
 		"-e", `REGISTRY_HTTP_TLS_CLIENTCAS=["/tls/client-ca.crt"]`,
-		"docker.io/library/registry:3.1.2@sha256:ddf754342cfc8acc51a56d5d0ab6af06826461864460636d8bd5c546dab2a7b8",
+		"docker.io/library/registry:3.1.2@sha256:82f6ff4a7f982960c8aa51617fea3aabc485df6e55cce80d22deb1de36f1bc3c",
 	).CombinedOutput()
 	as.T().Cleanup(func() {
 		if out, err := exec.Command("docker", "rm", "-f", mtlsRegistryNodeName).CombinedOutput(); err != nil {
