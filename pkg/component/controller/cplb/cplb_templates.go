@@ -32,7 +32,7 @@ vrrp_instance k0s-vip-{{$i}} {
     advert_int {{ $instance.AdvertIntervalSeconds }}
     authentication {
         auth_type PASS
-        auth_pass {{ $instance.AuthPass }}
+        auth_pass {{ printf "%q" $instance.AuthPass }}
     }
     virtual_ipaddress {
         {{ range $instance.VirtualIPs }}
