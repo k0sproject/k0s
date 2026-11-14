@@ -12,6 +12,10 @@ DOCKER ?= docker
 # https://reproducible-builds.org/docs/source-date-epoch/#git
 SOURCE_DATE_EPOCH ?= $(shell git log -1 --pretty=%ct || date -u +%s)
 
+# Build metadata of the Kubernetes binaries' version, e.g. the kubelet reports
+# v$(kubernetes_version)+$(KUBERNETES_VERSION_SUFFIX).
+KUBERNETES_VERSION_SUFFIX ?= k0s
+
 bindir = staging/${TARGET_OS}/bin
 posix_bins = runc kubelet containerd containerd-shim-runc-v2 kube-apiserver kube-scheduler kube-controller-manager etcd kine konnectivity-server xtables-legacy-multi xtables-nft-multi keepalived
 windows_bins = kubelet.exe containerd.exe containerd-shim-runhcs-v1.exe
@@ -41,6 +45,7 @@ clean:
 	  rm -- "$$i"; \
 	done
 	$(clean-iid-files)
+	rm -f .kubernetes-version-suffix
 	rm -rf staging
 	@echo 'cleaned up; you may want to run `docker system prune` in order to free dangling resources ...'
 
@@ -90,6 +95,7 @@ build_docker_image = \
 	  --build-arg TARGET_OS=$(if $(findstring .windows.stamp,$@),windows,linux) \
 	  --build-arg CONTAINERD_BINS="$(containerd_bins)" \
 	  --build-arg KUBERNETES_BINS="$(kubernetes_bins)" \
+	  --build-arg KUBERNETES_VERSION_SUFFIX=$(KUBERNETES_VERSION_SUFFIX) \
 	  --build-arg VERSION=$($(patsubst %/Dockerfile,%,$<)_version) \
 	  --build-arg REVISION=$($(patsubst %/Dockerfile,%,$<)_revision) \
 	  --build-arg SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) \
@@ -111,4 +117,12 @@ build_docker_image = \
 .docker-image.%.windows.stamp: %/Dockerfile Makefile.variables
 	$(build_docker_image)
 
-.docker-image.kubernetes.stamp .docker-image.kubernetes.windows.stamp: $(wildcard kubernetes/patches/*)
+.docker-image.kubernetes.stamp .docker-image.kubernetes.windows.stamp: $(wildcard kubernetes/patches/*) .kubernetes-version-suffix
+
+# Only rewritten when the suffix changes, so that the Kubernetes binaries are
+# rebuilt exactly then.
+.kubernetes-version-suffix: FORCE
+	@[ "$$(cat -- '$@' 2>/dev/null)" = '$(KUBERNETES_VERSION_SUFFIX)' ] || printf %s '$(KUBERNETES_VERSION_SUFFIX)' >'$@'
+
+.PHONY: FORCE
+FORCE:
