@@ -134,7 +134,7 @@ type VRRPInstance struct {
 	// This value is ignored for IPv4 VIPs. This is used to set the routing preference
 	// as per RFC 6724.
 	// The value must be in the range from 1 to 2^32-1.
-	// If not specificied or set to 0, defaults to 10000.
+	// If not specified or set to 0, defaults to 10000.
 	// +kubebuilder:default=10000
 	AddressLabel uint32 `json:"addressLabel,omitempty"`
 }

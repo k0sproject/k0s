@@ -91,7 +91,7 @@ k0s strives to be as independent from the operating system as possible. See the
 dedicated section on [external runtime dependencies](external-runtime-deps.md)
 for details on current and past requirements.
 
-To run some automated compatiblility checks on your system, use
+To run some automated compatibility checks on your system, use
 [`k0s sysinfo`](cli/k0s_sysinfo.md).
 
 ## Controller node measured memory consumption
