@@ -59,12 +59,16 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type command config.CLIOptions
+type command struct {
+	*config.CLIOptions
+	appArmorFlags *internal.AppArmorFlags
+}
 
 func NewControllerCmd() *cobra.Command {
 	var (
 		debugFlags      internal.DebugFlags
 		controllerFlags config.ControllerOptions
+		appArmorFlags   internal.AppArmorFlags
 	)
 
 	cmd := &cobra.Command{
@@ -89,7 +93,7 @@ func NewControllerCmd() *cobra.Command {
 				return err
 			}
 
-			c := (*command)(opts)
+			c := command{opts, &appArmorFlags}
 
 			if len(args) > 0 {
 				c.TokenArg = args[0]
@@ -157,6 +161,7 @@ func NewControllerCmd() *cobra.Command {
 	flags.AddFlagSet(config.GetPersistentFlagSet())
 	flags.AddFlagSet(config.GetControllerFlags(&controllerFlags))
 	flags.AddFlagSet(config.GetWorkerFlags())
+	appArmorFlags.AddToFlagSet(flags)
 	flags.AddFlagSet(config.FileInputFlag())
 
 	return cmd
@@ -755,10 +760,13 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 }
 
 func (c *command) startWorker(ctx context.Context, nodeName apitypes.NodeName, kubeletExtraArgs stringmap.StringMap, e *embeddingController) error {
-	// Cast and make a copy of the controller command so it can use the same
-	// opts to start the worker. Needs to be a copy so the original token and
-	// possibly other args won't get messed up.
-	wc := workercmd.Command(*(*config.CLIOptions)(c))
+	wc := workercmd.Command{
+		// Make a copy of the controller's options so the worker can be started
+		// with the same ones. Needs to be a copy so the original token and
+		// possibly other args won't get messed up.
+		CLIOptions:    new(*c.CLIOptions),
+		AppArmorFlags: c.appArmorFlags,
+	}
 	wc.Labels[constant.K0SNodeRoleLabel] = "control-plane"
 	if e.opts.Mode() == config.ControllerPlusWorkerMode && !e.opts.NoTaints {
 		wc.Taints = append(wc.Taints, constants.ControlPlaneTaint.ToString())
