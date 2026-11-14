@@ -7,7 +7,7 @@ import (
 	"maps"
 	"strings"
 
-	"github.com/k0sproject/k0s/pkg/build"
+	"github.com/k0sproject/k0s/internal/build"
 )
 
 const (

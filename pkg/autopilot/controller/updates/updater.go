@@ -17,11 +17,11 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	crcli "sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/k0sproject/k0s/internal/build"
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
 	uc "github.com/k0sproject/k0s/pkg/autopilot/updater"
-	"github.com/k0sproject/k0s/pkg/build"
 	"github.com/k0sproject/k0s/pkg/component/status"
 )
 
