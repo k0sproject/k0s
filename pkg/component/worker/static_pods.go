@@ -480,7 +480,7 @@ func (s *staticPods) Stop() error {
 }
 
 // Health-check interface
-func (s *staticPods) Ready() error {
+func (s *staticPods) Ready(ctx context.Context) error {
 	url, err := s.ManifestURL()
 	if err != nil {
 		return err
@@ -490,7 +490,7 @@ func (s *staticPods) Ready() error {
 	client := http.Client{Transport: &http.Transport{DisableKeepAlives: true}}
 	defer client.CloseIdleConnections()
 
-	ctx, cancel := context.WithTimeout(context.TODO(), 3*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url.JoinPath("_healthz").String(), nil)
