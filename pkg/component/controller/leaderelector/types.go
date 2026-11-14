@@ -3,7 +3,7 @@
 
 package leaderelector
 
-import "github.com/k0sproject/k0s/pkg/leaderelection"
+import "github.com/k0sproject/k0s/internal/leaderelection"
 
 // Interface is the common leader elector component to manage each controller leader status.
 type Interface interface {

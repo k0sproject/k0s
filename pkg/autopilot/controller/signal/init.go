@@ -9,11 +9,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/k0sproject/k0s/internal/leaderelection"
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
 	"github.com/k0sproject/k0s/pkg/autopilot/controller/signal/airgap"
 	"github.com/k0sproject/k0s/pkg/autopilot/controller/signal/k0s"
-	"github.com/k0sproject/k0s/pkg/leaderelection"
 
 	apitypes "k8s.io/apimachinery/pkg/types"
 
