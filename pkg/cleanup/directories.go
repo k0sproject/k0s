@@ -18,16 +18,24 @@ import (
 	"k8s.io/mount-utils"
 )
 
+// Test seams: constructing the mounter and removing directories touch the host,
+// so tests replace these functions. Because they are package-level overrides,
+// tests that change them must run serially and must not use t.Parallel().
+var (
+	newMounter = func() mount.Interface { return mount.New("") }
+	removeAll  = os.RemoveAll
+)
+
 // Run removes all kubelet mounts and deletes generated dataDir and runDir
 func (d *directories) Run(context.Context) error {
 	// unmount any leftover overlays (such as in alpine)
-	mounter := mount.New("")
+	mounter := newMounter()
 	procMounts, err := mounter.List()
 	if err != nil {
 		return err
 	}
 
-	var dataDirMounted, kubeletRootDirMounted bool
+	var dataDirMounted, kubeletRootDirMounted, runDirMounted bool
 
 	// The kubelet root dir only needs special handling when it lives outside
 	// the data dir. When it's under the data dir (the default location), it
@@ -35,6 +43,10 @@ func (d *directories) Run(context.Context) error {
 	// own mount be unmounted here just like any other mount under the data
 	// dir; otherwise the data dir cleanup would choke on the busy mount.
 	kubeletRootDirSeparate := !isUnderPath(d.kubeletRootDir, d.dataDir)
+
+	// Same reasoning for the run dir, which lives outside the data dir
+	// whenever k0s runs as root (/run/k0s).
+	runDirSeparate := !isUnderPath(d.runDir, d.dataDir)
 
 	// ensure that we don't delete any persistent data volumes that may be
 	// mounted by kubernetes by unmount every mount point under DataDir.
@@ -63,7 +75,11 @@ func (d *directories) Run(context.Context) error {
 			kubeletRootDirMounted = true
 			continue
 		}
-		if isUnderPath(v.Path, d.kubeletRootDir) || isUnderPath(v.Path, d.dataDir) {
+		if v.Path == d.runDir && runDirSeparate {
+			runDirMounted = true
+			continue
+		}
+		if isUnderPath(v.Path, d.kubeletRootDir) || isUnderPath(v.Path, d.dataDir) || isUnderPath(v.Path, d.runDir) {
 			logrus.Debugf("%v is mounted! attempting to unmount...", v.Path)
 			if err = mounter.Unmount(v.Path); err != nil {
 				// if we fail to unmount, try lazy unmount so
@@ -78,7 +94,7 @@ func (d *directories) Run(context.Context) error {
 	}
 
 	logrus.Debugf("removing kubelet root dir (%s)", d.kubeletRootDir)
-	if err := os.RemoveAll(d.kubeletRootDir); err != nil {
+	if err := removeAll(d.kubeletRootDir); err != nil {
 		// if the kubelet root dir is itself a mount point (e.g. mounted on
 		// a separate volume), it can't be removed; emptying its contents is
 		// enough. Bail out only on other errors.
@@ -90,24 +106,36 @@ func (d *directories) Run(context.Context) error {
 		}
 	}
 
+	// The run dir is deleted before the data dir on purpose: the data dir
+	// holds the bundled binaries (runc, containerd, ...) that a retried
+	// reset needs in order to start containerd and clean up any containers
+	// still holding mounts under the run dir. Deleting the data dir first
+	// would make a failure here unrecoverable without a reboot (#8048).
+	logrus.Debugf("deleting k0s generated run-dir (%s)", d.runDir)
+	if err := removeAll(d.runDir); err != nil {
+		// like the other two directories, the run dir may itself be a
+		// mount point; emptying its contents is enough then.
+		if !runDirMounted {
+			return fmt.Errorf("failed to delete %s: %w", d.runDir, err)
+		}
+		if !errorIsUnlinkat(err, d.runDir) {
+			return fmt.Errorf("failed to delete contents of mounted run-dir: %w", err)
+		}
+	}
+
 	if dataDirMounted {
 		logrus.Debugf("removing the contents of mounted data-dir (%s)", d.dataDir)
 	} else {
 		logrus.Debugf("removing k0s generated data-dir (%s)", d.dataDir)
 	}
 
-	if err := os.RemoveAll(d.dataDir); err != nil {
+	if err := removeAll(d.dataDir); err != nil {
 		if !dataDirMounted {
 			return fmt.Errorf("failed to delete k0s generated data-dir: %w", err)
 		}
 		if !errorIsUnlinkat(err, d.dataDir) {
 			return fmt.Errorf("failed to delete contents of mounted data-dir: %w", err)
 		}
-	}
-
-	logrus.Debugf("deleting k0s generated run-dir (%s)", d.runDir)
-	if err := os.RemoveAll(d.runDir); err != nil {
-		return fmt.Errorf("failed to delete %s: %w", d.runDir, err)
 	}
 
 	return nil
