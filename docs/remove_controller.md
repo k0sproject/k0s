@@ -104,3 +104,29 @@ object status will reflect that it is safe to remove it.
 ## Replace a controller
 
 To replace a controller, you first remove the old controller (like described above) then follow the [manual installation procedure](k0s-multi-node.md) to add the new one.
+
+## Change an etcd member's peer address
+
+Use `k0s etcd member-update` to replace a member's peer URL without installing
+`etcdctl`. Run it on a controller with access to a functioning etcd quorum.
+List the members first, then select the member by its name or its current peer
+address:
+
+```shell
+k0s etcd member-list
+k0s etcd member-update --member-name controller01 10.0.0.11
+# Alternatively, select by the old address:
+k0s etcd member-update --peer-address 10.0.0.1 10.0.0.11
+```
+
+The new address and `--peer-address` accept an IP address or DNS name, without a
+scheme or port. The command sets one peer URL using HTTPS and port 2380.
+For example, `2001:db8::11` becomes `https://[2001:db8::11]:2380`.
+The selectors are mutually exclusive. With neither selector, the command looks
+up the member using `spec.storage.etcd.peerAddress` from the local configuration.
+Use `--data-dir` when needed, as with `k0s etcd leave`.
+
+This changes etcd membership only. Update the affected controller's configuration
+and ensure its peer listener, certificates, and network connectivity support the
+new address before restarting it. Change one member at a time and maintain quorum.
+This command does not support external etcd clusters.
