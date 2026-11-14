@@ -125,16 +125,16 @@ func (a *APISpec) K0sControlPlaneAPIAddress() string {
 }
 
 func (a *APISpec) getExternalURIForPort(port int) string {
-	addr := a.Address
 	if a.ExternalAddress != "" {
-		// If ExternalAddress is a full host:port address, return it as is
-		if a.ExternalHost() != a.ExternalAddress {
+		// If ExternalAddress is a full host:port address and the requested port
+		// is the API server port, return ExternalAddress as is.
+		if a.ExternalHost() != a.ExternalAddress && port == a.Port {
 			return (&url.URL{Scheme: "https", Host: a.ExternalAddress}).String()
 		}
 
-		addr = a.ExternalAddress
+		return (&url.URL{Scheme: "https", Host: net.JoinHostPort(a.ExternalHost(), strconv.Itoa(port))}).String()
 	}
-	return (&url.URL{Scheme: "https", Host: net.JoinHostPort(addr, strconv.Itoa(port))}).String()
+	return (&url.URL{Scheme: "https", Host: net.JoinHostPort(a.Address, strconv.Itoa(port))}).String()
 }
 
 func isAnyAddress(address string) bool {
@@ -165,8 +165,8 @@ func (a *APISpec) Validate() []error {
 
 	if a.ExternalAddress != "" {
 		validateIPAddressOrDNSName(field.NewPath("externalAddress"), a.ExternalHost())
-		if isAnyAddress(a.ExternalAddress) {
-			errors = append(errors, field.Invalid(field.NewPath("externalAddress"), a.Address, "invalid INADDR_ANY"))
+		if isAnyAddress(a.ExternalHost()) {
+			errors = append(errors, field.Invalid(field.NewPath("externalAddress"), a.ExternalAddress, "invalid INADDR_ANY"))
 		}
 	}
 

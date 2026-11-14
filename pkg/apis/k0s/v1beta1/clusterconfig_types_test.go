@@ -205,6 +205,24 @@ spec:
 	assert.Equal(t, "https://foo.bar.com:9443", c.Spec.API.K0sControlPlaneAPIAddress())
 }
 
+func TestApiExternalAddressWithPort(t *testing.T) {
+	yamlData := []byte(`
+apiVersion: k0s.k0sproject.io/v1beta1
+kind: ClusterConfig
+metadata:
+  name: foobar
+spec:
+  api:
+    externalAddress: foo.bar.com:443
+    address: 1.2.3.4
+`)
+
+	c, err := ConfigFromBytes(yamlData)
+	assert.NoError(t, err)
+	assert.Equal(t, "https://foo.bar.com:443", c.Spec.API.APIAddressURL())
+	assert.Equal(t, "https://foo.bar.com:9443", c.Spec.API.K0sControlPlaneAPIAddress())
+}
+
 func TestApiNoExternalAddress(t *testing.T) {
 	yamlData := []byte(`
 apiVersion: k0s.k0sproject.io/v1beta1

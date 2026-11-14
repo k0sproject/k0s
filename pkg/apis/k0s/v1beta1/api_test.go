@@ -43,6 +43,34 @@ func (s *APISuite) TestValidation() {
 		}
 	})
 
+	s.Run("invalid_external_address_inaddr_any", func() {
+		a := APISpec{
+			Address:         "1.2.3.4",
+			ExternalAddress: "0.0.0.0",
+		}
+		a.setDefaults()
+
+		errs := a.Validate()
+		s.NotNil(errs)
+		if s.Len(errs, 1) {
+			s.ErrorContains(errs[0], `externalAddress: Invalid value: "0.0.0.0": invalid INADDR_ANY`)
+		}
+	})
+
+	s.Run("invalid_external_address_with_port_inaddr_any", func() {
+		a := APISpec{
+			Address:         "1.2.3.4",
+			ExternalAddress: "0.0.0.0:6443",
+		}
+		a.setDefaults()
+
+		errs := a.Validate()
+		s.NotNil(errs)
+		if s.Len(errs, 1) {
+			s.ErrorContains(errs[0], `externalAddress: Invalid value: "0.0.0.0:6443": invalid INADDR_ANY`)
+		}
+	})
+
 	s.Run("invalid_sans_address", func() {
 		a := APISpec{
 			SANs: []string{
