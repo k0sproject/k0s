@@ -20,9 +20,13 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	apiserverv1 "k8s.io/apiserver/pkg/apis/apiserver/v1"
+	bootstrapapi "k8s.io/cluster-bootstrap/token/api"
 	"sigs.k8s.io/yaml"
 
 	"github.com/k0sproject/k0s/internal/assets"
+	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/internal/pkg/users"
@@ -130,6 +134,8 @@ type apiServerConfig struct {
 	rawArgs        []string              // Raw arguments appended after the flags
 	stopTimeout    time.Duration         // How long to wait for kube-apiserver to terminate gracefully
 	egressSelector *egressSelectorConfig // The egress selector config, if konnectivity is enabled
+	// The path of the authentication config for cluster-info discovery, if k0s manages it.
+	discoveryAuthentication string
 }
 
 // Computes the kube-apiserver launch config from the k0s configuration.
@@ -192,12 +198,19 @@ func (a *APIServer) buildConfig() (*apiServerConfig, error) {
 	}
 	args = featuregates.ToArgs(args, a.NodeConfig.Spec.FeatureGates, kubeAPIComponentName)
 
+	var discoveryAuthentication string
+	if a.NodeConfig.Spec.API.ClusterInfoDiscovery && manageDiscoveryAuthentication(args, a.NodeConfig.Spec.API.RawArgs) {
+		discoveryAuthentication = filepath.Join(a.K0sVars.DataDir, "authentication-config.yaml")
+		args["authentication-config"] = discoveryAuthentication
+	}
+
 	// kube-apiserver refuses to start if the --anonymous-auth flag is set
 	// while the file referenced by --authentication-config contains the
 	// anonymous field. Skip the anonymous-auth default in that case, so that
 	// anonymous authentication can be managed via the configuration file.
-	anonymousAuthManaged := false
-	if path := args["authentication-config"]; path != "" {
+	// The discovery configuration contains the anonymous field.
+	anonymousAuthManaged := discoveryAuthentication != ""
+	if path := args["authentication-config"]; path != "" && !anonymousAuthManaged {
 		var err error
 		anonymousAuthManaged, err = authenticationConfigHasAnonymous(path)
 		if err != nil {
@@ -267,6 +280,8 @@ func (a *APIServer) buildConfig() (*apiServerConfig, error) {
 		rawArgs:        a.NodeConfig.Spec.API.RawArgs,
 		stopTimeout:    stopTimeout,
 		egressSelector: egressSelector,
+
+		discoveryAuthentication: discoveryAuthentication,
 	}, nil
 }
 
@@ -281,6 +296,29 @@ func (c *apiServerConfig) writeFiles() error {
 		}
 		if err := tw.Write(); err != nil {
 			return fmt.Errorf("failed to write konnectivity config: %w", err)
+		}
+	}
+	if c.discoveryAuthentication != "" {
+		var data []byte
+		var err error
+		// Lets anonymous users read the cluster-info ConfigMap only, as bootstrap token discovery does. No flag can
+		// limit anonymous access to a path, only this configuration can. RBAC still decides what they may get.
+		data, err = yaml.Marshal(&apiserverv1.AuthenticationConfiguration{
+			TypeMeta: metav1.TypeMeta{APIVersion: apiserverv1.SchemeGroupVersion.String(), Kind: "AuthenticationConfiguration"},
+			Anonymous: &apiserverv1.AnonymousAuthConfig{
+				Enabled: true,
+				Conditions: []apiserverv1.AnonymousAuthCondition{{
+					Path: "/api/v1/namespaces/" + metav1.NamespacePublic + "/configmaps/" + bootstrapapi.ConfigMapClusterInfo,
+				}},
+			},
+		})
+		if err != nil {
+			return fmt.Errorf("failed to marshal the authentication config: %w", err)
+		}
+		// kube-apiserver doesn't run as root.
+		err = file.WriteContentAtomically(c.discoveryAuthentication, data, constant.CertMode)
+		if err != nil {
+			return fmt.Errorf("failed to write the authentication config: %w", err)
 		}
 	}
 
