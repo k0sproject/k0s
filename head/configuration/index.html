@@ -3871,7 +3871,7 @@ CALICO_IPV6POOL_CIDR:<span class="w"> </span><span class="s2">"{{ spec.network.d
 </tr>
 <tr>
 <td><code>mode</code></td>
-<td>Kube proxy operating mode, supported modes <code>iptables</code>, <code>ipvs</code>, <code>nftables</code>¹, <code>userspace</code> (default: <code>iptables</code>)</td>
+<td>Kube proxy operating mode, supported modes <code>iptables</code>, <code>ipvs</code>¹, <code>nftables</code>² (default: <code>iptables</code>)</td>
 </tr>
 <tr>
 <td><code>iptables</code></td>
@@ -3907,7 +3907,12 @@ CALICO_IPV6POOL_CIDR:<span class="w"> </span><span class="s2">"{{ spec.network.d
 </tr>
 </tbody>
 </table>
-<p>¹ For nftables, the kube-proxy container's nftables version needs to be less
+<p>¹ The <code>ipvs</code> mode is deprecated. Starting with Kubernetes 1.40, users must
+explicitly enable the Kubernetes <code>KubeProxyIPVS</code> feature gate in
+<code>spec.featureGates</code>. IPVS will be removed entirely in Kubernetes 1.43. Use
+<code>nftables</code> or <code>iptables</code> instead. See
+<a href="https://github.com/kubernetes/enhancements/blob/master/keps/sig-network/5495-deprecate-ipvs-mode-in-kube-proxy/README.md">KEP-5495</a> for details.</p>
+<p>² For nftables, the kube-proxy container's nftables version needs to be less
 than or equal to the host OS's in order to avoid segmentation faults. For
 example, a host OS with nftables v1.1.1 requires
 <code>quay.io/k0sproject/kube-proxy:v1.33.2</code> or
@@ -3919,7 +3924,7 @@ lower.</p>
 <span class="w">  </span><span class="nt">minSyncPeriod</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0s</span>
 <span class="w">  </span><span class="nt">syncPeriod</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0s</span>
 </code></pre></div>
-<p>Default kube-proxy IPVS settings:</p>
+<p>Default kube-proxy IPVS settings (deprecated, see above):</p>
 <div class="highlight"><pre><span></span><code><span class="nt">ipvs</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">excludeCIDRs</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
 <span class="w">  </span><span class="nt">minSyncPeriod</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0s</span>
