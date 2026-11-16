@@ -438,6 +438,12 @@ spdx.json: syft.yaml go.mod .bins.$(TARGET_OS).stamp
 	  -v '$(CURDIR)/go.mod':/k0s/go.mod:ro \
 	  -v '$(CURDIR)/embedded-bins/staging/$(TARGET_OS)/bin':/k0s/bin:ro \
 	  -w /k0s \
+<<<<<<< HEAD
 	  $(DOCKER_RUN_OPTS) docker.io/anchore/syft:v1.55.0@sha256:4cc92b64ca74ffca4c94d4c8fcc01f217731375300be14d0b6eeb2e82eaa110a \
+||||||| parent of 8096e83 (Bump docker.io/anchore/syft Docker tag to v1.57.2)
+	  $(DOCKER_RUN_OPTS) docker.io/anchore/syft:v1.57.1@sha256:03215d0e98b661d0ecbc8575dbc14d65be1743b5de5df6410aecb7e80f95b060 \
+=======
+	  $(DOCKER_RUN_OPTS) docker.io/anchore/syft:v1.57.2@sha256:e97e20b6e6d1699c60296b66ab337941724f9bd06ac279d893eda89601fc4b2a \
+>>>>>>> 8096e83 (Bump docker.io/anchore/syft Docker tag to v1.57.2)
 	  --source-name k0s --source-version '$(VERSION)' \
 	  -c syft.yaml -o spdx-json@2.2 . >'$@'
