@@ -3754,7 +3754,7 @@ k0sctl</a> and the <a href="https://github.com/k0sproject/k0sctl/blob/main/READM
 </tr>
 <tr>
 <td><code>mtu</code></td>
-<td>MTU for overlay network (default: <code>0</code>, which causes Calico to detect optimal MTU during bootstrap).</td>
+<td>MTU for overlay network (default: <code>1450</code>). Set it to the smallest MTU of any path between nodes minus the <a href="https://docs.tigera.io/calico/latest/networking/configuring/mtu">encapsulation overhead</a>. Set to <code>0</code> to let Calico detect the MTU on each node, which only works if all nodes have the same MTU.</td>
 </tr>
 <tr>
 <td><code>wireguard</code></td>
