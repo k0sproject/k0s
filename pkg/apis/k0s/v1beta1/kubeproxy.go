@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/k0sproject/k0s/internal/pkg/net"
+	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/kubernetes/pkg/cluster/ports"
@@ -16,17 +17,19 @@ import (
 var _ Validateable = (*KubeProxy)(nil)
 
 const (
-	ModeIptables  = "iptables"
-	ModeIPVS      = "ipvs"
-	ModeUSerspace = "userspace"
-	ModeNFT       = "nftables"
+	ModeIptables = "iptables"
+	// Deprecated: Use [ModeNFT] or [ModeIptables] instead. The IPVS mode
+	// requires the KubeProxyIPVS feature gate starting with Kubernetes 1.40
+	// and is removed in Kubernetes 1.43.
+	ModeIPVS = "ipvs"
+	ModeNFT  = "nftables"
 )
 
 // KubeProxy defines the configuration for kube-proxy
 type KubeProxy struct {
 	Disabled bool `json:"disabled,omitempty"`
-	// Mode defines the kube-proxy mode. Supported values are "iptables", "ipvs", "userspace" and "nft"
-	// Defaults to "iptables"
+	// Mode defines the kube-proxy mode. Supported values are "iptables", "ipvs" and "nftables"
+	// Defaults to "iptables". The "ipvs" mode is deprecated (KEP-5495).
 	Mode               string `json:"mode,omitempty"`
 	MetricsBindAddress string `json:"metricsBindAddress,omitempty"`
 	HealthzBindAddress string `json:"healthzBindAddress,omitempty"`
@@ -115,8 +118,13 @@ func (k *KubeProxy) Validate() []error {
 	if k.Disabled {
 		return errors
 	}
-	if k.Mode != ModeIptables && k.Mode != ModeIPVS && k.Mode != ModeUSerspace && k.Mode != ModeNFT {
+	if k.Mode != ModeIptables && k.Mode != ModeIPVS && k.Mode != ModeNFT {
 		errors = append(errors, fmt.Errorf("unsupported mode %s for kubeProxy config", k.Mode))
+	}
+	if k.Mode == ModeIPVS {
+		// TODO: Update this message once the KubeProxyIPVS feature gate
+		// defaults to false in Kubernetes 1.40.
+		logrus.Warn("The kube-proxy IPVS mode is deprecated and will require the KubeProxyIPVS feature gate starting with Kubernetes 1.40, use nftables or iptables instead")
 	}
 	if _, err := net.ParseHostPort(k.HealthzBindAddress); err != nil {
 		errors = append(errors, fmt.Errorf("healthzBindAddress: %w", err))
