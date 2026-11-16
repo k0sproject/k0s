@@ -30,7 +30,8 @@ type Calico struct {
 
 	// MTU for overlay network (default: 1450)
 	// +kubebuilder:default=1450
-	MTU int `json:"mtu,omitempty"`
+	// +optional
+	MTU int `json:"mtu"`
 
 	// +kubebuilder:default=vxlan
 	Mode CalicoMode `json:"mode,omitempty"`
