@@ -22,7 +22,6 @@ import (
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
 	uc "github.com/k0sproject/k0s/pkg/autopilot/updater"
 	"github.com/k0sproject/k0s/pkg/build"
-	"github.com/k0sproject/k0s/pkg/component/status"
 )
 
 type updater interface {
@@ -76,11 +75,6 @@ func newCronUpdater(parentCtx context.Context, updateConfig apv1beta2.UpdateConf
 		schedule = defaultCronSchedule
 	}
 
-	status, err := status.GetStatusInfo(status.DefaultSocketPath)
-	if err != nil {
-		return nil, err
-	}
-
 	ctx, cancel := context.WithCancel(parentCtx)
 	u := &cronUpdater{
 		ctx:            ctx,
@@ -91,7 +85,7 @@ func newCronUpdater(parentCtx context.Context, updateConfig apv1beta2.UpdateConf
 		updateSchedule: schedule,
 		k8sClient:      k8sClient,
 		clusterID:      clusterID,
-		k0sVersion:     status.Version,
+		k0sVersion:     build.Version,
 	}
 
 	return u, nil
