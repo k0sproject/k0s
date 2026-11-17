@@ -3905,12 +3905,13 @@ load balancer's endpoint list. This component monitors constantly the endpoint <
 <div class="highlight"><pre><span></span><code><span class="gp">controller0:/# </span>netstat<span class="w"> </span>-tlpn<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="m">6444</span>
 <span class="go">tcp        0      0 :::6444                 :::*                    LISTEN      345/k0s</span>
 </code></pre></div>
-<p>Then the requests to the VIP on the apiserver port are forwarded to this socket using one iptables rule:</p>
-<div class="highlight"><pre><span></span><code><span class="go">-A PREROUTING -d &lt;VIP&gt;/32 -p tcp -m tcp --dport &lt;apiserver port&gt; -j REDIRECT --to-ports &lt;userspace proxy port&gt;</span>
+<p>Then the requests to the VIP on the apiserver port are forwarded to this socket on the controller address using one
+iptables rule. If the VIP isn't in the IP family of the controller address, the rule uses <code>REDIRECT --to-ports</code> instead:</p>
+<div class="highlight"><pre><span></span><code><span class="go">-A PREROUTING -d &lt;VIP&gt;/32 -p tcp -m tcp --dport &lt;apiserver port&gt; -j DNAT --to-destination &lt;controller address&gt;:&lt;userspace proxy port&gt;</span>
 </code></pre></div>
 <p>A real life example of a cluster using the VIP <code>17.177.0.102</code> looks like:</p>
 <div class="highlight"><pre><span></span><code><span class="gp">controller0:/# </span>/var/lib/k0s/bin/iptables-save<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="m">6444</span>
-<span class="go">-A PREROUTING -d 172.17.0.102/32 -p tcp -m tcp --dport 6443 -j REDIRECT --to-ports 6444</span>
+<span class="go">-A PREROUTING -d 172.17.0.102/32 -p tcp -m tcp --dport 6443 -j DNAT --to-destination 172.17.0.2:6444</span>
 </code></pre></div>
 <p>Keep in mind that clusters using IPv6 as a primary address family, should use ip6tables or ip6tables-save.</p>
 <p>It the load balancer is not load balancing for whatever reason, you can establish connections to it directly. A good way to see if it's actually load balancing is checking the serving certificate:</p>
