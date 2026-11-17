@@ -17,7 +17,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/autopilot/constant"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
 	apsigpred "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/common/predicate"
-	"github.com/k0sproject/k0s/pkg/component/status"
+	"github.com/k0sproject/k0s/pkg/build"
 	"github.com/k0sproject/k0s/pkg/leaderelection"
 
 	coordinationv1 "k8s.io/api/coordination/v1"
@@ -53,7 +53,7 @@ func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Ma
 	logger.Infof("Using node name = '%v'", nodeName)
 
 	k0sVersionHandler := func() (string, error) {
-		return getK0sVersion(status.DefaultSocketPath)
+		return build.Version, nil
 	}
 
 	if enableWorker {
@@ -168,15 +168,4 @@ func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Ma
 	}
 
 	return nil
-}
-
-// getK0sVersion returns the version k0s installed, as identified by the
-// provided status socket path.
-func getK0sVersion(statusSocketPath string) (string, error) {
-	status, err := status.GetStatusInfo(statusSocketPath)
-	if err != nil {
-		return "", err
-	}
-
-	return status.Version, nil
 }
