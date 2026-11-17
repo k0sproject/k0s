@@ -462,3 +462,46 @@ func TestKeepalivedSpec_Validate(t *testing.T) {
 		})
 	}
 }
+
+func TestKeepalivedSpec_ValidateProxyBindPorts(t *testing.T) {
+	for _, tt := range []struct {
+		name    string
+		spec    KeepalivedSpec
+		wantErr string
+	}{
+		{
+			name: "accepts both ports",
+			spec: KeepalivedSpec{UserSpaceProxyKonnectivityBindPort: 8134, UserSpaceProxyK0sAPIBindPort: 9444},
+		},
+		{
+			name:    "rejects out of range port",
+			spec:    KeepalivedSpec{UserSpaceProxyKonnectivityBindPort: 70000},
+			wantErr: "userSpaceProxyKonnectivityBindPort: Invalid value: 70000: must be between 1 and 65535, inclusive",
+		},
+		{
+			name:    "rejects the API server proxy port",
+			spec:    KeepalivedSpec{UserSpaceProxyK0sAPIBindPort: 6444},
+			wantErr: "userSpaceProxyK0sApiBindPort: Duplicate value: 6444",
+		},
+		{
+			name:    "rejects the same port twice",
+			spec:    KeepalivedSpec{UserSpaceProxyKonnectivityBindPort: 8134, UserSpaceProxyK0sAPIBindPort: 8134},
+			wantErr: "userSpaceProxyK0sApiBindPort: Duplicate value: 8134",
+		},
+		{
+			name:    "rejects virtual servers",
+			spec:    KeepalivedSpec{UserSpaceProxyKonnectivityBindPort: 8134, VirtualServers: VirtualServers{{IPAddress: "10.0.0.100"}}},
+			wantErr: "userSpaceProxyKonnectivityBindPort: Forbidden: cannot be combined with virtualServers",
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			errs := tt.spec.Validate(nil)
+			if tt.wantErr != "" {
+				require.Len(t, errs, 1)
+				assert.ErrorContains(t, errs[0], tt.wantErr)
+			} else {
+				require.Empty(t, errs)
+			}
+		})
+	}
+}
