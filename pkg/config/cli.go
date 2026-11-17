@@ -76,6 +76,7 @@ type WorkerOptions struct {
 	TokenArg              string
 	WorkerProfile         string
 	IPTablesMode          string
+	FeatureGates          featuregate.FeatureGates
 }
 
 func (m ControllerMode) WorkloadsEnabled() bool {
@@ -260,6 +261,7 @@ func GetWorkerFlags() *pflag.FlagSet {
 	flagset.StringVar(&workerOpts.KubeletExtraArgs, "kubelet-extra-args", "", "extra args for kubelet")
 	flagset.StringVar(&workerOpts.IPTablesMode, "iptables-mode", "", "iptables mode (valid values: nft, legacy, auto). default: auto")
 	flagset.BoolVar(&workerOpts.IgnorePreFlightChecks, "ignore-pre-flight-checks", false, "continue even if pre-flight checks fail")
+	flagset.Var(&workerOpts.FeatureGates, "feature-gates", "feature gates to enable (comma separated list of key=value pairs)")
 	flagset.AddFlagSet(GetCriSocketFlag())
 
 	return flagset
