@@ -8,7 +8,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/k0sproject/k0s/pkg/cleanup"
+	"github.com/k0sproject/k0s/internal/cleanup"
 	"github.com/k0sproject/k0s/pkg/config"
 
 	"github.com/sirupsen/logrus"
