@@ -211,6 +211,43 @@ spec:
 	s.Equal(1450, DefaultCalico().MTU)
 }
 
+func (s *NetworkSuite) TestCalicoMTU6RoundTrip() {
+	for _, test := range []struct {
+		name     string
+		mtu6     string
+		expected int
+	}{
+		{"unset", "", 1430},
+		{"auto", "mtu6: 0", 0},
+		{"explicit", "mtu6: 1380", 1380},
+	} {
+		s.Run(test.name, func() {
+			c, err := ConfigFromBytes([]byte(`
+apiVersion: k0s.k0sproject.io/v1beta1
+kind: ClusterConfig
+spec:
+  network:
+    provider: calico
+    calico:
+      mode: vxlan
+      ` + test.mtu6 + `
+`))
+			s.Require().NoError(err)
+			s.Equal(test.expected, c.Spec.Network.Calico.MTU6)
+
+			// The config gets written out and read back, e.g. when it's
+			// stored in the API server. The MTU must survive this.
+			data, err := yaml.Marshal(c)
+			s.Require().NoError(err)
+			c, err = ConfigFromBytes(data)
+			s.Require().NoError(err)
+			s.Equal(test.expected, c.Spec.Network.Calico.MTU6)
+		})
+	}
+
+	s.Equal(1430, DefaultCalico().MTU6)
+}
+
 func (s *NetworkSuite) TestKubeRouterDefaultsAfterMarshaling() {
 	yamlData := []byte(`
 apiVersion: k0s.k0sproject.io/v1beta1
