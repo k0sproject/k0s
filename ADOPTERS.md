@@ -97,3 +97,4 @@ In addition, it is being used for novel use cases in the wild:
 * New England Research Cloud [provides it as an option vs k3s](https://nerc-project.github.io/nerc-docs/other-tools/kubernetes/k0s/).
 * Amaze Systems [job posting includes requirement for k0s experience](https://www.salary.com/job/amaze-systems-inc/hiring-for-ml-engineer-data-scientist-robotics-software-engineer-boston-ma-onsite-from-day-1/j202305270140264589562).
 * k0s with Traefik for a Tokyo [smart cities project](https://community.traefik.io/t/help-setting-up-with-k0s-via-helm-extensions/20748).
+* [Large-Scale Edge Management with Kubernetes: The Tech Behind Stable Operation of 200 EV Chargers](https://www.youtube.com/watch?v=4qV9lrg3FBc)
