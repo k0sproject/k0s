@@ -545,6 +545,7 @@ func (c *ClusterConfig) Validate() (errs []error) {
 // - Network.ServiceCIDR
 // - Network.ClusterDomain
 // - Network.ControlPlaneLoadBalancing
+// - Network.NodeAddresses
 // - Network.PrimaryAddressFamily
 // - Install
 func (c *ClusterConfig) GetClusterWideConfig() *ClusterConfig {
@@ -556,6 +557,7 @@ func (c *ClusterConfig) GetClusterWideConfig() *ClusterConfig {
 			c.Spec.Network.ServiceCIDR = ""
 			c.Spec.Network.ClusterDomain = ""
 			c.Spec.Network.ControlPlaneLoadBalancing = nil
+			c.Spec.Network.NodeAddresses = nil
 			c.Spec.Network.PrimaryAddressFamily = ""
 		}
 		c.Spec.Install = nil

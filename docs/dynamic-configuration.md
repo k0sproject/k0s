@@ -63,6 +63,7 @@ havoc.
 - `network.serviceCIDR`
 - `network.provider`
 - `network.controlPlaneLoadBalancing`
+- `network.nodeAddresses`
 - `network.primaryAddressFamily`
 
 During the manual installation of control plane nodes with `k0s install`, all these

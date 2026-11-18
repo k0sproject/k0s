@@ -38,6 +38,12 @@ type Network struct {
 	// control plane load balancing feature.
 	ControlPlaneLoadBalancing *ControlPlaneLoadBalancingSpec `json:"controlPlaneLoadBalancing,omitempty"`
 
+	// NodeAddresses declares the address space that the cluster's nodes live
+	// in. If set, k0s's csr-approver refuses kubelet serving certificates for
+	// names and addresses outside of it.
+	// +optional
+	NodeAddresses *NodeAddresses `json:"nodeAddresses,omitempty"`
+
 	// Pod network CIDR to use in the cluster
 	// +kubebuilder:default="10.244.0.0/16"
 	PodCIDR string `json:"podCIDR,omitempty"`
@@ -167,6 +173,9 @@ func (n *Network) Validate() []error {
 		errors = append(errors, err)
 	}
 	for _, err := range n.ControlPlaneLoadBalancing.Validate(field.NewPath("controlPlaneLoadBalancing")) {
+		errors = append(errors, err)
+	}
+	for _, err := range n.NodeAddresses.Validate(field.NewPath("nodeAddresses")) {
 		errors = append(errors, err)
 	}
 

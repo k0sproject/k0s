@@ -526,6 +526,31 @@ func (s *NetworkSuite) TestValidation() {
 			s.ErrorContains(errors[1], "if DualStack is enabled, serviceCIDR must be IPv4")
 		}
 	})
+
+	s.Run("valid_node_addresses", func() {
+		n := DefaultNetwork()
+		n.NodeAddresses = &NodeAddresses{
+			CIDRs:    []string{"10.0.0.0/16", "2001:db8:1::/64"},
+			DNSNames: []string{"*", "worker-*", "*.nodes.example.internal", "Node-1.Example.com."},
+		}
+		s.Empty(n.Validate())
+	})
+
+	s.Run("invalid_node_addresses", func() {
+		n := DefaultNetwork()
+		n.NodeAddresses = &NodeAddresses{
+			CIDRs:    []string{"10.0.0.0/16", "10.0.0.1", "foobar"},
+			DNSNames: []string{"worker-*", "", "worker_[0-9]", "*..example.com"},
+		}
+		errors := n.Validate()
+		if s.Len(errors, 5) {
+			s.ErrorContains(errors[0], `nodeAddresses.cidrs[1]: Invalid value: "10.0.0.1": invalid CIDR address`)
+			s.ErrorContains(errors[1], `nodeAddresses.cidrs[2]: Invalid value: "foobar": invalid CIDR address`)
+			s.ErrorContains(errors[2], `nodeAddresses.dnsNames[1]: Invalid value: "": invalid DNS name pattern`)
+			s.ErrorContains(errors[3], `nodeAddresses.dnsNames[2]: Invalid value: "worker_[0-9]": invalid DNS name pattern`)
+			s.ErrorContains(errors[4], `nodeAddresses.dnsNames[3]: Invalid value: "*..example.com": invalid DNS name pattern`)
+		}
+	})
 }
 
 func TestNetworkSuite(t *testing.T) {

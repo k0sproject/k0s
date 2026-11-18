@@ -1206,6 +1206,31 @@ spec:
                           type: string
                         type: array
                     type: object
+                  nodeAddresses:
+                    description: |-
+                      NodeAddresses declares the address space that the cluster's nodes live
+                      in. If set, k0s's csr-approver refuses kubelet serving certificates for
+                      names and addresses outside of it.
+                    properties:
+                      cidrs:
+                        description: |-
+                          CIDRs that contain the IP addresses of the cluster's nodes. If set,
+                          csr-approver refuses kubelet serving certificates for IP addresses
+                          outside of them. If empty, IP addresses are unrestricted.
+                        items:
+                          type: string
+                        type: array
+                      dnsNames:
+                        description: |-
+                          DNSNames lists patterns for the DNS names of the cluster's nodes. If set,
+                          csr-approver refuses kubelet serving certificates for DNS names that
+                          match none of them. If empty, DNS names are unrestricted. Patterns are
+                          matched case-insensitively. An asterisk matches any sequence of
+                          characters within a single DNS label, i.e. it doesn't match dots.
+                        items:
+                          type: string
+                        type: array
+                    type: object
                   nodeLocalLoadBalancing:
                     description: |-
                       NodeLocalLoadBalancing defines the configuration options related to k0s's
