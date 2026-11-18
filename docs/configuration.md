@@ -430,11 +430,12 @@ Configuration options required for using VRRP to configure VIPs in control plane
 
 #### `spec.network.nodeAddresses`
 
-Declares the address space that the cluster's nodes live in. If set, k0s's
+Restricts the names and addresses that nodes may claim. If set, k0s's
 `csr-approver` component refuses [kubelet serving certificates] for names and
 addresses outside of it. If unset, which is the default, only the node's own
-status decides. Like `serviceCIDR`, this is read by each controller at startup
-and isn't part of the [dynamic configuration].
+status decides, in addition to the deny list for in-cluster names and addresses
+that always applies. Like `serviceCIDR`, this is read by each controller at
+startup and isn't part of the [dynamic configuration].
 
 | Element    | Description                                                                                                                                                                                                                                  |
 | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

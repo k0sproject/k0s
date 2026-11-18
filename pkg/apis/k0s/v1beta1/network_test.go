@@ -529,26 +529,27 @@ func (s *NetworkSuite) TestValidation() {
 
 	s.Run("valid_node_addresses", func() {
 		n := DefaultNetwork()
-		n.NodeAddresses = &NodeAddresses{
-			CIDRs:    []string{"10.0.0.0/16", "2001:db8:1::/64"},
-			DNSNames: []string{"*", "worker-*", "*.nodes.example.internal", "Node-1.Example.com."},
+		n.NodeAddresses = NodeAddresses{
+			CIDRs:    []NodeCIDR{"10.0.0.0/16", "2001:db8:1::/64"},
+			DNSNames: []NodeDNSName{"*", "worker-*", "*.nodes.example.internal", "Node-1.Example.com."},
 		}
 		s.Empty(n.Validate())
 	})
 
 	s.Run("invalid_node_addresses", func() {
 		n := DefaultNetwork()
-		n.NodeAddresses = &NodeAddresses{
-			CIDRs:    []string{"10.0.0.0/16", "10.0.0.1", "foobar"},
-			DNSNames: []string{"worker-*", "", "worker_[0-9]", "*..example.com"},
+		n.NodeAddresses = NodeAddresses{
+			CIDRs:    []NodeCIDR{"10.0.0.0/16", "10.0.0.1", "foobar", "::ffff:10.0.0.0/104"},
+			DNSNames: []NodeDNSName{"worker-*", "", "worker_[0-9]", "*..example.com"},
 		}
 		errors := n.Validate()
-		if s.Len(errors, 5) {
+		if s.Len(errors, 6) {
 			s.ErrorContains(errors[0], `nodeAddresses.cidrs[1]: Invalid value: "10.0.0.1": invalid CIDR address`)
 			s.ErrorContains(errors[1], `nodeAddresses.cidrs[2]: Invalid value: "foobar": invalid CIDR address`)
-			s.ErrorContains(errors[2], `nodeAddresses.dnsNames[1]: Invalid value: "": invalid DNS name pattern`)
-			s.ErrorContains(errors[3], `nodeAddresses.dnsNames[2]: Invalid value: "worker_[0-9]": invalid DNS name pattern`)
-			s.ErrorContains(errors[4], `nodeAddresses.dnsNames[3]: Invalid value: "*..example.com": invalid DNS name pattern`)
+			s.ErrorContains(errors[2], `nodeAddresses.cidrs[3]: Invalid value: "::ffff:10.0.0.0/104": invalid CIDR address`)
+			s.ErrorContains(errors[3], `nodeAddresses.dnsNames[1]: Invalid value: "": invalid DNS name pattern`)
+			s.ErrorContains(errors[4], `nodeAddresses.dnsNames[2]: Invalid value: "worker_[0-9]": invalid DNS name pattern`)
+			s.ErrorContains(errors[5], `nodeAddresses.dnsNames[3]: Invalid value: "*..example.com": invalid DNS name pattern`)
 		}
 	})
 }

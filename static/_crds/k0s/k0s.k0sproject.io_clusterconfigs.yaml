@@ -1207,27 +1207,29 @@ spec:
                         type: array
                     type: object
                   nodeAddresses:
-                    description: |-
-                      NodeAddresses declares the address space that the cluster's nodes live
-                      in. If set, k0s's csr-approver refuses kubelet serving certificates for
-                      names and addresses outside of it.
+                    description: NodeAddresses restricts the addresses that nodes
+                      are allowed to claim.
                     properties:
                       cidrs:
                         description: |-
-                          CIDRs that contain the IP addresses of the cluster's nodes. If set,
-                          csr-approver refuses kubelet serving certificates for IP addresses
-                          outside of them. If empty, IP addresses are unrestricted.
+                          CIDRs that contain the IP addresses of the cluster's nodes. If empty, IP
+                          addresses are unrestricted.
                         items:
+                          description: A CIDR that contains the IP addresses of nodes.
+                          maxLength: 49
+                          pattern: ^[0-9a-fA-F:.]+/[0-9]{1,3}$
                           type: string
                         type: array
                       dnsNames:
                         description: |-
-                          DNSNames lists patterns for the DNS names of the cluster's nodes. If set,
-                          csr-approver refuses kubelet serving certificates for DNS names that
-                          match none of them. If empty, DNS names are unrestricted. Patterns are
-                          matched case-insensitively. An asterisk matches any sequence of
-                          characters within a single DNS label, i.e. it doesn't match dots.
+                          DNSNames lists patterns for the DNS names of the cluster's nodes. If
+                          empty, DNS names are unrestricted.
                         items:
+                          description: |-
+                            A DNS name pattern for the names of nodes. Asterisks are allowed in place of
+                            characters.
+                          maxLength: 253
+                          pattern: ^[a-zA-Z0-9*]([a-zA-Z0-9*-]*[a-zA-Z0-9*])?(\.[a-zA-Z0-9*]([a-zA-Z0-9*-]*[a-zA-Z0-9*])?)*\.?$
                           type: string
                         type: array
                     type: object

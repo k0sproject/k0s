@@ -106,12 +106,11 @@ func TestCSRApprover(t *testing.T) {
 	// that parse as CIDRs are CIDRs, everything else is a DNS name pattern.
 	networkWithNodeAddresses := func(cidrsOrPatterns ...string) *v1beta1.Network {
 		n := v1beta1.DefaultNetwork()
-		n.NodeAddresses = &v1beta1.NodeAddresses{}
 		for _, value := range cidrsOrPatterns {
-			if _, _, err := net.ParseCIDR(value); err == nil {
-				n.NodeAddresses.CIDRs = append(n.NodeAddresses.CIDRs, value)
+			if _, err := netip.ParsePrefix(value); err == nil {
+				n.NodeAddresses.CIDRs = append(n.NodeAddresses.CIDRs, v1beta1.NodeCIDR(value))
 			} else {
-				n.NodeAddresses.DNSNames = append(n.NodeAddresses.DNSNames, value)
+				n.NodeAddresses.DNSNames = append(n.NodeAddresses.DNSNames, v1beta1.NodeDNSName(value))
 			}
 		}
 		return n
@@ -455,11 +454,12 @@ func TestCSRApprover(t *testing.T) {
 			}(),
 		},
 		{
-			testCase: "certificate for an IPv4-mapped address inside the configured node CIDRs",
-			network:  networkWithNodeAddresses("10.0.0.0/30"),
+			testCase: "certificate for a DNS name in non-canonical notation matching a configured pattern",
+			objects:  nodeClaiming("Node-1.Nodes.Example.COM."),
+			network:  networkWithNodeAddresses("csr-approver-*", "*.nodes.example.com"),
 			template: func() *x509.CertificateRequest {
 				t := validTemplate()
-				t.IPAddresses = []net.IP{net.ParseIP("10.0.0.1").To16()}
+				t.DNSNames = append(t.DNSNames, "Node-1.Nodes.Example.COM.")
 				return t
 			}(),
 		},
@@ -510,7 +510,7 @@ func TestCSRApprover(t *testing.T) {
 			expectedErr: `DNSNames[1]: forbidden: "a.b.nodes.example.com": matches none of the allowed node DNS names`,
 		},
 		{
-			testCase:    "certificate for a DNS name with only a wildcard prefix pattern",
+			testCase:    "certificate for a DNS name that only matches the beginning of a pattern",
 			network:     networkWithNodeAddresses("csr-approver-*.example.com"),
 			expectedErr: `DNSNames[0]: forbidden: "csr-approver-test-node": matches none of the allowed node DNS names`,
 		},
@@ -691,14 +691,25 @@ func TestCSRApprover(t *testing.T) {
 
 func TestCSRApprover_WarnsAboutControlPlaneNodeAddresses(t *testing.T) {
 	network := v1beta1.DefaultNetwork()
-	network.NodeAddresses = &v1beta1.NodeAddresses{
-		CIDRs:    []string{"10.0.0.0/16"},
-		DNSNames: []string{"*.example.com"},
+	network.NodeAddresses = v1beta1.NodeAddresses{
+		CIDRs:    []v1beta1.NodeCIDR{"10.0.0.0/16"},
+		DNSNames: []v1beta1.NodeDNSName{"*.example.com"},
+	}
+	network.ControlPlaneLoadBalancing = &v1beta1.ControlPlaneLoadBalancingSpec{
+		Enabled: true,
+		Keepalived: &v1beta1.KeepalivedSpec{
+			VRRPInstances: v1beta1.VRRPInstances{
+				{VirtualIPs: []string{"10.0.1.1/24", "192.168.1.1/24"}},
+			},
+			VirtualServers: v1beta1.VirtualServers{
+				{IPAddress: "10.0.2.1"},
+			},
+		},
 	}
 	api := &v1beta1.APISpec{
 		Address:         "10.0.0.1",
 		ExternalAddress: "api.example.com:6443",
-		SANs:            []string{"10.0.0.1", "192.168.0.1", "api.example.org", "k8s.example.com"},
+		SANs:            []string{"192.168.0.1", "api.example.org", "k8s.example.com"},
 	}
 
 	logger, logs := test.NewNullLogger()
@@ -709,10 +720,13 @@ func TestCSRApprover_WarnsAboutControlPlaneNodeAddresses(t *testing.T) {
 	var warned []string
 	for _, entry := range logs.AllEntries() {
 		assert.Equal(t, logrus.WarnLevel, entry.Level)
-		assert.Contains(t, entry.Message, "Control plane address is inside the configured node address space")
-		warned = append(warned, entry.Data["address"].(string))
+		assert.Contains(t, entry.Message, "Control plane ")
+		assert.Contains(t, entry.Message, " nodes may obtain kubelet serving certificates for it")
+		if address, ok := entry.Data["address"].(string); assert.True(t, ok, "address field is missing or not a string") {
+			warned = append(warned, address)
+		}
 	}
-	assert.ElementsMatch(t, []string{"10.0.0.1", "api.example.com", "k8s.example.com"}, warned)
+	assert.ElementsMatch(t, []string{"10.0.0.1", "10.0.1.1", "10.0.2.1", "api.example.com", "k8s.example.com"}, warned)
 
 	t.Run("not without node addresses", func(t *testing.T) {
 		logger, logs := test.NewNullLogger()

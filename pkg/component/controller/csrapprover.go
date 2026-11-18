@@ -69,12 +69,15 @@ type CSRApprover struct {
 	nodeIdentifier    nodeidentifier.NodeIdentifier
 	serviceCIDRs      []netip.Prefix
 	clusterDomain     string
-	api               *v1beta1.APISpec
 
 	// The node address space, if configured. Empty slices mean unrestricted.
-	nodeAddresses   bool
 	nodeCIDRs       []netip.Prefix
 	nodeDNSPatterns []*regexp.Regexp
+
+	// Names and addresses of the control plane, to warn about overlaps with the
+	// node address space.
+	controlPlaneNames     []string
+	controlPlaneAddresses []netip.Addr
 }
 
 var _ manager.Component = (*CSRApprover)(nil)
@@ -85,33 +88,6 @@ func NewCSRApprover(leaderElector leaderelector.Interface, kubeClientFactory kub
 	if network.DualStack.Enabled {
 		cidrs = append(cidrs, network.DualStack.IPv6ServiceCIDR)
 	}
-
-	approver := &CSRApprover{
-		leaderElector:     leaderElector,
-		KubeClientFactory: kubeClientFactory,
-		nodeIdentifier:    nodeidentifier.NewDefaultNodeIdentifier(),
-		serviceCIDRs:      parseCIDRs(cidrs),
-		api:               api,
-
-		// Normalize the cluster domain to be lowercase, so we can use substring
-		// matches later on. This is safe, as it is proven to be ASCII only
-		// during configuration validation at startup.
-		clusterDomain: normalizeDNSName(network.ClusterDomain),
-	}
-
-	if nodeAddresses := network.NodeAddresses; nodeAddresses != nil {
-		approver.nodeAddresses = true
-		approver.nodeCIDRs = parseCIDRs(nodeAddresses.CIDRs)
-		for _, pattern := range nodeAddresses.DNSNames {
-			approver.nodeDNSPatterns = append(approver.nodeDNSPatterns, compileDNSNamePattern(pattern))
-		}
-	}
-
-	return approver
-}
-
-// Parses the given CIDRs into normalized prefixes.
-func parseCIDRs(cidrs []string) []netip.Prefix {
 	prefixes := make([]netip.Prefix, len(cidrs))
 	for i := range cidrs {
 		// Need to use net.ParseCIDR here as this is what the validation uses,
@@ -129,22 +105,73 @@ func parseCIDRs(cidrs []string) []netip.Prefix {
 		// Construct a normalized prefix.
 		prefixes[i] = k0snet.UnmapPrefix(netip.PrefixFrom(addr, prefixLen)).Masked()
 	}
-	return prefixes
+
+	approver := &CSRApprover{
+		leaderElector:     leaderElector,
+		KubeClientFactory: kubeClientFactory,
+		nodeIdentifier:    nodeidentifier.NewDefaultNodeIdentifier(),
+		serviceCIDRs:      prefixes,
+
+		// Normalize the cluster domain to be lowercase, so we can use substring
+		// matches later on. This is safe, as it is proven to be ASCII only
+		// during configuration validation at startup.
+		clusterDomain: strings.TrimSuffix(strings.ToLower(network.ClusterDomain), "."),
+	}
+
+	// The node addresses are proven to be valid during configuration
+	// validation at startup.
+	for _, cidr := range network.NodeAddresses.CIDRs {
+		approver.nodeCIDRs = append(approver.nodeCIDRs, netip.MustParsePrefix(string(cidr)).Masked())
+	}
+	for _, pattern := range network.NodeAddresses.DNSNames {
+		// Match against the normalized form of the requested names, as
+		// certificate verification is case-insensitive and ignores the
+		// trailing dot of fully qualified names. An asterisk matches any
+		// sequence of characters within a single label.
+		quoted := regexp.QuoteMeta(strings.TrimSuffix(strings.ToLower(string(pattern)), "."))
+		approver.nodeDNSPatterns = append(approver.nodeDNSPatterns,
+			regexp.MustCompile("^"+strings.ReplaceAll(quoted, `\*`, `[^.]*`)+"$"),
+		)
+	}
+
+	if len(approver.nodeCIDRs)+len(approver.nodeDNSPatterns) > 0 {
+		approver.collectControlPlaneAddresses(api, network.ControlPlaneLoadBalancing)
+	}
+
+	return approver
 }
 
-// Compiles a DNS name pattern into an anchored regular expression that matches
-// normalized DNS names. Asterisks match any sequence of characters within a
-// single label. The pattern is proven to be ASCII only during configuration
-// validation at startup.
-func compileDNSNamePattern(pattern string) *regexp.Regexp {
-	pattern = regexp.QuoteMeta(normalizeDNSName(pattern))
-	return regexp.MustCompile("^" + strings.ReplaceAll(pattern, `\*`, `[^.]*`) + "$")
-}
+// Collects the names and addresses that identify the control plane.
+func (a *CSRApprover) collectControlPlaneAddresses(api *v1beta1.APISpec, cplb *v1beta1.ControlPlaneLoadBalancingSpec) {
+	add := func(address string) {
+		// Virtual IPs of the CPLB are CIDRs.
+		if prefix, err := netip.ParsePrefix(address); err == nil {
+			a.controlPlaneAddresses = append(a.controlPlaneAddresses, prefix.Addr().Unmap())
+		} else if ip, err := netip.ParseAddr(address); err == nil {
+			a.controlPlaneAddresses = append(a.controlPlaneAddresses, ip.Unmap())
+		} else if govalidator.IsDNSName(address) {
+			a.controlPlaneNames = append(a.controlPlaneNames, address)
+		}
+	}
 
-// Normalizes a DNS name for comparison. Certificate verification is
-// case-insensitive and ignores the trailing dot of fully qualified names.
-func normalizeDNSName(name string) string {
-	return strings.TrimSuffix(strings.ToLower(name), ".")
+	if api != nil {
+		add(api.Address)
+		add(api.ExternalHost())
+		for _, san := range api.SANs {
+			add(san)
+		}
+	}
+
+	if cplb != nil && cplb.Enabled && cplb.Keepalived != nil {
+		for _, instance := range cplb.Keepalived.VRRPInstances {
+			for _, vip := range instance.VirtualIPs {
+				add(vip)
+			}
+		}
+		for _, server := range cplb.Keepalived.VirtualServers {
+			add(server.IPAddress)
+		}
+	}
 }
 
 // Stop stops the CSRApprover
@@ -323,12 +350,7 @@ func (a *CSRApprover) authorizeKubeletServingCSR(ctx context.Context, csr *certi
 	// cluster's control plane or other in-cluster services, nor for addresses
 	// that no kubelet claims for itself, before even checking what the node
 	// reports.
-	if err := a.denyReservedSANs(cr); err != nil {
-		return nil, err
-	}
-
-	// Refuse names and addresses outside the configured node address space.
-	if err := a.denyForeignSANs(cr); err != nil {
+	if err := a.checkSANs(cr); err != nil {
 		return nil, err
 	}
 
@@ -388,14 +410,16 @@ func (a *CSRApprover) verifyNodeIdentity(csr *certificatesv1.CertificateSigningR
 	return nodeName, nil
 }
 
-func (a *CSRApprover) denyReservedSANs(cr *x509.CertificateRequest) error {
+// Refuses names and addresses that are reserved for in-cluster use, and those
+// outside of the configured node address space.
+func (a *CSRApprover) checkSANs(cr *x509.CertificateRequest) error {
 	for i, dnsName := range cr.DNSNames {
 		if !govalidator.IsDNSName(dnsName) {
 			return fmt.Errorf("DNSNames[%d]: invalid: %q", i, dnsName)
 		}
-		// Compare the normalized form. This is safe, as dnsName is proven to
-		// be ASCII only.
-		subdomain := normalizeDNSName(dnsName)
+		// Certificate verification is case-insensitive, so compare the
+		// normalized form. This is safe, as dnsName is proven to be ASCII only.
+		subdomain := strings.TrimSuffix(strings.ToLower(dnsName), ".")
 		if subdomain == "kubernetes" || subdomain == "kubernetes.default" {
 			return fmt.Errorf("DNSNames[%d]: forbidden: %q: reserved for in-cluster services", i, dnsName)
 		}
@@ -415,6 +439,9 @@ func (a *CSRApprover) denyReservedSANs(cr *x509.CertificateRequest) error {
 				return fmt.Errorf("DNSNames[%d]: forbidden: %q: reserved for in-cluster services", i, dnsName)
 			}
 		}
+		if !a.isNodeDNSName(subdomain) {
+			return fmt.Errorf("DNSNames[%d]: forbidden: %q: matches none of the allowed node DNS names", i, dnsName)
+		}
 	}
 	for i, address := range cr.IPAddresses {
 		ip, ok := netip.AddrFromSlice(address)
@@ -432,37 +459,26 @@ func (a *CSRApprover) denyReservedSANs(cr *x509.CertificateRequest) error {
 				return fmt.Errorf("IPAddresses[%d]: forbidden: %q: is inside a cluster service CIDR", i, address)
 			}
 		}
-	}
-	return nil
-}
-
-// Refuses names and addresses that are outside of the configured node address
-// space. Expects the SANs to have passed [CSRApprover.denyReservedSANs].
-func (a *CSRApprover) denyForeignSANs(cr *x509.CertificateRequest) error {
-	for i, dnsName := range cr.DNSNames {
-		if !a.isNodeDNSName(dnsName) {
-			return fmt.Errorf("DNSNames[%d]: forbidden: %q: matches none of the allowed node DNS names", i, dnsName)
-		}
-	}
-	for i, address := range cr.IPAddresses {
-		ip, _ := netip.AddrFromSlice(address)
-		if !a.isNodeIP(ip.Unmap()) {
+		if !a.isNodeIP(ip) {
 			return fmt.Errorf("IPAddresses[%d]: forbidden: %q: is outside of the allowed node CIDRs", i, address)
 		}
 	}
 	return nil
 }
 
-func (a *CSRApprover) isNodeDNSName(dnsName string) bool {
+// Checks if a normalized DNS name matches the configured node DNS name
+// patterns. Always true if there are none.
+func (a *CSRApprover) isNodeDNSName(normalized string) bool {
 	if len(a.nodeDNSPatterns) == 0 {
 		return true
 	}
-	dnsName = normalizeDNSName(dnsName)
 	return slices.ContainsFunc(a.nodeDNSPatterns, func(pattern *regexp.Regexp) bool {
-		return pattern.MatchString(dnsName)
+		return pattern.MatchString(normalized)
 	})
 }
 
+// Checks if an unmapped IP address is inside the configured node CIDRs. Always
+// true if there are none.
 func (a *CSRApprover) isNodeIP(ip netip.Addr) bool {
 	if len(a.nodeCIDRs) == 0 {
 		return true
@@ -477,22 +493,17 @@ func (a *CSRApprover) isNodeIP(ip netip.Addr) bool {
 // This is unavoidable for controllers which run workloads, but administrators
 // should be aware of it.
 func (a *CSRApprover) warnAboutControlPlaneNodeAddresses() {
-	if !a.nodeAddresses || a.api == nil {
-		return
-	}
-
-	addresses := slices.Concat([]string{a.api.Address, a.api.ExternalHost()}, a.api.SANs)
-	slices.Sort(addresses)
-	for _, address := range slices.Compact(addresses) {
-		var isNodeAddress bool
-		if ip, err := netip.ParseAddr(address); err == nil {
-			isNodeAddress = a.isNodeIP(ip.Unmap())
-		} else if govalidator.IsDNSName(address) {
-			isNodeAddress = a.isNodeDNSName(address)
+	for _, ip := range a.controlPlaneAddresses {
+		if len(a.nodeCIDRs) > 0 && a.isNodeIP(ip) {
+			a.log.WithField("address", ip.String()).Warn(
+				"Control plane IP address is inside the configured node CIDRs, nodes may obtain kubelet serving certificates for it",
+			)
 		}
-		if isNodeAddress {
-			a.log.WithField("address", address).Warn(
-				"Control plane address is inside the configured node address space, nodes may obtain kubelet serving certificates for it",
+	}
+	for _, name := range a.controlPlaneNames {
+		if len(a.nodeDNSPatterns) > 0 && a.isNodeDNSName(strings.TrimSuffix(strings.ToLower(name), ".")) {
+			a.log.WithField("address", name).Warn(
+				"Control plane DNS name matches the configured node DNS names, nodes may obtain kubelet serving certificates for it",
 			)
 		}
 	}

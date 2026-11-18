@@ -113,6 +113,13 @@ logged by the k0s controller. Note that a node's addresses are reported by its
 kubelet, so flags like `--node-ip` directly influence which addresses a
 certificate may be issued for.
 
+The CSR approver checks for pending requests periodically. It only considers the
+newest pending request of each node per pass, so that a node can't hold up
+others by creating large numbers of requests. It can be turned off via `k0s
+controller --disable-components csr-approver`. In that case, kubelet serving
+certificates need to be approved by some other means, otherwise the affected
+kubelet APIs remain unavailable.
+
 #### Trust model
 
 A worker join token yields an arbitrary node identity, and a node vouches for
@@ -138,19 +145,13 @@ spec:
 ```
 
 When starting, the CSR approver warns about every name and address from
-`spec.api.address`, `spec.api.externalAddress` and `spec.api.sans` that falls
-inside the node address space, since nodes can then still obtain certificates
-for the control plane's identity. That is unavoidable for controllers that run
-workloads, but it is worth knowing about. If the address space can't be bounded
-in a meaningful way, consider verifying node addresses out of band with a
-third-party approver and disabling k0s's CSR approver.
-
-The CSR approver checks for pending requests periodically. It only considers the
-newest pending request of each node per pass, so that a node can't hold up
-others by creating large numbers of requests. It can be turned off via `k0s
-controller --disable-components csr-approver`. In that case, kubelet serving
-certificates need to be approved by some other means, otherwise the affected
-kubelet APIs remain unavailable.
+`spec.api.address`, `spec.api.externalAddress`, `spec.api.sans` and the control
+plane load balancing virtual IPs that falls inside the node address space, since
+nodes can then still obtain certificates for the control plane's identity. That
+is unavoidable for controllers that run workloads, but it is worth knowing
+about. If the address space can't be bounded in a meaningful way, consider
+verifying node addresses out of band with a third-party approver and disabling
+k0s's CSR approver.
 
 [Certificate Signing Requests]: https://kubernetes.io/docs/reference/access-authn-authz/certificate-signing-requests/
 [Kubernetes Metrics Server]: https://github.com/kubernetes-sigs/metrics-server

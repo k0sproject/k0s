@@ -38,11 +38,9 @@ type Network struct {
 	// control plane load balancing feature.
 	ControlPlaneLoadBalancing *ControlPlaneLoadBalancingSpec `json:"controlPlaneLoadBalancing,omitempty"`
 
-	// NodeAddresses declares the address space that the cluster's nodes live
-	// in. If set, k0s's csr-approver refuses kubelet serving certificates for
-	// names and addresses outside of it.
+	// NodeAddresses restricts the addresses that nodes are allowed to claim.
 	// +optional
-	NodeAddresses *NodeAddresses `json:"nodeAddresses,omitempty"`
+	NodeAddresses NodeAddresses `json:"nodeAddresses,omitzero"`
 
 	// Pod network CIDR to use in the cluster
 	// +kubebuilder:default="10.244.0.0/16"

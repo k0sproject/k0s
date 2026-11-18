@@ -557,7 +557,7 @@ func (c *ClusterConfig) GetClusterWideConfig() *ClusterConfig {
 			c.Spec.Network.ServiceCIDR = ""
 			c.Spec.Network.ClusterDomain = ""
 			c.Spec.Network.ControlPlaneLoadBalancing = nil
-			c.Spec.Network.NodeAddresses = nil
+			c.Spec.Network.NodeAddresses = NodeAddresses{}
 			c.Spec.Network.PrimaryAddressFamily = ""
 		}
 		c.Spec.Install = nil
