@@ -39,7 +39,6 @@ type ProbeStatus struct {
 	Success bool
 }
 
-// Condition is a Kubernetes-style status condition. CNIReady is the first type.
 type Condition struct {
 	Type    string
 	Status  corev1.ConditionStatus

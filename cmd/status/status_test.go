@@ -40,7 +40,7 @@ SingleNode: true
 Kube-api probing successful: true
 Kube-api probing last error:  
 CNIReady: True
-Reason: AllReady
-Message: kube-router DaemonSet reports 1/1 available, 1 updated
+  Reason: AllReady
+  Message: kube-router DaemonSet reports 1/1 available, 1 updated
 `, buf.String())
 }

@@ -175,8 +175,8 @@ Role: controller
 Init System: linux-systemd
 Service file: /etc/systemd/system/k0scontroller.service
 CNIReady: True
-Reason: AllReady
-Message: kube-router DaemonSet reports 1/1 available, 1 updated
+  Reason: AllReady
+  Message: kube-router DaemonSet reports 1/1 available, 1 updated
 ```
 
 ### 7. Access your cluster
