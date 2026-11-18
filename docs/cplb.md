@@ -531,17 +531,18 @@ controller0:/# netstat -tlpn | grep 6444
 tcp        0      0 :::6444                 :::*                    LISTEN      345/k0s
 ```
 
-Then the requests to the VIP on the apiserver port are forwarded to this socket using one iptables rule:
+Then the requests to the VIP on the apiserver port are forwarded to this socket on the controller address using one
+iptables rule. If the VIP isn't in the IP family of the controller address, the rule uses `REDIRECT --to-ports` instead:
 
 ```console
--A PREROUTING -d <VIP>/32 -p tcp -m tcp --dport <apiserver port> -j REDIRECT --to-ports <userspace proxy port>
+-A PREROUTING -d <VIP>/32 -p tcp -m tcp --dport <apiserver port> -j DNAT --to-destination <controller address>:<userspace proxy port>
 ```
 
 A real life example of a cluster using the VIP `17.177.0.102` looks like:
 
 ```console
 controller0:/# /var/lib/k0s/bin/iptables-save | grep 6444
--A PREROUTING -d 172.17.0.102/32 -p tcp -m tcp --dport 6443 -j REDIRECT --to-ports 6444
+-A PREROUTING -d 172.17.0.102/32 -p tcp -m tcp --dport 6443 -j DNAT --to-destination 172.17.0.2:6444
 ```
 
 Keep in mind that clusters using IPv6 as a primary address family, should use ip6tables or ip6tables-save.

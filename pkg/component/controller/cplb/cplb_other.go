@@ -24,6 +24,7 @@ type Keepalived struct {
 	LogConfig       bool
 	APIPort         int
 	KubeConfigPath  string
+	Address         string
 }
 
 func (k *Keepalived) Init(context.Context) error {
