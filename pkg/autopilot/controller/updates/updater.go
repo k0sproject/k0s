@@ -22,7 +22,6 @@ import (
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
 	uc "github.com/k0sproject/k0s/pkg/autopilot/updater"
 	"github.com/k0sproject/k0s/pkg/build"
-	"github.com/k0sproject/k0s/pkg/component/status"
 )
 
 type updater interface {
@@ -62,7 +61,7 @@ func newUpdater(parentCtx context.Context, updateConfig apv1beta2.UpdateConfig, 
 
 	switch updateConfig.Spec.UpgradeStrategy.Type {
 	case apv1beta2.UpdateStrategyTypeCron:
-		return newCronUpdater(parentCtx, updateConfig, k8sClient, clusterID, updateClient)
+		return newCronUpdater(parentCtx, updateConfig, k8sClient, clusterID, updateClient), nil
 	case apv1beta2.UpdateStrategyTypePeriodic:
 		return newPeriodicUpdater(parentCtx, updateConfig, k8sClient, apClientFactory, collector, build.Version), nil
 	default:
@@ -70,15 +69,10 @@ func newUpdater(parentCtx context.Context, updateConfig apv1beta2.UpdateConfig, 
 	}
 }
 
-func newCronUpdater(parentCtx context.Context, updateConfig apv1beta2.UpdateConfig, k8sClient crcli.Client, clusterID string, updateClient uc.Client) (updater, error) {
+func newCronUpdater(parentCtx context.Context, updateConfig apv1beta2.UpdateConfig, k8sClient crcli.Client, clusterID string, updateClient uc.Client) updater {
 	schedule := updateConfig.Spec.UpgradeStrategy.Cron
 	if schedule == "" {
 		schedule = defaultCronSchedule
-	}
-
-	status, err := status.GetStatusInfo(status.DefaultSocketPath)
-	if err != nil {
-		return nil, err
 	}
 
 	ctx, cancel := context.WithCancel(parentCtx)
@@ -91,10 +85,10 @@ func newCronUpdater(parentCtx context.Context, updateConfig apv1beta2.UpdateConf
 		updateSchedule: schedule,
 		k8sClient:      k8sClient,
 		clusterID:      clusterID,
-		k0sVersion:     status.Version,
+		k0sVersion:     build.Version,
 	}
 
-	return u, nil
+	return u
 }
 
 func (u *cronUpdater) Run() error {

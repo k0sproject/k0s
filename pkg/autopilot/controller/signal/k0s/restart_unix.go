@@ -8,16 +8,16 @@ package k0s
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 	"sync/atomic"
 	"syscall"
-	"time"
 
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
 	apsigpred "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/common/predicate"
 	apsigv2 "github.com/k0sproject/k0s/pkg/autopilot/signaling/v2"
-	"github.com/k0sproject/k0s/pkg/component/status"
+	"github.com/k0sproject/k0s/pkg/build"
 
 	apitypes "k8s.io/apimachinery/pkg/types"
 
@@ -30,10 +30,6 @@ import (
 )
 
 const Restart = "Restart"
-
-const (
-	restartRequeueDuration = 5 * time.Second
-)
 
 // restartEventFilter creates a controller-runtime predicate that governs which
 // objects will make it into reconciliation, and which will be ignored.
@@ -128,13 +124,7 @@ func (r *restart) Reconcile(ctx context.Context, req cr.Request) (cr.Result, err
 	logger := r.log.WithField("signalnode", signalNode.GetName())
 
 	// Get the current version of k0s
-	logger.Info("Determining the current version of k0s")
-	k0sVersion, err := getK0sVersion(status.DefaultSocketPath)
-	if err != nil {
-		logger.Info("Unable to determine current verion of k0s; requeuing")
-		return cr.Result{}, fmt.Errorf("unable to get k0s version: %w", err)
-	}
-
+	k0sVersion := build.Version
 	logger.Infof("k0s version = %v is installed", k0sVersion)
 
 	var signalData apsigv2.SignalData
@@ -177,16 +167,9 @@ func (r *restart) Reconcile(ctx context.Context, req cr.Request) (cr.Result, err
 	}
 
 	// If the found k0s version does not match the updated version, restart k0s.
-	// The fact that the version of k0s was determined by the status socket, the
-	// old k0s is still running.
-
 	logger.Info("Preparing to restart k0s")
 
-	k0sPid, err := getK0sPid(status.DefaultSocketPath)
-	if err != nil {
-		logger.Info("Unable to determine current k0s pid; requeuing")
-		return cr.Result{RequeueAfter: restartRequeueDuration}, fmt.Errorf("unable to get k0s pid: %w", err)
-	}
+	k0sPid := os.Getpid()
 
 	// We terminate `k0s` by sending it SIGTERM. It is expected that `k0s` will be restarted
 	// by some process init (systemctl, etc).
@@ -196,14 +179,4 @@ func (r *restart) Reconcile(ctx context.Context, req cr.Request) (cr.Result, err
 	}
 
 	return cr.Result{}, nil
-}
-
-// getK0sPid returns the PID of a running k0s based on its status socket.
-func getK0sPid(statusSocketPath string) (int, error) {
-	status, err := status.GetStatusInfo(statusSocketPath)
-	if err != nil {
-		return -1, err
-	}
-
-	return status.Pid, nil
 }

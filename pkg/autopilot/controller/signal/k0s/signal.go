@@ -16,6 +16,7 @@ import (
 	apsigcomm "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/common"
 	apsigpred "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/common/predicate"
 	apsigv2 "github.com/k0sproject/k0s/pkg/autopilot/signaling/v2"
+	"github.com/k0sproject/k0s/pkg/build"
 
 	apitypes "k8s.io/apimachinery/pkg/types"
 
@@ -30,8 +31,6 @@ import (
 const (
 	SignalResponseProcessingTimeout = 1 * time.Minute
 )
-
-type k0sVersionHandlerFunc func() (string, error)
 
 // signalDataUpdateCommandK0sPredicate creates a predicate that ensures that the
 // provided SignalData is an 'k0s' update.
@@ -63,16 +62,15 @@ func signalControllerEventFilter(nodeName apitypes.NodeName, handler apsigpred.E
 }
 
 type signalControllerHandler struct {
-	timeout           time.Duration
-	clusterID         string
-	k0sVersionHandler k0sVersionHandlerFunc
+	timeout   time.Duration
+	clusterID string
 }
 
 // registerSignalController registers the k0s 'signal' controller to the controller-runtime manager.
 //
 // This controller is only interested in changes to its own annotations, and is the main
 // mechanism in identifying incoming autopilot k0s signaling updates.
-func registerSignalController(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, delegate apdel.ControllerDelegate, clusterID string, k0sVersionHandler k0sVersionHandlerFunc) error {
+func registerSignalController(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, delegate apdel.ControllerDelegate, clusterID string) error {
 	logr := logger.WithFields(logrus.Fields{"updatetype": "k0s"})
 	name := strings.ToLower(delegate.Name()) + "_k0s_signal"
 
@@ -88,9 +86,8 @@ func registerSignalController(logger *logrus.Entry, mgr crman.Manager, eventFilt
 				mgr.GetClient(),
 				delegate,
 				&signalControllerHandler{
-					timeout:           SignalResponseProcessingTimeout,
-					clusterID:         clusterID,
-					k0sVersionHandler: k0sVersionHandler,
+					timeout:   SignalResponseProcessingTimeout,
+					clusterID: clusterID,
 				},
 			),
 		)
@@ -112,11 +109,7 @@ func (h *signalControllerHandler) Handle(ctx context.Context, sctx apsigcomm.Sig
 	sctx.Log.Infof("Found available signaling update request")
 
 	// Confirm that the installed version of k0s requires an update
-	// TODO:s0j - make the status path an argument to signaling/plan
-	k0sVersion, err := h.k0sVersionHandler()
-	if err != nil {
-		return cr.Result{}, fmt.Errorf("unable to determine k0s version: %w", err)
-	}
+	k0sVersion := build.Version
 
 	sctx.Log.Infof("Current version of k0s = '%s', requested version = '%s'", k0sVersion, sctx.SignalData.Command.K0sUpdate.Version)
 
