@@ -1866,6 +1866,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#update-channels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Update channels
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Update channels">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#channels-published-with-the-k0s-documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Channels published with the k0s documentation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#default-update-server" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Default update server
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#safeguards" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3342,6 +3381,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#update-channels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Update channels
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Update channels">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#channels-published-with-the-k0s-documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Channels published with the k0s documentation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#default-update-server" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Default update server
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#safeguards" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3698,7 +3776,7 @@ There is a public update-server hosted on the same domain as the documentation s
 <span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">example</span>
 <span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span>
 <span class="nt">spec</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">channel</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">edge_release</span>
+<span class="w">  </span><span class="nt">channel</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">stable</span>
 <span class="w">  </span><span class="nt">updateServer</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://updates.k0sproject.io/</span>
 <span class="w">  </span><span class="nt">upgradeStrategy</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">periodic</span>
@@ -3710,6 +3788,50 @@ There is a public update-server hosted on the same domain as the documentation s
 <span class="w">  </span><span class="nt">planSpec</span><span class="p">:</span><span class="w"> </span><span class="c1"># This defines the plan to be created IF there are updates available</span>
 <span class="w">    </span><span class="l l-Scalar l-Scalar-Plain">...</span>
 </code></pre></div>
+<h2 id="update-channels">Update channels<a class="headerlink" href="#update-channels" title="Permanent link">#</a></h2>
+<p>An update channel is a path on an update server that announces exactly one
+k0s version. Autopilot resolves the channel URL from <code>spec.updateServer</code> and
+<code>spec.channel</code>.</p>
+<h3 id="channels-published-with-the-k0s-documentation">Channels published with the k0s documentation<a class="headerlink" href="#channels-published-with-the-k0s-documentation" title="Permanent link">#</a></h3>
+<table>
+<thead>
+<tr>
+<th>Channel</th>
+<th>URL</th>
+<th>Content</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>stable_release</code></td>
+<td><a href="https://docs.k0sproject.io/stable_release">https://docs.k0sproject.io/stable_release</a></td>
+<td>Newest k0s release, excluding pre-releases</td>
+</tr>
+<tr>
+<td><code>edge_release</code></td>
+<td><a href="https://docs.k0sproject.io/edge_release">https://docs.k0sproject.io/edge_release</a></td>
+<td>Newest k0s release, including alpha, beta and RC versions</td>
+</tr>
+<tr>
+<td><code>stable.txt</code></td>
+<td><a href="https://docs.k0sproject.io/stable.txt">https://docs.k0sproject.io/stable.txt</a></td>
+<td>Version string only, excluding pre-releases</td>
+</tr>
+<tr>
+<td><code>latest.txt</code></td>
+<td><a href="https://docs.k0sproject.io/latest.txt">https://docs.k0sproject.io/latest.txt</a></td>
+<td>Version string only, including pre-releases</td>
+</tr>
+</tbody>
+</table>
+<p><code>stable_release</code> and <code>edge_release</code> use the format of the deprecated <code>cron</code>
+upgrade strategy. The plain-text files are intended for scripts and CI pipelines:</p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-sSL<span class="w"> </span>https://docs.k0sproject.io/stable.txt
+</code></pre></div>
+<p><strong>Note:</strong> The <code>periodic</code> upgrade strategy requests <code>&lt;updateServer&gt;/&lt;channel&gt;/index.yaml</code> and cannot consume the files above.</p>
+<h3 id="default-update-server">Default update server<a class="headerlink" href="#default-update-server" title="Permanent link">#</a></h3>
+<p>If <code>spec.updateServer</code> and <code>spec.channel</code> are not set, autopilot uses
+<code>https://updates.k0sproject.io</code> with channel <code>stable</code>.</p>
 <h2 id="safeguards">Safeguards<a class="headerlink" href="#safeguards" title="Permanent link">#</a></h2>
 <p>There are a number of safeguards in place to avoid breaking a cluster.</p>
 <h3 id="stateless-component">Stateless Component<a class="headerlink" href="#stateless-component" title="Permanent link">#</a></h3>
@@ -4065,7 +4187,7 @@ update operation. There are a number of statuses available:</p>
 <h3 id="spec">Spec<a class="headerlink" href="#spec" title="Permanent link">#</a></h3>
 <h4 id="specchannel-string-optional"><code>spec.channel &lt;string&gt; (optional)</code><a class="headerlink" href="#specchannel-string-optional" title="Permanent link">#</a></h4>
 <ul>
-<li>Update channel to use. Supported values: <code>stable</code>(default), <code>unstable</code>.</li>
+<li>Update channel to use. Defaults to <code>stable</code>.  See <a href="#update-channels">update channels</a>.</li>
 </ul>
 <h4 id="specupdateserver-string-optional"><code>spec.updateServer &lt;string&gt; (optional)</code><a class="headerlink" href="#specupdateserver-string-optional" title="Permanent link">#</a></h4>
 <ul>
