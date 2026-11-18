@@ -13,6 +13,7 @@ import (
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
 	apsigcomm "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/common"
 	apsigv2 "github.com/k0sproject/k0s/pkg/autopilot/signaling/v2"
+	"github.com/k0sproject/k0s/pkg/build"
 	apscheme "github.com/k0sproject/k0s/pkg/client/clientset/scheme"
 
 	"github.com/sirupsen/logrus"
@@ -292,13 +293,13 @@ func TestSignalControllerSameVersion(t *testing.T) {
 
 			client := crfake.NewClientBuilder().WithObjects(test.objects...).WithScheme(scheme).Build()
 
+			setK0sVersion(t, "v99.99.99")
 			c := apsigcomm.NewSignalController(
 				logger,
 				client,
 				test.delegate,
 				&signalControllerHandler{
-					timeout:           SignalResponseProcessingTimeout,
-					k0sVersionHandler: echoedK0sVersionHandler("v99.99.99"),
+					timeout: SignalResponseProcessingTimeout,
 				},
 			)
 
@@ -397,13 +398,13 @@ func TestSignalControllerSameVersionForceUpdate(t *testing.T) {
 
 			client := crfake.NewClientBuilder().WithObjects(test.objects...).WithScheme(scheme).Build()
 
+			setK0sVersion(t, "v99.99.99")
 			c := apsigcomm.NewSignalController(
 				logger,
 				client,
 				test.delegate,
 				&signalControllerHandler{
-					timeout:           SignalResponseProcessingTimeout,
-					k0sVersionHandler: echoedK0sVersionHandler("v99.99.99"),
+					timeout: SignalResponseProcessingTimeout,
 				},
 			)
 
@@ -501,13 +502,13 @@ func TestSignalControllerNewVersion(t *testing.T) {
 
 			client := crfake.NewClientBuilder().WithObjects(test.objects...).WithScheme(scheme).Build()
 
+			setK0sVersion(t, "v99.99.99+k0s.NEW")
 			c := apsigcomm.NewSignalController(
 				logger,
 				client,
 				test.delegate,
 				&signalControllerHandler{
-					timeout:           SignalResponseProcessingTimeout,
-					k0sVersionHandler: echoedK0sVersionHandler("v99.99.99+k0s.NEW"),
+					timeout: SignalResponseProcessingTimeout,
 				},
 			)
 
@@ -629,10 +630,11 @@ func TestCheckExpiredInvalid(t *testing.T) {
 	}
 }
 
-// echoedK0sVersionHandler is a `k0sVersionHandlerFunc` that returns the version
-// that you provide to it.
-func echoedK0sVersionHandler(version string) k0sVersionHandlerFunc {
-	return func() (string, error) {
-		return version, nil
-	}
+// setK0sVersion temporarily overrides the build-time version for the duration
+// of a test, since the signal handler now reads build.Version directly.
+func setK0sVersion(t *testing.T, version string) {
+	t.Helper()
+	original := build.Version
+	build.Version = version
+	t.Cleanup(func() { build.Version = original })
 }
