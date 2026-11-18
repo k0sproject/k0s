@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Prepares a fresh clone of the Windows base VM and joins it as a k0s worker.
-# Mirrors the steps of the win-wsl.yaml workflow. Expects k0s.exe and
-# k0s-worker-token next to it.
+# Mirrors the steps of the win-wsl.yaml workflow. Expects k0s.exe,
+# k0s-worker-token and create-overlay-network.ps1 next to it.
 
 param(
     # MAC address of the lab NIC added by qemu-wrapper.sh, e.g. 52-54-00-77-00-02.
@@ -17,10 +17,6 @@ param(
     # Node name. Calico and kubelet need to agree on it.
     [Parameter(Mandatory)] [string] $NodeName
 )
-
-# Commit of microsoft/SDN that hns.psm1 is taken from, and its SHA-256.
-$hnsCommit = "32df9732ef6dfab07dba205440e30bdfbd8e579a"
-$hnsSha256 = "a8a53ed4fac2e27c7e4268db069d4cf3129a56d466ef3bf9465fb52dcd76a29c"
 
 $ErrorActionPreference = "Stop"
 Set-Location $PSScriptRoot
@@ -49,33 +45,9 @@ New-NetIPAddress -InterfaceIndex $lab.ifIndex -IPAddress $LabIP -PrefixLength $L
 # disabling the firewall like the workflow does. Applies to all profiles.
 New-NetFirewallRule -DisplayName "k0s-lab-inbound" -Direction Inbound -Action Allow -RemoteAddress $LabCIDR, $PodCIDR | Out-Null
 
-Write-Host "Downloading HNS helpers"
-Invoke-WebRequest -UseBasicParsing -OutFile hns.psm1 -Uri "https://raw.githubusercontent.com/microsoft/SDN/$hnsCommit/Kubernetes/windows/hns.psm1"
-if ((Get-FileHash hns.psm1 -Algorithm SHA256).Hash -ne $hnsSha256) {
-    throw "hns.psm1 does not match the expected checksum"
-}
-Unblock-File hns.psm1
-Import-Module .\hns.psm1 -Force
-
 # Same as the workflow, but on the lab NIC, which is where Calico's IP
 # autodetection will put the VXLAN network as well.
-Write-Host "Creating overlay network on adapter $($lab.Name)"
-New-HNSNetwork -Type Overlay -AddressPrefix "192.168.255.0/30" -Gateway "192.168.255.1" -Name "External" -SubnetPolicies @(@{Type = "VSID"; VSID = 9999; }) -AdapterName $lab.Name | Out-Null
-
-$deadline = (Get-Date).AddMinutes(2)
-while (-not (Get-HnsNetwork | Where-Object { $_.Name -eq "External" })) {
-    if ((Get-Date) -gt $deadline) { throw "HNS network External did not show up" }
-    Start-Sleep -Seconds 2
-}
-
-# Pretend that Calico for Windows already initialized its networking since the
-# last boot, so that it keeps the overlay network created above instead of
-# creating its own. Same trick as in the win-wsl.yaml workflow.
-Write-Host "Making Calico keep the existing overlay network"
-$calicoKey = "HKLM:\Software\Tigera\Calico"
-New-Item -Path $calicoKey -Force | Out-Null
-$bootTime = (Get-CimInstance Win32_OperatingSystem).LastBootUpTime
-Set-ItemProperty -Path $calicoKey -Name "LastBootTime" -Value $bootTime.ToString("G")
+& .\create-overlay-network.ps1 -AdapterName $lab.Name
 
 Write-Host "Installing and starting k0s worker"
 Invoke-Native .\k0s.exe version

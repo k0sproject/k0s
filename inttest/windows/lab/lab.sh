@@ -255,8 +255,11 @@ EOF
 
   # k0s includes 127.0.0.1 in the API server certificate's SANs, so the
   # forwarded port can be used instead of the address on the lab link.
-  limactl shell "$controller" sudo k0s kubeconfig admin |
-    sed -E "s#(server: https://)[^:/]+(:$apiPort)#\\1127.0.0.1\\2#" >"$workDir/kubeconfig"
+  # No pipe: sh has no pipefail, so a failing k0s wouldn't stop the script.
+  limactl shell "$controller" sudo k0s kubeconfig admin >"$workDir/kubeconfig.orig"
+  sed -E "s#(server: https://)[^:/]+(:$apiPort)#\\1127.0.0.1\\2#" "$workDir/kubeconfig.orig" >"$workDir/kubeconfig"
+  grep -qF "server: https://127.0.0.1:$apiPort" "$workDir/kubeconfig" ||
+    die "Failed to point the admin kubeconfig to 127.0.0.1:$apiPort"
   limactl shell "$controller" sudo k0s token create --role=worker >"$workDir/k0s-worker-token"
 
   echo "Starting Windows worker VM from $base"
@@ -264,7 +267,8 @@ EOF
   startLabVM "$worker" "$workerPort" "$controllerPort" "$workerMAC"
 
   echo "Installing k0s worker"
-  winCopy "$worker" "$k0sExe" "$workDir/k0s-worker-token" "$labDir/provision-worker.ps1"
+  winCopy "$worker" "$k0sExe" "$workDir/k0s-worker-token" \
+    "$labDir/provision-worker.ps1" "$labDir/../create-overlay-network.ps1"
   winScript "$worker" provision-worker.ps1 \
     -LabMac "$(printf '%s' "$workerMAC" | tr ':a-f' '-A-F')" \
     -LabIP "$workerIP" \
