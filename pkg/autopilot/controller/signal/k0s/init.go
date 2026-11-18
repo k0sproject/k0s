@@ -17,7 +17,6 @@ import (
 	"github.com/k0sproject/k0s/pkg/autopilot/constant"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
 	apsigpred "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/common/predicate"
-	"github.com/k0sproject/k0s/pkg/build"
 	"github.com/k0sproject/k0s/pkg/leaderelection"
 
 	coordinationv1 "k8s.io/api/coordination/v1"
@@ -51,10 +50,6 @@ func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Ma
 	k0sBinaryDir := filepath.Dir(k0sBinaryPath)
 
 	logger.Infof("Using node name = '%v'", nodeName)
-
-	k0sVersionHandler := func() (string, error) {
-		return build.Version, nil
-	}
 
 	if enableWorker {
 		// Stamp the node lease with the central cordoning label to signal to
@@ -110,7 +105,7 @@ func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Ma
 		}
 	}
 
-	if err := registerSignalController(logger, mgr, signalControllerEventFilter(nodeName, apsigpred.DefaultErrorHandler(logger, "k0s signal")), delegate, clusterID, k0sVersionHandler); err != nil {
+	if err := registerSignalController(logger, mgr, signalControllerEventFilter(nodeName, apsigpred.DefaultErrorHandler(logger, "k0s signal")), delegate, clusterID); err != nil {
 		return fmt.Errorf("unable to register signal controller: %w", err)
 	}
 

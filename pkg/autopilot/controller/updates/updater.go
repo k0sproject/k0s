@@ -61,7 +61,7 @@ func newUpdater(parentCtx context.Context, updateConfig apv1beta2.UpdateConfig, 
 
 	switch updateConfig.Spec.UpgradeStrategy.Type {
 	case apv1beta2.UpdateStrategyTypeCron:
-		return newCronUpdater(parentCtx, updateConfig, k8sClient, clusterID, updateClient)
+		return newCronUpdater(parentCtx, updateConfig, k8sClient, clusterID, updateClient), nil
 	case apv1beta2.UpdateStrategyTypePeriodic:
 		return newPeriodicUpdater(parentCtx, updateConfig, k8sClient, apClientFactory, collector, build.Version), nil
 	default:
@@ -69,7 +69,7 @@ func newUpdater(parentCtx context.Context, updateConfig apv1beta2.UpdateConfig, 
 	}
 }
 
-func newCronUpdater(parentCtx context.Context, updateConfig apv1beta2.UpdateConfig, k8sClient crcli.Client, clusterID string, updateClient uc.Client) (updater, error) {
+func newCronUpdater(parentCtx context.Context, updateConfig apv1beta2.UpdateConfig, k8sClient crcli.Client, clusterID string, updateClient uc.Client) updater {
 	schedule := updateConfig.Spec.UpgradeStrategy.Cron
 	if schedule == "" {
 		schedule = defaultCronSchedule
@@ -88,7 +88,7 @@ func newCronUpdater(parentCtx context.Context, updateConfig apv1beta2.UpdateConf
 		k0sVersion:     build.Version,
 	}
 
-	return u, nil
+	return u
 }
 
 func (u *cronUpdater) Run() error {
