@@ -74,7 +74,7 @@ extensions:
 ### Add new entrypoints
 
 Traefik can be configured to add new entrypoints which serve to accept traffic via a specified port. This can either be via the [http(s) load-balancer](https://doc.traefik.io/traefik/reference/routing-configuration/kubernetes/crd/http/ingressroute/), or the [tcp/udp load-balancer](https://doc.traefik.io/traefik/reference/routing-configuration/kubernetes/crd/tcp/ingressroutetcp/).
-For detailled infos check out the [official docs](https://doc.traefik.io/traefik/reference/install-configuration/entrypoints/).
+For detailed information, check out the [official docs](https://doc.traefik.io/traefik/reference/install-configuration/entrypoints/).
 
 To add a new entrypoint which can be used by `IngressRoute` or `IngressRouteTCP/IngressRouteUDP` CRD, set the following config via the `values` section:
 
