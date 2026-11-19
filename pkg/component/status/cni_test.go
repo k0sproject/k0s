@@ -9,6 +9,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/k0sproject/k0s/internal/testutil"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/constant"
@@ -356,7 +357,7 @@ func TestAppendCNICondition(t *testing.T) {
 		t.Parallel()
 		status := K0sStatus{ClusterConfig: clusterConfigWithProvider("custom")}
 		sh := &statusHandler{Status: &Status{
-			AdminClientFactory: &stubFactory{client: fake.NewSimpleClientset()},
+			AdminClientFactory: testutil.NewFakeClientFactory(),
 		}}
 		sh.appendCNICondition(t.Context(), &status)
 		assert.Empty(t, status.Conditions)
@@ -366,7 +367,7 @@ func TestAppendCNICondition(t *testing.T) {
 		t.Parallel()
 		status := K0sStatus{ClusterConfig: clusterConfigWithProvider("custom")}
 		sh := &statusHandler{Status: &Status{
-			AdminClientFactory: &stubFactory{err: errors.New("admin kubeconfig missing")},
+			AdminClientFactory: &failingClientFactory{err: errors.New("admin kubeconfig missing")},
 		}}
 		sh.appendCNICondition(t.Context(), &status)
 		assert.Empty(t, status.Conditions)
@@ -376,7 +377,7 @@ func TestAppendCNICondition(t *testing.T) {
 		t.Parallel()
 		status := K0sStatus{}
 		sh := &statusHandler{Status: &Status{
-			AdminClientFactory: &stubFactory{client: fake.NewSimpleClientset()},
+			AdminClientFactory: testutil.NewFakeClientFactory(),
 		}}
 		sh.appendCNICondition(t.Context(), &status)
 		assert.Empty(t, status.Conditions)
@@ -386,7 +387,7 @@ func TestAppendCNICondition(t *testing.T) {
 		t.Parallel()
 		status := K0sStatus{ClusterConfig: clusterConfigWithProvider(constant.CNIProviderKubeRouter)}
 		sh := &statusHandler{Status: &Status{
-			AdminClientFactory: &stubFactory{err: errors.New("admin kubeconfig missing")},
+			AdminClientFactory: &failingClientFactory{err: errors.New("admin kubeconfig missing")},
 		}}
 		sh.appendCNICondition(t.Context(), &status)
 		require.Len(t, status.Conditions, 1)
@@ -402,7 +403,7 @@ func TestAppendCNICondition(t *testing.T) {
 				Workloads:     false,
 				ClusterConfig: clusterConfigWithProvider(constant.CNIProviderKubeRouter),
 			},
-			AdminClientFactory: &stubFactory{client: fake.NewSimpleClientset(kubeRouterDS(1, 1))},
+			AdminClientFactory: testutil.NewFakeClientFactory(kubeRouterDS(1, 1)),
 		}}
 		got := sh.getCurrentStatus(t.Context())
 		require.Len(t, got.Conditions, 1)
@@ -414,10 +415,10 @@ func TestAppendCNICondition(t *testing.T) {
 		t.Parallel()
 		st := &Status{
 			StatusInformation: K0sStatus{ClusterConfig: clusterConfigWithCalico(v1beta1.CalicoModeBIRD)},
-			AdminClientFactory: &stubFactory{client: fake.NewSimpleClientset(
+			AdminClientFactory: testutil.NewFakeClientFactory(
 				calicoNodeDS(1, 1),
 				calicoControllers(corev1.ConditionTrue),
-			)},
+			),
 			HasWindowsNodes: windowsCounter(new(true)),
 		}
 		sh := &statusHandler{Status: st}
@@ -464,9 +465,9 @@ func TestAppendCNICondition(t *testing.T) {
 				ClusterConfig: clusterConfigWithProvider(constant.CNIProviderKubeRouter),
 			},
 			GetWorkerClientFactory: func() kubeutil.ClientFactoryInterface {
-				return &stubFactory{err: errors.New("kubelet kubeconfig missing")}
+				return &failingClientFactory{err: errors.New("kubelet kubeconfig missing")}
 			},
-			AdminClientFactory: &stubFactory{client: fake.NewSimpleClientset(kubeRouterDS(1, 1))},
+			AdminClientFactory: testutil.NewFakeClientFactory(kubeRouterDS(1, 1)),
 		}}
 		got := sh.getCurrentStatus(t.Context())
 		assert.False(t, got.WorkerToAPIConnectionStatus.Success)
@@ -547,14 +548,13 @@ func clusterConfigWithCalico(mode v1beta1.CalicoMode) *v1beta1.ClusterConfig {
 	}
 }
 
-type stubFactory struct {
+type failingClientFactory struct {
 	kubeutil.ClientFactoryInterface
-	client kubernetes.Interface
-	err    error
+	err error
 }
 
-func (s *stubFactory) GetClient() (kubernetes.Interface, error) {
-	return s.client, s.err
+func (f *failingClientFactory) GetClient() (kubernetes.Interface, error) {
+	return nil, f.err
 }
 
 func windowsCounter(present *bool) func() (*bool, <-chan struct{}) {
