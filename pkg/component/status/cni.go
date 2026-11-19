@@ -28,6 +28,8 @@ const (
 	reasonError               = "Error"
 	reasonTimeout             = "Timeout"
 	reasonWindowsNodesUnknown = "WindowsNodesUnknown"
+	reasonNoScheduledPods     = "NoScheduledPods"
+	reasonStaleGeneration     = "StaleGeneration"
 
 	kubeRouterDaemonSet         = "kube-router"
 	calicoNodeDaemonSet         = "calico-node"
@@ -163,19 +165,21 @@ func daemonSetCNICondition(ctx context.Context, client kubernetes.Interface, nam
 		return apiErrorCondition(err)
 	}
 
-	if ds.Status.ObservedGeneration != ds.Generation {
-		return cniCondition(
-			corev1.ConditionFalse,
-			reasonNotReady,
-			fmt.Sprintf("%s DaemonSet has not observed generation %d (observed %d)", name, ds.Generation, ds.Status.ObservedGeneration),
-		)
-	}
-
 	desired := ds.Status.DesiredNumberScheduled
 	available := ds.Status.NumberAvailable
 	updated := ds.Status.UpdatedNumberScheduled
 	message := fmt.Sprintf("%s DaemonSet reports %d/%d available, %d updated", name, available, desired, updated)
-	if desired <= 0 || available != desired || updated != desired {
+	if desired == 0 {
+		return cniCondition(corev1.ConditionUnknown, reasonNoScheduledPods, message)
+	}
+	if ds.Status.ObservedGeneration != ds.Generation {
+		return cniCondition(
+			corev1.ConditionUnknown,
+			reasonStaleGeneration,
+			fmt.Sprintf("%s DaemonSet has not observed generation %d (observed %d)", name, ds.Generation, ds.Status.ObservedGeneration),
+		)
+	}
+	if available != desired || updated != desired {
 		return cniCondition(corev1.ConditionFalse, reasonNotReady, message)
 	}
 	return cniCondition(corev1.ConditionTrue, reasonAllReady, message)

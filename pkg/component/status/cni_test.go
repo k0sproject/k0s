@@ -56,13 +56,25 @@ func TestEvaluateCNI_KubeRouter(t *testing.T) {
 		assert.Equal(t, "kube-router DaemonSet reports 0/1 available, 1 updated", got.Message)
 	})
 
-	t.Run("zero_desired_is_not_ready", func(t *testing.T) {
+	t.Run("zero_desired", func(t *testing.T) {
 		t.Parallel()
 		client := fake.NewSimpleClientset(kubeRouterDS(0, 0))
 		got, ok := evaluateCNI(t.Context(), client, kubeRouterNet(), nil)
 		require.True(t, ok)
-		assert.Equal(t, corev1.ConditionFalse, got.Status)
-		assert.Equal(t, reasonNotReady, got.Reason)
+		assert.Equal(t, corev1.ConditionUnknown, got.Status)
+		assert.Equal(t, reasonNoScheduledPods, got.Reason)
+		assert.Equal(t, "kube-router DaemonSet reports 0/0 available, 0 updated", got.Message)
+	})
+
+	t.Run("zero_desired_beats_stale_generation", func(t *testing.T) {
+		t.Parallel()
+		ds := kubeRouterDS(0, 0)
+		ds.Generation = 2
+		ds.Status.ObservedGeneration = 1
+		got, ok := evaluateCNI(t.Context(), fake.NewSimpleClientset(ds), kubeRouterNet(), nil)
+		require.True(t, ok)
+		assert.Equal(t, corev1.ConditionUnknown, got.Status)
+		assert.Equal(t, reasonNoScheduledPods, got.Reason)
 	})
 
 	t.Run("not_found", func(t *testing.T) {
@@ -94,8 +106,8 @@ func TestEvaluateCNI_KubeRouter(t *testing.T) {
 		ds.Status.ObservedGeneration = 1
 		got, ok := evaluateCNI(t.Context(), fake.NewSimpleClientset(ds), kubeRouterNet(), nil)
 		require.True(t, ok)
-		assert.Equal(t, corev1.ConditionFalse, got.Status)
-		assert.Equal(t, reasonNotReady, got.Reason)
+		assert.Equal(t, corev1.ConditionUnknown, got.Status)
+		assert.Equal(t, reasonStaleGeneration, got.Reason)
 		assert.Equal(t, "kube-router DaemonSet has not observed generation 2 (observed 1)", got.Message)
 	})
 
