@@ -11,13 +11,13 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	"github.com/k0sproject/k0s/internal/constant"
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	k0snet "github.com/k0sproject/k0s/internal/pkg/net"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/component/prober"
-	"github.com/k0sproject/k0s/pkg/constant"
 )
 
 type KonnectivityAgent struct {

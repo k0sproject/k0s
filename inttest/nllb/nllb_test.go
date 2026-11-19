@@ -14,9 +14,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/k0sproject/k0s/internal/constant"
 	"github.com/k0sproject/k0s/inttest/common"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
-	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
 
 	appsv1 "k8s.io/api/apps/v1"

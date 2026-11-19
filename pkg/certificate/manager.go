@@ -25,10 +25,10 @@ import (
 	"github.com/cloudflare/cfssl/signer"
 	"github.com/sirupsen/logrus"
 
+	"github.com/k0sproject/k0s/internal/constant"
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/internal/pkg/stringslice"
 	"github.com/k0sproject/k0s/pkg/config"
-	"github.com/k0sproject/k0s/pkg/constant"
 )
 
 // Request defines the certificate request fields

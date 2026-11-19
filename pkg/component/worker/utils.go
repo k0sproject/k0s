@@ -16,9 +16,9 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/k0sproject/k0s/internal/constant"
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/config"
-	"github.com/k0sproject/k0s/pkg/constant"
 
 	apitypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/clientcmd"
