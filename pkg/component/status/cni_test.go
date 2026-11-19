@@ -410,15 +410,10 @@ func TestAppendCNICondition(t *testing.T) {
 		assert.False(t, got.WorkerToAPIConnectionStatus.Success)
 	})
 
-	t.Run("reconciled_calico_mode_requires_windows_daemonset", func(t *testing.T) {
+	t.Run("reconciled VXLAN mode requires the Windows DaemonSet", func(t *testing.T) {
 		t.Parallel()
-		startup := clusterConfigWithCalico(v1beta1.CalicoModeBIRD)
-		startup.Spec.Storage = &v1beta1.StorageSpec{
-			Type: v1beta1.KineStorageType,
-			Kine: &v1beta1.KineConfig{DataSource: "sqlite:///var/lib/k0s/db/state.db"},
-		}
 		st := &Status{
-			StatusInformation: K0sStatus{ClusterConfig: startup},
+			StatusInformation: K0sStatus{ClusterConfig: clusterConfigWithCalico(v1beta1.CalicoModeBIRD)},
 			AdminClientFactory: &stubFactory{client: fake.NewSimpleClientset(
 				calicoNodeDS(1, 1),
 				calicoControllers(corev1.ConditionTrue),
@@ -429,29 +424,36 @@ func TestAppendCNICondition(t *testing.T) {
 
 		got := sh.getCurrentStatus(t.Context())
 		require.Len(t, got.Conditions, 1)
-		assert.Equal(t, corev1.ConditionTrue, got.Conditions[0].Status)
+		assert.Equal(t, corev1.ConditionTrue, got.Conditions[0].Status, "BIRD mode does not require calico-node-windows")
 
-		clusterWide := clusterConfigWithCalico(v1beta1.CalicoModeVXLAN)
-		require.NoError(t, st.ClusterConfigReconciler().(manager.Reconciler).Reconcile(t.Context(), clusterWide))
+		require.NoError(t, st.ClusterConfigReconciler().(manager.Reconciler).Reconcile(t.Context(), clusterConfigWithCalico(v1beta1.CalicoModeVXLAN)))
 		got = sh.getCurrentStatus(t.Context())
 		require.Len(t, got.Conditions, 1)
 		assert.Equal(t, corev1.ConditionFalse, got.Conditions[0].Status)
 		assert.Equal(t, reasonNotFound, got.Conditions[0].Reason)
 		assert.Equal(t, "calico-node-windows DaemonSet not found", got.Conditions[0].Message)
+	})
+
+	t.Run("reconcile keeps the node-local Kine config", func(t *testing.T) {
+		t.Parallel()
+		got := statusAfterCalicoReconcile(t)
 		require.NotNil(t, got.ClusterConfig)
 		require.NotNil(t, got.ClusterConfig.Spec)
 		require.NotNil(t, got.ClusterConfig.Spec.Storage)
-		assert.False(t, got.ClusterConfig.Spec.Storage.IsJoinable())
-		assert.Equal(t, v1beta1.CalicoModeBIRD, got.ClusterConfig.Spec.Network.Calico.Mode)
+		assert.False(t, got.ClusterConfig.Spec.Storage.IsJoinable(), "node-local Kine storage stays not joinable")
+		assert.Equal(t, v1beta1.CalicoModeBIRD, got.ClusterConfig.Spec.Network.Calico.Mode, "startup Calico mode stays on the node-local config")
+	})
 
-		encoded, err := json.Marshal(got)
+	t.Run("status JSON keeps the node-local Kine config", func(t *testing.T) {
+		t.Parallel()
+		encoded, err := json.Marshal(statusAfterCalicoReconcile(t))
 		require.NoError(t, err)
 		var decoded K0sStatus
 		require.NoError(t, json.Unmarshal(encoded, &decoded))
 		require.NotNil(t, decoded.ClusterConfig)
 		require.NotNil(t, decoded.ClusterConfig.Spec)
 		require.NotNil(t, decoded.ClusterConfig.Spec.Storage)
-		assert.False(t, decoded.ClusterConfig.Spec.Storage.IsJoinable())
+		assert.False(t, decoded.ClusterConfig.Spec.Storage.IsJoinable(), "encoded status keeps the node-local Kine storage")
 	})
 
 	t.Run("workloads_probe_failure_still_reports_cni", func(t *testing.T) {
@@ -557,4 +559,16 @@ func (s *stubFactory) GetClient() (kubernetes.Interface, error) {
 
 func windowsCounter(present *bool) func() (*bool, <-chan struct{}) {
 	return func() (*bool, <-chan struct{}) { return present, nil }
+}
+
+func statusAfterCalicoReconcile(t *testing.T) K0sStatus {
+	t.Helper()
+	startup := clusterConfigWithCalico(v1beta1.CalicoModeBIRD)
+	startup.Spec.Storage = &v1beta1.StorageSpec{
+		Type: v1beta1.KineStorageType,
+		Kine: &v1beta1.KineConfig{DataSource: "sqlite:///var/lib/k0s/db/state.db"},
+	}
+	st := &Status{StatusInformation: K0sStatus{ClusterConfig: startup}}
+	require.NoError(t, st.ClusterConfigReconciler().(manager.Reconciler).Reconcile(t.Context(), clusterConfigWithCalico(v1beta1.CalicoModeVXLAN)))
+	return (&statusHandler{Status: st}).getCurrentStatus(t.Context())
 }
