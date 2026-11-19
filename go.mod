@@ -16,6 +16,7 @@ require (
 	github.com/containerd/containerd/api v1.11.1
 	github.com/containerd/containerd/v2 v2.3.6
 	github.com/containerd/platforms v1.0.0-rc.5
+	github.com/cyphar/filepath-securejoin v0.7.0
 	github.com/distribution/reference v0.6.0
 	github.com/dustin/go-humanize v1.1.0
 	github.com/evanphx/json-patch v5.9.11+incompatible
@@ -124,7 +125,6 @@ require (
 	github.com/coreos/go-semver v0.3.1 // indirect
 	github.com/coreos/go-systemd/v22 v22.7.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.7 // indirect
-	github.com/cyphar/filepath-securejoin v0.7.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/docker/go-connections v0.6.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect

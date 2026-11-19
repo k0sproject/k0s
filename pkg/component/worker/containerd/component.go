@@ -24,7 +24,6 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	workerconfig "github.com/k0sproject/k0s/pkg/component/worker/config"
-	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/supervisor"
 
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -36,30 +35,34 @@ const containerdTomlHeader = `# k0s_managed=true
 # For reference see https://github.com/containerd/containerd/blob/main/docs/man/containerd-config.toml.5.md
 `
 
+// Configuration for the containerd component.
+type Config struct {
+	K0sBinDir, K0sRunDir, K0sDataDir string
+	LogLevel                         string
+	Profile                          *workerconfig.Profile
+	AppArmor                         AppArmorConfig
+}
+
 // Component implements the component interface to manage containerd as a k0s component.
 type Component struct {
-	LogLevel      string
-	K0sVars       *config.CfgVars
-	Profile       *workerconfig.Profile
+	cfg           *Config
 	OCIBundlePath string
 
 	supervisor     *supervisor.Supervisor
 	executablePath string
+	starter        supervisor.ProcessStarter
 	confPath       string
 	importsPath    string
 
 	stop func() error
 }
 
-func NewComponent(logLevel string, vars *config.CfgVars, profile *workerconfig.Profile) *Component {
-	c := &Component{
-		LogLevel:    logLevel,
-		K0sVars:     vars,
-		Profile:     profile,
+func NewComponent(cfg *Config) *Component {
+	return &Component{
+		cfg:         cfg,
 		confPath:    defaultConfPath,
 		importsPath: DefaultImportsPath,
 	}
-	return c
 }
 
 var _ manager.Component = (*Component)(nil)
@@ -69,20 +72,23 @@ func (c *Component) Init(ctx context.Context) error {
 	g, _ := errgroup.WithContext(ctx)
 
 	g.Go(func() (err error) {
-		c.executablePath, err = stageExecutable(c.K0sVars.BinDir, "containerd")
+		c.executablePath, err = stageExecutable(c.cfg.K0sBinDir, "containerd")
 		return err
 	})
 	for _, bin := range additionalExecutableNames {
 		g.Go(func() error {
-			_, err := stageExecutable(c.K0sVars.BinDir, bin)
+			_, err := stageExecutable(c.cfg.K0sBinDir, bin)
 			return err
 		})
 	}
-	if err := g.Wait(); err != nil {
-		return err
-	}
+	g.Go(func() (err error) {
+		if c.starter, err = c.setupAppArmor(ctx); err != nil {
+			return fmt.Errorf("failed to set up AppArmor: %w", err)
+		}
+		return nil
+	})
 
-	return nil
+	return g.Wait()
 }
 
 // Run runs containerd.
@@ -97,15 +103,16 @@ func (c *Component) Start(ctx context.Context) (err error) {
 	c.supervisor = &supervisor.Supervisor{
 		Name:    "containerd",
 		BinPath: c.executablePath,
-		RunDir:  c.K0sVars.RunDir,
-		DataDir: c.K0sVars.DataDir,
+		RunDir:  c.cfg.K0sRunDir,
+		DataDir: c.cfg.K0sDataDir,
 		Args: []string{
-			"--root=" + filepath.Join(c.K0sVars.DataDir, "containerd"),
-			"--state=" + filepath.Join(c.K0sVars.RunDir, "containerd"),
-			"--address=" + Address(c.K0sVars.RunDir),
-			"--log-level=" + c.LogLevel,
+			"--root=" + filepath.Join(c.cfg.K0sDataDir, "containerd"),
+			"--state=" + filepath.Join(c.cfg.K0sRunDir, "containerd"),
+			"--address=" + Address(c.cfg.K0sRunDir),
+			"--log-level=" + c.cfg.LogLevel,
 			"--config=" + c.confPath,
 		},
+		Starter: c.starter,
 	}
 
 	if err := c.supervisor.Supervise(ctx); err != nil {
@@ -139,7 +146,7 @@ func (c *Component) Start(ctx context.Context) (err error) {
 	err = wait.ExponentialBackoffWithContext(ctx, wait.Backoff{
 		Duration: 100 * time.Millisecond, Factor: 1.2, Jitter: 0.05, Steps: 30,
 	}, func(ctx context.Context) (bool, error) {
-		rt := containerruntime.NewContainerRuntime(Endpoint(c.K0sVars.RunDir))
+		rt := containerruntime.NewContainerRuntime(Endpoint(c.cfg.K0sRunDir))
 		if lastErr = rt.Ping(ctx); lastErr != nil {
 			log.WithError(lastErr).Debug("Failed to ping containerd")
 			return false, nil
@@ -179,7 +186,7 @@ func (c *Component) setupConfig() error {
 		return fmt.Errorf("can't create containerd config imports dir: %w", err)
 	}
 
-	configData, err := marshalContainerdConfig(c.importsPath, c.Profile.PauseImage.URI())
+	configData, err := marshalContainerdConfig(c.importsPath, c.cfg.Profile.PauseImage.URI())
 	if err != nil {
 		return fmt.Errorf("can't marshal containerd config: %w", err)
 	}

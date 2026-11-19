@@ -141,8 +141,13 @@ func newContainersStep(debug bool, k0sVars *config.CfgVars, criSocketFlag string
 		if debug {
 			logLevel = "debug"
 		}
-		containers.managedContainerd = containerd.NewComponent(logLevel, k0sVars, &workerconfig.Profile{
-			PauseImage: defaultPauseImage(),
+		containers.managedContainerd = containerd.NewComponent(&containerd.Config{
+			LogLevel:   logLevel,
+			K0sBinDir:  k0sVars.BinDir,
+			K0sRunDir:  k0sVars.RunDir,
+			K0sDataDir: k0sVars.DataDir,
+			Profile:    &workerconfig.Profile{PauseImage: defaultPauseImage()},
+			// Leave AppArmor unmanaged, so that the loaded profiles keep matching the running shims.
 		})
 	}
 

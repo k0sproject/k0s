@@ -10,7 +10,6 @@ import (
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	workerconfig "github.com/k0sproject/k0s/pkg/component/worker/config"
-	"github.com/k0sproject/k0s/pkg/config"
 
 	"github.com/stretchr/testify/require"
 )
@@ -27,12 +26,14 @@ func Test_isK0sManagedConfig(t *testing.T) {
 		defaultConfigPath := filepath.Join(t.TempDir(), "default.toml")
 
 		underTest := Component{
-			K0sVars: &config.CfgVars{
-				RunDir: /* The merged config file will be written here: */ t.TempDir(),
+			cfg: &Config{
+				// The merged config file will be written here:
+				K0sRunDir: t.TempDir(),
+				// Some non-nil pause image:
+				Profile: &workerconfig.Profile{PauseImage: &v1beta1.ImageSpec{}},
 			},
 			confPath:/* The main config file will be written here: */ defaultConfigPath,
 			importsPath:/* some empty dir: */ t.TempDir(),
-			Profile:/* Some non-nil pause image: */ &workerconfig.Profile{PauseImage: &v1beta1.ImageSpec{}},
 		}
 		err := underTest.setupConfig()
 

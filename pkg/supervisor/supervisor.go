@@ -52,12 +52,18 @@ type Supervisor struct {
 	CleanBeforeFn func() error
 	// Required privileges for the supervised process
 	RequiredPrivileges RequiredPrivileges
+	Starter            ProcessStarter
 
 	cmd            *exec.Cmd
 	log            logrus.FieldLogger
 	mutex          sync.Mutex
 	startStopMutex sync.Mutex
 	stop           func(opts StopOpts)
+}
+
+// Starts processes in a particular way, e.g. confined by a security profile.
+type ProcessStarter interface {
+	Start(*exec.Cmd) error
 }
 
 const k0sManaged = "_K0S_MANAGED=yes"
@@ -258,7 +264,11 @@ func (s *Supervisor) Supervise(ctx context.Context) error {
 				s.cmd.Stdout = log.NewWriter(s.log.WithField("stream", "stdout"), logrus.InfoLevel, maxLogChunkLen)
 				s.cmd.Stderr = log.NewWriter(s.log.WithField("stream", "stderr"), logrus.InfoLevel, maxLogChunkLen)
 
-				err = s.cmd.Start()
+				if s.Starter == nil {
+					err = s.cmd.Start()
+				} else {
+					err = s.Starter.Start(s.cmd)
+				}
 			}
 			s.mutex.Unlock()
 			if err != nil {
