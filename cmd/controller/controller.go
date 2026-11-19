@@ -517,7 +517,7 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 		adminClientFactory,
 		configSource,
 	))
-	clusterComponents.Add(ctx, &status.ClusterConfigUpdater{Status: &statusComponent})
+	clusterComponents.Add(ctx, statusComponent.ClusterConfigReconciler())
 
 	if !slices.Contains(flags.DisableComponents, constant.HelmComponentName) {
 		clusterComponents.Add(ctx, controller.NewExtensionsController(

@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
+	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/constant"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 
@@ -431,7 +432,7 @@ func TestAppendCNICondition(t *testing.T) {
 		assert.Equal(t, corev1.ConditionTrue, got.Conditions[0].Status)
 
 		clusterWide := clusterConfigWithCalico(v1beta1.CalicoModeVXLAN)
-		require.NoError(t, (&ClusterConfigUpdater{Status: st}).Reconcile(t.Context(), clusterWide))
+		require.NoError(t, st.ClusterConfigReconciler().(manager.Reconciler).Reconcile(t.Context(), clusterWide))
 		got = sh.getCurrentStatus(t.Context())
 		require.Len(t, got.Conditions, 1)
 		assert.Equal(t, corev1.ConditionFalse, got.Conditions[0].Status)

@@ -42,28 +42,29 @@ var _ manager.Component = (*Status)(nil)
 
 const statusCheckTimeout = 5 * time.Second
 
-// ClusterConfigUpdater copies reconciled Network onto Status so CNIReady
-// follows live Calico mode. JSON ClusterConfig on K0sStatus stays node-local
-// so controller-token admission still sees Kine storage.
-type ClusterConfigUpdater struct {
-	Status *Status
+func (s *Status) ClusterConfigReconciler() manager.Component {
+	return &clusterConfigUpdater{status: s}
+}
+
+type clusterConfigUpdater struct {
+	status *Status
 }
 
 var (
-	_ manager.Component  = (*ClusterConfigUpdater)(nil)
-	_ manager.Reconciler = (*ClusterConfigUpdater)(nil)
+	_ manager.Component  = (*clusterConfigUpdater)(nil)
+	_ manager.Reconciler = (*clusterConfigUpdater)(nil)
 )
 
-func (c *ClusterConfigUpdater) Init(context.Context) error  { return nil }
-func (c *ClusterConfigUpdater) Start(context.Context) error { return nil }
-func (c *ClusterConfigUpdater) Stop() error                 { return nil }
+func (c *clusterConfigUpdater) Init(context.Context) error  { return nil }
+func (c *clusterConfigUpdater) Start(context.Context) error { return nil }
+func (c *clusterConfigUpdater) Stop() error                 { return nil }
 
-func (c *ClusterConfigUpdater) Reconcile(_ context.Context, cfg *v1beta1.ClusterConfig) error {
+func (c *clusterConfigUpdater) Reconcile(_ context.Context, cfg *v1beta1.ClusterConfig) error {
 	var network *v1beta1.Network
 	if cfg != nil && cfg.Spec != nil {
 		network = cfg.Spec.Network
 	}
-	c.Status.SetNetwork(network)
+	c.status.SetNetwork(network)
 	return nil
 }
 
