@@ -552,6 +552,7 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 			return nil, changed
 		}
 	}
+	statusComponent.HasWindowsNodes = hasWindowsNodes
 
 	if !slices.Contains(flags.DisableComponents, constant.KubeProxyComponentName) {
 		clusterComponents.Add(ctx, controller.NewKubeProxy(c.K0sVars, nodeConfig, hasWindowsNodes))

@@ -33,7 +33,9 @@ type Status struct {
 	httpserver             http.Server
 	GetWorkerClientFactory func() kubeutil.ClientFactoryInterface
 	AdminClientFactory     kubeutil.ClientFactoryInterface
-	network                atomic.Pointer[v1beta1.Network]
+	// HasWindowsNodes is the Windows stack counter. A nil bool means the count is not known yet.
+	HasWindowsNodes func() (*bool, <-chan struct{})
+	network         atomic.Pointer[v1beta1.Network]
 }
 
 var _ manager.Component = (*Status)(nil)
@@ -188,7 +190,7 @@ func (sh *statusHandler) appendCNICondition(ctx context.Context, status *K0sStat
 		return
 	}
 
-	cond, ok := evaluateCNI(ctx, client, network)
+	cond, ok := evaluateCNI(ctx, client, network, sh.Status.HasWindowsNodes)
 	if ok {
 		status.Conditions = []Condition{cond}
 	}

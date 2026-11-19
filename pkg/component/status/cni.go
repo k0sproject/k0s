@@ -16,18 +16,18 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
 )
 
 const (
 	conditionCNIReady = "CNIReady"
 
-	reasonAllReady = "AllReady"
-	reasonNotReady = "NotReady"
-	reasonNotFound = "NotFound"
-	reasonError    = "Error"
-	reasonTimeout  = "Timeout"
+	reasonAllReady            = "AllReady"
+	reasonNotReady            = "NotReady"
+	reasonNotFound            = "NotFound"
+	reasonError               = "Error"
+	reasonTimeout             = "Timeout"
+	reasonWindowsNodesUnknown = "WindowsNodesUnknown"
 
 	kubeRouterDaemonSet         = "kube-router"
 	calicoNodeDaemonSet         = "calico-node"
@@ -67,7 +67,7 @@ func isManagedCNI(network *v1beta1.Network) bool {
 // A CNI conf file on disk is not used: kubelet treats that file as enough to
 // mark the node Ready even when the CNI is not operational.
 // Custom CNI is skipped (ok=false). Callers must pass a live API client.
-func evaluateCNI(ctx context.Context, client kubernetes.Interface, network *v1beta1.Network) (Condition, bool) {
+func evaluateCNI(ctx context.Context, client kubernetes.Interface, network *v1beta1.Network, hasWindowsNodes func() (*bool, <-chan struct{})) (Condition, bool) {
 	if network == nil {
 		return Condition{}, false
 	}
@@ -75,39 +75,43 @@ func evaluateCNI(ctx context.Context, client kubernetes.Interface, network *v1be
 	case constant.CNIProviderKubeRouter:
 		return daemonSetCNICondition(ctx, client, kubeRouterDaemonSet), true
 	case constant.CNIProviderCalico:
-		return calicoCNICondition(ctx, client, network), true
+		return calicoCNICondition(ctx, client, network, hasWindowsNodes), true
 	default:
 		return Condition{}, false
 	}
 }
 
-func calicoCNICondition(ctx context.Context, client kubernetes.Interface, network *v1beta1.Network) Condition {
+func calicoCNICondition(ctx context.Context, client kubernetes.Interface, network *v1beta1.Network, hasWindowsNodes func() (*bool, <-chan struct{})) Condition {
 	node := daemonSetCNICondition(ctx, client, calicoNodeDaemonSet)
 	controllers := deploymentCNICondition(ctx, client, calicoControllersDeployment)
 
 	parts := []Condition{node}
-	requireWindows, err := windowsCalicoRequired(ctx, client, network)
-	if err != nil {
-		parts = append(parts, apiErrorCondition(err))
-	} else if requireWindows {
+	required, known := windowsCalicoRequired(network, hasWindowsNodes)
+	switch {
+	case !known:
+		parts = append(parts, cniCondition(corev1.ConditionUnknown, reasonWindowsNodesUnknown, "Windows node count is not yet known"))
+	case required:
 		parts = append(parts, daemonSetCNICondition(ctx, client, calicoWindowsDaemonSet))
 	}
 	parts = append(parts, controllers)
 	return mergeCalicoConditions(parts)
 }
 
-func windowsCalicoRequired(ctx context.Context, client kubernetes.Interface, network *v1beta1.Network) (bool, error) {
+// windowsCalicoRequired uses the Windows stack component's node counter.
+// A nil counter or a nil observation means the count is not known yet.
+// Status checks do not wait on the counter's changed channel.
+func windowsCalicoRequired(network *v1beta1.Network, hasWindowsNodes func() (*bool, <-chan struct{})) (required, known bool) {
 	if !calicoDeploysWindowsDaemonSet(network) {
-		return false, nil
+		return false, true
 	}
-	nodes, err := client.CoreV1().Nodes().List(ctx, metav1.ListOptions{
-		LabelSelector: labels.Set{corev1.LabelOSStable: string(corev1.Windows)}.AsSelector().String(),
-		Limit:         1,
-	})
-	if err != nil {
-		return false, err
+	if hasWindowsNodes == nil {
+		return false, false
 	}
-	return len(nodes.Items) > 0, nil
+	has, _ := hasWindowsNodes()
+	if has == nil {
+		return false, false
+	}
+	return *has, true
 }
 
 func calicoDeploysWindowsDaemonSet(network *v1beta1.Network) bool {

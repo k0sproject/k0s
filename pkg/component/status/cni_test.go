@@ -26,7 +26,7 @@ import (
 
 func TestEvaluateCNI_CustomProviderSkipped(t *testing.T) {
 	t.Parallel()
-	_, ok := evaluateCNI(t.Context(), fake.NewSimpleClientset(), &v1beta1.Network{Provider: "custom"})
+	_, ok := evaluateCNI(t.Context(), fake.NewSimpleClientset(), &v1beta1.Network{Provider: "custom"}, nil)
 	assert.False(t, ok)
 }
 
@@ -36,7 +36,7 @@ func TestEvaluateCNI_KubeRouter(t *testing.T) {
 	t.Run("healthy", func(t *testing.T) {
 		t.Parallel()
 		client := fake.NewSimpleClientset(kubeRouterDS(1, 1))
-		got, ok := evaluateCNI(t.Context(), client, kubeRouterNet())
+		got, ok := evaluateCNI(t.Context(), client, kubeRouterNet(), nil)
 		require.True(t, ok)
 		assert.Equal(t, Condition{
 			Type:    conditionCNIReady,
@@ -49,7 +49,7 @@ func TestEvaluateCNI_KubeRouter(t *testing.T) {
 	t.Run("not_ready", func(t *testing.T) {
 		t.Parallel()
 		client := fake.NewSimpleClientset(kubeRouterDS(1, 0))
-		got, ok := evaluateCNI(t.Context(), client, kubeRouterNet())
+		got, ok := evaluateCNI(t.Context(), client, kubeRouterNet(), nil)
 		require.True(t, ok)
 		assert.Equal(t, corev1.ConditionFalse, got.Status)
 		assert.Equal(t, reasonNotReady, got.Reason)
@@ -59,7 +59,7 @@ func TestEvaluateCNI_KubeRouter(t *testing.T) {
 	t.Run("zero_desired_is_not_ready", func(t *testing.T) {
 		t.Parallel()
 		client := fake.NewSimpleClientset(kubeRouterDS(0, 0))
-		got, ok := evaluateCNI(t.Context(), client, kubeRouterNet())
+		got, ok := evaluateCNI(t.Context(), client, kubeRouterNet(), nil)
 		require.True(t, ok)
 		assert.Equal(t, corev1.ConditionFalse, got.Status)
 		assert.Equal(t, reasonNotReady, got.Reason)
@@ -67,7 +67,7 @@ func TestEvaluateCNI_KubeRouter(t *testing.T) {
 
 	t.Run("not_found", func(t *testing.T) {
 		t.Parallel()
-		got, ok := evaluateCNI(t.Context(), fake.NewSimpleClientset(), kubeRouterNet())
+		got, ok := evaluateCNI(t.Context(), fake.NewSimpleClientset(), kubeRouterNet(), nil)
 		require.True(t, ok)
 		assert.Equal(t, corev1.ConditionFalse, got.Status)
 		assert.Equal(t, reasonNotFound, got.Reason)
@@ -80,7 +80,7 @@ func TestEvaluateCNI_KubeRouter(t *testing.T) {
 		client.PrependReactor("get", "daemonsets", func(k8stesting.Action) (bool, runtime.Object, error) {
 			return true, nil, errors.New("apiserver unavailable")
 		})
-		got, ok := evaluateCNI(t.Context(), client, kubeRouterNet())
+		got, ok := evaluateCNI(t.Context(), client, kubeRouterNet(), nil)
 		require.True(t, ok)
 		assert.Equal(t, corev1.ConditionUnknown, got.Status)
 		assert.Equal(t, reasonError, got.Reason)
@@ -92,7 +92,7 @@ func TestEvaluateCNI_KubeRouter(t *testing.T) {
 		ds := kubeRouterDS(1, 1)
 		ds.Generation = 2
 		ds.Status.ObservedGeneration = 1
-		got, ok := evaluateCNI(t.Context(), fake.NewSimpleClientset(ds), kubeRouterNet())
+		got, ok := evaluateCNI(t.Context(), fake.NewSimpleClientset(ds), kubeRouterNet(), nil)
 		require.True(t, ok)
 		assert.Equal(t, corev1.ConditionFalse, got.Status)
 		assert.Equal(t, reasonNotReady, got.Reason)
@@ -105,7 +105,7 @@ func TestEvaluateCNI_KubeRouter(t *testing.T) {
 		client.PrependReactor("get", "daemonsets", func(k8stesting.Action) (bool, runtime.Object, error) {
 			return true, nil, context.DeadlineExceeded
 		})
-		got, ok := evaluateCNI(t.Context(), client, kubeRouterNet())
+		got, ok := evaluateCNI(t.Context(), client, kubeRouterNet(), nil)
 		require.True(t, ok)
 		assert.Equal(t, corev1.ConditionUnknown, got.Status)
 		assert.Equal(t, reasonTimeout, got.Reason)
@@ -118,7 +118,7 @@ func TestEvaluateCNI_KubeRouter(t *testing.T) {
 		client.PrependReactor("get", "daemonsets", func(k8stesting.Action) (bool, runtime.Object, error) {
 			return true, nil, context.Canceled
 		})
-		got, ok := evaluateCNI(t.Context(), client, kubeRouterNet())
+		got, ok := evaluateCNI(t.Context(), client, kubeRouterNet(), nil)
 		require.True(t, ok)
 		assert.Equal(t, corev1.ConditionUnknown, got.Status)
 		assert.Equal(t, reasonError, got.Reason)
@@ -129,7 +129,7 @@ func TestEvaluateCNI_KubeRouter(t *testing.T) {
 		t.Parallel()
 		ds := kubeRouterDS(2, 2)
 		ds.Status.UpdatedNumberScheduled = 1
-		got, ok := evaluateCNI(t.Context(), fake.NewSimpleClientset(ds), kubeRouterNet())
+		got, ok := evaluateCNI(t.Context(), fake.NewSimpleClientset(ds), kubeRouterNet(), nil)
 		require.True(t, ok)
 		assert.Equal(t, corev1.ConditionFalse, got.Status)
 		assert.Equal(t, reasonNotReady, got.Reason)
@@ -143,7 +143,7 @@ func TestEvaluateCNI_Calico(t *testing.T) {
 	t.Run("healthy", func(t *testing.T) {
 		t.Parallel()
 		client := fake.NewSimpleClientset(calicoNodeDS(2, 2), calicoControllers(corev1.ConditionTrue))
-		got, ok := evaluateCNI(t.Context(), client, calicoNet(""))
+		got, ok := evaluateCNI(t.Context(), client, calicoNet(""), windowsCounter(new(false)))
 		require.True(t, ok)
 		assert.Equal(t, corev1.ConditionTrue, got.Status)
 		assert.Equal(t, reasonAllReady, got.Reason)
@@ -153,7 +153,7 @@ func TestEvaluateCNI_Calico(t *testing.T) {
 	t.Run("node_not_ready", func(t *testing.T) {
 		t.Parallel()
 		client := fake.NewSimpleClientset(calicoNodeDS(2, 1), calicoControllers(corev1.ConditionTrue))
-		got, ok := evaluateCNI(t.Context(), client, calicoNet(""))
+		got, ok := evaluateCNI(t.Context(), client, calicoNet(""), windowsCounter(new(false)))
 		require.True(t, ok)
 		assert.Equal(t, corev1.ConditionFalse, got.Status)
 		assert.Equal(t, reasonNotReady, got.Reason)
@@ -163,7 +163,7 @@ func TestEvaluateCNI_Calico(t *testing.T) {
 	t.Run("controllers_not_ready", func(t *testing.T) {
 		t.Parallel()
 		client := fake.NewSimpleClientset(calicoNodeDS(1, 1), calicoControllers(corev1.ConditionFalse))
-		got, ok := evaluateCNI(t.Context(), client, calicoNet(""))
+		got, ok := evaluateCNI(t.Context(), client, calicoNet(""), windowsCounter(new(false)))
 		require.True(t, ok)
 		assert.Equal(t, corev1.ConditionFalse, got.Status)
 		assert.Equal(t, reasonNotReady, got.Reason)
@@ -173,7 +173,7 @@ func TestEvaluateCNI_Calico(t *testing.T) {
 	t.Run("controllers_not_found", func(t *testing.T) {
 		t.Parallel()
 		client := fake.NewSimpleClientset(calicoNodeDS(1, 1))
-		got, ok := evaluateCNI(t.Context(), client, calicoNet(""))
+		got, ok := evaluateCNI(t.Context(), client, calicoNet(""), windowsCounter(new(false)))
 		require.True(t, ok)
 		assert.Equal(t, corev1.ConditionFalse, got.Status)
 		assert.Equal(t, reasonNotFound, got.Reason)
@@ -186,7 +186,7 @@ func TestEvaluateCNI_Calico(t *testing.T) {
 		client.PrependReactor("get", "deployments", func(k8stesting.Action) (bool, runtime.Object, error) {
 			return true, nil, errors.New("apiserver unavailable")
 		})
-		got, ok := evaluateCNI(t.Context(), client, calicoNet(""))
+		got, ok := evaluateCNI(t.Context(), client, calicoNet(""), windowsCounter(new(false)))
 		require.True(t, ok)
 		assert.Equal(t, corev1.ConditionUnknown, got.Status)
 		assert.Equal(t, reasonError, got.Reason)
@@ -199,7 +199,7 @@ func TestEvaluateCNI_Calico(t *testing.T) {
 		client.PrependReactor("get", "deployments", func(k8stesting.Action) (bool, runtime.Object, error) {
 			return true, nil, errors.New("apiserver unavailable")
 		})
-		got, ok := evaluateCNI(t.Context(), client, calicoNet(""))
+		got, ok := evaluateCNI(t.Context(), client, calicoNet(""), windowsCounter(new(false)))
 		require.True(t, ok)
 		assert.Equal(t, corev1.ConditionFalse, got.Status)
 		assert.Equal(t, reasonNotReady, got.Reason)
@@ -209,7 +209,7 @@ func TestEvaluateCNI_Calico(t *testing.T) {
 	t.Run("windows_not_found_is_ignored", func(t *testing.T) {
 		t.Parallel()
 		client := fake.NewSimpleClientset(calicoNodeDS(1, 1), calicoControllers(corev1.ConditionTrue))
-		got, ok := evaluateCNI(t.Context(), client, calicoNet(""))
+		got, ok := evaluateCNI(t.Context(), client, calicoNet(""), windowsCounter(new(false)))
 		require.True(t, ok)
 		assert.Equal(t, corev1.ConditionTrue, got.Status)
 		assert.NotContains(t, got.Message, calicoWindowsDaemonSet)
@@ -221,9 +221,8 @@ func TestEvaluateCNI_Calico(t *testing.T) {
 			calicoNodeDS(1, 1),
 			calicoWindowsDS(1, 0),
 			calicoControllers(corev1.ConditionTrue),
-			windowsNode(),
 		)
-		got, ok := evaluateCNI(t.Context(), client, calicoNet(""))
+		got, ok := evaluateCNI(t.Context(), client, calicoNet(""), windowsCounter(new(true)))
 		require.True(t, ok)
 		assert.Equal(t, corev1.ConditionFalse, got.Status)
 		assert.Equal(t, reasonNotReady, got.Reason)
@@ -236,9 +235,8 @@ func TestEvaluateCNI_Calico(t *testing.T) {
 			calicoNodeDS(1, 1),
 			calicoWindowsDS(1, 1),
 			calicoControllers(corev1.ConditionTrue),
-			windowsNode(),
 		)
-		got, ok := evaluateCNI(t.Context(), client, calicoNet(""))
+		got, ok := evaluateCNI(t.Context(), client, calicoNet(""), windowsCounter(new(true)))
 		require.True(t, ok)
 		assert.Equal(t, corev1.ConditionTrue, got.Status)
 		assert.Equal(t, "calico-node DaemonSet reports 1/1 available, 1 updated; calico-node-windows DaemonSet reports 1/1 available, 1 updated; calico-kube-controllers Deployment is available", got.Message)
@@ -247,7 +245,7 @@ func TestEvaluateCNI_Calico(t *testing.T) {
 	t.Run("controllers_unknown", func(t *testing.T) {
 		t.Parallel()
 		client := fake.NewSimpleClientset(calicoNodeDS(1, 1), calicoControllers(corev1.ConditionUnknown))
-		got, ok := evaluateCNI(t.Context(), client, calicoNet(""))
+		got, ok := evaluateCNI(t.Context(), client, calicoNet(""), windowsCounter(new(false)))
 		require.True(t, ok)
 		assert.Equal(t, corev1.ConditionUnknown, got.Status)
 		assert.Equal(t, reasonError, got.Reason)
@@ -259,13 +257,22 @@ func TestEvaluateCNI_Calico(t *testing.T) {
 		client := fake.NewSimpleClientset(
 			calicoNodeDS(1, 1),
 			calicoControllers(corev1.ConditionTrue),
-			windowsNode(),
 		)
-		got, ok := evaluateCNI(t.Context(), client, calicoNet(""))
+		got, ok := evaluateCNI(t.Context(), client, calicoNet(""), windowsCounter(new(true)))
 		require.True(t, ok)
 		assert.Equal(t, corev1.ConditionFalse, got.Status)
 		assert.Equal(t, reasonNotFound, got.Reason)
 		assert.Equal(t, "calico-node-windows DaemonSet not found", got.Message)
+	})
+
+	t.Run("windows_count_unknown", func(t *testing.T) {
+		t.Parallel()
+		client := fake.NewSimpleClientset(calicoNodeDS(1, 1), calicoControllers(corev1.ConditionTrue))
+		got, ok := evaluateCNI(t.Context(), client, calicoNet(""), windowsCounter(nil))
+		require.True(t, ok)
+		assert.Equal(t, corev1.ConditionUnknown, got.Status)
+		assert.Equal(t, reasonWindowsNodesUnknown, got.Reason)
+		assert.Equal(t, "Windows node count is not yet known", got.Message)
 	})
 
 	t.Run("bird_mode_does_not_require_windows_daemonset", func(t *testing.T) {
@@ -273,9 +280,8 @@ func TestEvaluateCNI_Calico(t *testing.T) {
 		client := fake.NewSimpleClientset(
 			calicoNodeDS(1, 1),
 			calicoControllers(corev1.ConditionTrue),
-			windowsNode(),
 		)
-		got, ok := evaluateCNI(t.Context(), client, calicoNet(v1beta1.CalicoModeBIRD))
+		got, ok := evaluateCNI(t.Context(), client, calicoNet(v1beta1.CalicoModeBIRD), windowsCounter(new(true)))
 		require.True(t, ok)
 		assert.Equal(t, corev1.ConditionTrue, got.Status)
 		assert.NotContains(t, got.Message, calicoWindowsDaemonSet)
@@ -287,7 +293,7 @@ func TestEvaluateCNI_Calico(t *testing.T) {
 		deploy.Generation = 3
 		deploy.Status.ObservedGeneration = 2
 		client := fake.NewSimpleClientset(calicoNodeDS(1, 1), deploy)
-		got, ok := evaluateCNI(t.Context(), client, calicoNet(""))
+		got, ok := evaluateCNI(t.Context(), client, calicoNet(""), windowsCounter(new(false)))
 		require.True(t, ok)
 		assert.Equal(t, corev1.ConditionFalse, got.Status)
 		assert.Equal(t, reasonNotReady, got.Reason)
@@ -300,7 +306,7 @@ func TestEvaluateCNI_Calico(t *testing.T) {
 		deploy.Status.UpdatedReplicas = 0
 		deploy.Status.AvailableReplicas = 1
 		client := fake.NewSimpleClientset(calicoNodeDS(1, 1), deploy)
-		got, ok := evaluateCNI(t.Context(), client, calicoNet(""))
+		got, ok := evaluateCNI(t.Context(), client, calicoNet(""), windowsCounter(new(false)))
 		require.True(t, ok)
 		assert.Equal(t, corev1.ConditionFalse, got.Status)
 		assert.Equal(t, reasonNotReady, got.Reason)
@@ -314,7 +320,7 @@ func TestEvaluateCNI_Calico(t *testing.T) {
 		deploy.Status.UpdatedReplicas = 1
 		deploy.Status.AvailableReplicas = 1
 		client := fake.NewSimpleClientset(calicoNodeDS(1, 1), deploy)
-		got, ok := evaluateCNI(t.Context(), client, calicoNet(""))
+		got, ok := evaluateCNI(t.Context(), client, calicoNet(""), windowsCounter(new(false)))
 		require.True(t, ok)
 		assert.Equal(t, corev1.ConditionFalse, got.Status)
 		assert.Equal(t, reasonNotReady, got.Reason)
@@ -403,8 +409,8 @@ func TestAppendCNICondition(t *testing.T) {
 			AdminClientFactory: &stubFactory{client: fake.NewSimpleClientset(
 				calicoNodeDS(1, 1),
 				calicoControllers(corev1.ConditionTrue),
-				windowsNode(),
 			)},
+			HasWindowsNodes: windowsCounter(new(true)),
 		}
 		sh := &statusHandler{Status: st}
 
@@ -510,15 +516,6 @@ func calicoNet(mode v1beta1.CalicoMode) *v1beta1.Network {
 	return n
 }
 
-func windowsNode() *corev1.Node {
-	return &corev1.Node{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:   "win-1",
-			Labels: map[string]string{corev1.LabelOSStable: string(corev1.Windows)},
-		},
-	}
-}
-
 func clusterConfigWithProvider(provider string) *v1beta1.ClusterConfig {
 	return &v1beta1.ClusterConfig{
 		Spec: &v1beta1.ClusterSpec{
@@ -543,4 +540,8 @@ type stubFactory struct {
 
 func (s *stubFactory) GetClient() (kubernetes.Interface, error) {
 	return s.client, s.err
+}
+
+func windowsCounter(present *bool) func() (*bool, <-chan struct{}) {
+	return func() (*bool, <-chan struct{}) { return present, nil }
 }
