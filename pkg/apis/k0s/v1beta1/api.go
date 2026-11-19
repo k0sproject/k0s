@@ -171,7 +171,7 @@ func (a *APISpec) Validate() []error {
 	if a.ExternalAddress != "" {
 		validateIPAddressOrDNSName(field.NewPath("externalAddress"), a.ExternalHost())
 		if isAnyAddress(a.ExternalHost()) {
-			errors = append(errors, field.Invalid(field.NewPath("externalAddress"), a.Address, "invalid INADDR_ANY"))
+			errors = append(errors, field.Invalid(field.NewPath("externalAddress"), a.ExternalAddress, "invalid INADDR_ANY"))
 		}
 	}
 

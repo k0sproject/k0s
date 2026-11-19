@@ -66,8 +66,7 @@ func (s *APISuite) TestValidation() {
 
 				errors := a.Validate()
 				if s.Len(errors, 1) {
-					s.ErrorContains(errors[0], "externalAddress: Invalid value: ")
-					s.ErrorContains(errors[0], ": invalid INADDR_ANY")
+					s.ErrorContains(errors[0], `externalAddress: Invalid value: "`+externalAddress+`": invalid INADDR_ANY`)
 				}
 			})
 		}
