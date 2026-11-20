@@ -14,9 +14,7 @@ import (
 )
 
 func TestTotalMemoryProber(t *testing.T) {
-	underTest := newTotalMemoryProber()
-
-	ram, err := underTest()
+	ram, err := newTotalMemoryProber()()
 	require.NoError(t, err)
 
 	procMeminfo, err := os.Open("/proc/meminfo")
