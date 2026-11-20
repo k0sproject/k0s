@@ -7,6 +7,7 @@ package backup
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -92,9 +93,29 @@ func (s *sqliteStep) Restore(restoreFrom string, _ string) error {
 	if err := dir.Init(dbPathDir, constant.KineDBDirMode); err != nil {
 		return err
 	}
+	// The snapshot is a standalone database created by VACUUM INTO. Journal
+	// files left over from the database it replaces would be paired with it on
+	// the next open, which can corrupt it. Remove them first.
+	if err := removeSqliteCompanionFiles(s.dbPath); err != nil {
+		return err
+	}
+
 	logrus.Infof("restoring sqlite db to `%s`", s.dbPath)
 	if err := file.Copy(snapshotPath, s.dbPath); err != nil {
-		logrus.Errorf("failed to restore snapshot from disk: %v", err)
+		return fmt.Errorf("failed to restore snapshot from disk: %w", err)
+	}
+	return nil
+}
+
+// removeSqliteCompanionFiles removes the write-ahead log, shared memory and
+// rollback journal files that belong to the database at dbPath. Missing files
+// are fine.
+func removeSqliteCompanionFiles(dbPath string) error {
+	for _, suffix := range []string{"-wal", "-shm", "-journal"} {
+		path := dbPath + suffix
+		if err := os.Remove(path); err != nil && !errors.Is(err, os.ErrNotExist) {
+			return fmt.Errorf("failed to remove stale sqlite file: %w", err)
+		}
 	}
 	return nil
 }
