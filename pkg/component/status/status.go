@@ -26,13 +26,13 @@ type Stater interface {
 }
 
 type Status struct {
-	StatusInformation      K0sStatus
-	Prober                 Stater
-	Socket                 string
-	L                      *logrus.Entry
-	httpserver             http.Server
-	GetWorkerClientFactory func() kubeutil.ClientFactoryInterface
-	AdminClientFactory     kubeutil.ClientFactoryInterface
+	StatusInformation       K0sStatus
+	Prober                  Stater
+	Socket                  string
+	L                       *logrus.Entry
+	httpserver              http.Server
+	GetWorkerClientFactory  func() kubeutil.ClientFactoryInterface
+	ControllerClientFactory kubeutil.ClientFactoryInterface
 	// HasWindowsNodes is the Windows stack counter. A nil bool means the count is not known yet.
 	HasWindowsNodes func() (*bool, <-chan struct{})
 	network         atomic.Pointer[v1beta1.Network]
@@ -64,12 +64,8 @@ func (c *clusterConfigUpdater) Reconcile(_ context.Context, cfg *v1beta1.Cluster
 	if cfg != nil && cfg.Spec != nil {
 		network = cfg.Spec.Network
 	}
-	c.status.SetNetwork(network)
+	c.status.network.Store(network)
 	return nil
-}
-
-func (s *Status) SetNetwork(network *v1beta1.Network) {
-	s.network.Store(network)
 }
 
 func (s *Status) cniNetwork(snapshot *K0sStatus) *v1beta1.Network {
@@ -155,7 +151,9 @@ func (sh *statusHandler) getCurrentStatus(ctx context.Context) K0sStatus {
 	if status.Workloads {
 		sh.probeWorkerAPI(ctx, &status)
 	}
-	sh.appendCNICondition(ctx, &status)
+	if sh.Status.ControllerClientFactory != nil {
+		sh.setCNICondition(ctx, &status)
+	}
 	return status
 }
 
@@ -176,16 +174,13 @@ func (sh *statusHandler) probeWorkerAPI(ctx context.Context, status *K0sStatus) 
 	status.WorkerToAPIConnectionStatus = ProbeStatus{Success: true}
 }
 
-func (sh *statusHandler) appendCNICondition(ctx context.Context, status *K0sStatus) {
-	if sh.Status.AdminClientFactory == nil {
-		return
-	}
+func (sh *statusHandler) setCNICondition(ctx context.Context, status *K0sStatus) {
 	network := sh.Status.cniNetwork(status)
 	if !isManagedCNI(network) {
 		return
 	}
 
-	client, err := sh.Status.AdminClientFactory.GetClient()
+	client, err := sh.Status.ControllerClientFactory.GetClient()
 	if err != nil {
 		status.Conditions = []Condition{cniCondition(corev1.ConditionUnknown, reasonError, err.Error())}
 		return
