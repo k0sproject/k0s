@@ -11,6 +11,8 @@ env:
   MAKEFLAGS: -j
   CURL_OPTS: --proto =https --tlsv1.2 --retry 5 --retry-all-errors --silent --show-error --location --fail
 
+permissions: {}
+
 jobs:
   build:
     name: Deploy docs

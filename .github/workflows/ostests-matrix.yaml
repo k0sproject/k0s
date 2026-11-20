@@ -68,6 +68,9 @@ on:
 
 run-name: "OS tests :: ${{ inputs.arch }}"
 
+permissions:
+  contents: read
+
 jobs:
   build:
     name: Build

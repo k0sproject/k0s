@@ -12,6 +12,9 @@ on:
   schedule:
     - cron: 45 2 * * *
 
+permissions:
+  contents: read
+
 jobs:
   build-k0s:
     name: "Build :: k0s :: linux-riscv64"

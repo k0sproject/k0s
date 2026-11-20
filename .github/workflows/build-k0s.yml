@@ -15,6 +15,9 @@ on:
 env:
   MAKEFLAGS: -j
 
+permissions:
+  contents: read
+
 jobs:
   build:
     name: ${{ inputs.target-os }}-${{ inputs.target-arch }}
