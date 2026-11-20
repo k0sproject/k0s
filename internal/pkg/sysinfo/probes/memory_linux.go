@@ -10,21 +10,13 @@ import (
 )
 
 func newTotalMemoryProber() totalMemoryProber {
-	var once sync.Once
-	var totalMemory uint64
-	var err error
-
-	return func() (uint64, error) {
-		once.Do(func() {
-			var info syscall.Sysinfo_t
-			if err = syscall.Sysinfo(&info); err != nil {
-				err = fmt.Errorf("sysinfo syscall failed: %w", err)
-			} else {
-				//nolint:unconvert // explicit cast to support 32-bit systems
-				totalMemory = uint64(info.Totalram) * uint64(info.Unit)
-			}
-		})
-
-		return totalMemory, err
-	}
+	return sync.OnceValues(func() (uint64, error) {
+		var info syscall.Sysinfo_t
+		if err := syscall.Sysinfo(&info); err != nil {
+			return 0, fmt.Errorf("sysinfo syscall failed: %w", err)
+		} else {
+			//nolint:unconvert // explicit cast to support 32-bit systems
+			return uint64(info.Totalram) * uint64(info.Unit), nil
+		}
+	})
 }
