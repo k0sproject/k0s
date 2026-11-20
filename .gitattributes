@@ -10,3 +10,5 @@ go.sum text eol=lf
 # Don't normalize line endings for diffs and patches
 *.diff -text
 *.patch -text
+
+.github/workflows/*.lock.yml linguist-generated=true
