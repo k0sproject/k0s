@@ -11,15 +11,20 @@ import (
 
 	// "github.com/k0sproject/k0s/pkg/component/manager"
 
+	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 	"github.com/k0sproject/k0s/pkg/autopilot/channels"
 	"github.com/k0sproject/k0s/pkg/autopilot/controller/updates"
 	"github.com/k0sproject/k0s/pkg/build"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
-	"github.com/sirupsen/logrus"
+
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/sirupsen/logrus"
 )
 
 // Dummy checks so we catch easily if we miss some interface implementation
@@ -82,27 +87,19 @@ func (u *UpdateProber) checkUpdates(ctx context.Context) {
 	if !u.leaderElector.IsLeader() {
 		u.log.Debug("not leader, skipping check")
 	}
-	u.log.Debug("checking updates")
-	// Check if there's an active UpdateConfig, if there is no need to do this generic polling
-	apClient, err := u.APClientFactory.GetK0sClient()
-	if err != nil {
-		u.log.Warnf("failed to create k8s client: %s", err.Error())
-	}
+
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
 	defer cancel()
 
-	u.log.Debug("checking if there's existing UpdateConfig objects")
-	updateConfigs, err := apClient.AutopilotV1beta2().UpdateConfigs().List(ctx, metav1.ListOptions{})
-	if err != nil {
-		u.log.Warnf("failed to list update configs: %s", err.Error())
+	if reason, err := u.skipUpdateCheck(ctx); err != nil {
+		u.log.WithError(err).Warn("Skipping update check")
 		return
-	}
-	u.log.Debugf("found %d UpdateConfig objects", len(updateConfigs.Items))
-	if len(updateConfigs.Items) > 0 {
-		u.log.Debugf("found %d update configs, skipping generic update check", len(updateConfigs.Items))
+	} else if reason != "" {
+		u.log.WithField("reason", reason).Info("Skipping update check")
 		return
 	}
 
+	u.log.Debug("checking updates")
 	// Create new update channel client for default server and latest channel
 	// ENV var only to be used for testing purposes
 	updateServer := "https://updates.k0sproject.io"
@@ -175,4 +172,32 @@ func (u *UpdateProber) checkUpdates(ctx context.Context) {
 	} else {
 		u.log.Debugf("no newer version availablen")
 	}
+}
+
+func (u *UpdateProber) skipUpdateCheck(ctx context.Context) (string, error) {
+	// Check if there's an active UpdateConfig, if there is no need to do this generic polling
+	client, err := u.APClientFactory.GetMetadataClient()
+	if err != nil {
+		return "", fmt.Errorf("failed to create k8s client: %w", err)
+	}
+
+	updateConfigs, err := client.Resource(schema.GroupVersionResource{
+		Group:    apv1beta2.GroupVersion.Group,
+		Version:  apv1beta2.GroupVersion.Version,
+		Resource: "updateconfigs",
+	}).List(ctx, metav1.ListOptions{})
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return "", nil
+		}
+		return "", fmt.Errorf("failed to list update configs: %w", err)
+	}
+
+	numUpdateConfigs := len(updateConfigs.Items)
+	u.log.Debugf("Found %d update configs", numUpdateConfigs)
+	if numUpdateConfigs > 0 {
+		return "some Autopilot update configs exist in the cluster", nil
+	}
+
+	return "", nil
 }
