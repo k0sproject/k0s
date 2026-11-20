@@ -7,11 +7,11 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 You can install k0s in environments without Internet access. Air gapped
 installations require an image bundle that contains all the container images
-that would normally be pulled over the network. K0s uses so-called OCI archives
+that would normally be pulled over the network. k0s uses so-called OCI archives
 for this: Tarball representations of an [OCI Image Layout]. They allow for
-multiple images to be packed into a single file. K0s will watch for image
-bundles in the `<data-dir>/images` folder will automatically import them into
-the container runtime.
+multiple images to be packed into a single file. k0s watches the
+`<data-dir>/images` directory and automatically imports any bundle it finds
+there into the container runtime.
 
 There are several ways to obtain an image bundle:
 
@@ -97,13 +97,19 @@ uses Docker:
    docker image save -o image-bundle.tar $(xargs <airgap-images.txt)
    ```
 
-## Placing image bundles on worker nodes
+## Placing image bundles on nodes
 
 ### By hand
 
-Copy the `image-bundle.tar` to the target machine into the `images` directory in
-the k0s data directory. Copy the bundle only to the worker nodes. Controller
-nodes don't use it.
+Copy the `image-bundle.tar` to the `images` directory in the k0s data directory
+of the target machine. Copy the bundle to every node that runs the worker role.
+That includes controller+worker nodes, such as the node of a single node
+(`k0s controller --single`) installation or a controller started with
+`--enable-worker`: these nodes run the same worker components as dedicated
+worker nodes and import the bundles in the same way.
+
+Nodes that run only the controller role don't use the image bundle. They run the
+control plane components directly from the k0s binary instead of containers.
 
 ```console
 # mkdir -p /var/lib/k0s/images
@@ -113,9 +119,10 @@ nodes don't use it.
 ### Via k0sctl
 
 As an alternative to the previous step, you can use `k0sctl` to upload image
-bundles to worker nodes. `k0sctl` can also be used to upload the k0s binary file
-to all nodes. Take a look at this example configuration with one controller and
-one worker node to upload k0s binary and an image bundle:
+bundles to the nodes that run the worker role. `k0sctl` can also be used to
+upload the k0s binary file to all nodes. Take a look at this example
+configuration with one controller and one worker node to upload k0s binary and
+an image bundle:
 
 ```yaml
 apiVersion: k0sctl.k0sproject.io/v1beta1
@@ -157,6 +164,9 @@ spec:
           dstDir: /var/lib/k0s/images
           perm: 0755
 ```
+
+Add the same `files` entry to hosts that combine both roles, such as
+controller+worker hosts of a single node cluster.
 
 ## Disable image pulling (optional)
 
