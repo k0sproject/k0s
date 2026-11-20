@@ -101,6 +101,8 @@ the following conditions:
   within the `svc` or cluster domains.
 - No requested IP address is a loopback, link-local, multicast or unspecified
   address. Kubelets never claim such addresses for themselves.
+- If [`spec.network.nodeAddresses`] is configured, the requested DNS names and
+  IP addresses are inside the node address space declared there.
 - The node exists in the cluster.
 - The node's `status.addresses` contains no more than 4096 entries.
 - The requested DNS names and IP addresses are all listed in the node's
@@ -118,8 +120,42 @@ controller --disable-components csr-approver`. In that case, kubelet serving
 certificates need to be approved by some other means, otherwise the affected
 kubelet APIs remain unavailable.
 
+#### Trust model
+
+A worker join token yields an arbitrary node identity, and a node vouches for
+its own addresses. Anyone who holds a worker join token can therefore make a
+node report addresses that belong to other machines, such as the API server's
+external address or another node's address, and obtain a serving certificate
+for them that is signed by the cluster CA.
+
+The [`spec.network.nodeAddresses`] setting bounds what nodes can vouch for. It
+declares the CIDRs and DNS name patterns that the cluster's nodes live in, and
+the CSR approver refuses any name or address outside of them. For example:
+
+```yaml
+spec:
+  network:
+    nodeAddresses:
+      cidrs:
+        - 10.0.0.0/16
+        - 2001:db8:1::/64
+      dnsNames:
+        - "worker-*"
+        - "*.nodes.example.internal"
+```
+
+When starting, the CSR approver warns about every name and address from
+`spec.api.address`, `spec.api.externalAddress`, `spec.api.sans` and the control
+plane load balancing virtual IPs that falls inside the node address space, since
+nodes can then still obtain certificates for the control plane's identity. That
+is unavoidable for controllers that run workloads, but it is worth knowing
+about. If the address space can't be bounded in a meaningful way, consider
+verifying node addresses out of band with a third-party approver and disabling
+k0s's CSR approver.
+
 [Certificate Signing Requests]: https://kubernetes.io/docs/reference/access-authn-authz/certificate-signing-requests/
 [Kubernetes Metrics Server]: https://github.com/kubernetes-sigs/metrics-server
+[`spec.network.nodeAddresses`]: configuration.md#specnetworknodeaddresses
 
 ## IPTables Mode
 

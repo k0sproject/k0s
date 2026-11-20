@@ -38,6 +38,10 @@ type Network struct {
 	// control plane load balancing feature.
 	ControlPlaneLoadBalancing *ControlPlaneLoadBalancingSpec `json:"controlPlaneLoadBalancing,omitempty"`
 
+	// NodeAddresses restricts the addresses that nodes are allowed to claim.
+	// +optional
+	NodeAddresses NodeAddresses `json:"nodeAddresses,omitzero"`
+
 	// Pod network CIDR to use in the cluster
 	// +kubebuilder:default="10.244.0.0/16"
 	PodCIDR string `json:"podCIDR,omitempty"`
@@ -167,6 +171,9 @@ func (n *Network) Validate() []error {
 		errors = append(errors, err)
 	}
 	for _, err := range n.ControlPlaneLoadBalancing.Validate(field.NewPath("controlPlaneLoadBalancing")) {
+		errors = append(errors, err)
+	}
+	for _, err := range n.NodeAddresses.Validate(field.NewPath("nodeAddresses")) {
 		errors = append(errors, err)
 	}
 

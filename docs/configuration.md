@@ -428,6 +428,23 @@ Configuration options required for using VRRP to configure VIPs in control plane
 | `lbKind`                    | Kind of IPVS load balancer. Supported values: `NAT`, `DR`, `TUN`. Default: `DR`.                                                           |
 | `persistenceTimeoutSeconds` | Timeout for persistent connections in seconds. Must be in the range of 1-2678400 (31 days). If not specified, defaults to 360 (6 minutes). |
 
+#### `spec.network.nodeAddresses`
+
+Restricts the names and addresses that nodes may claim. If set, k0s's
+`csr-approver` component refuses [kubelet serving certificates] for names and
+addresses outside of it. If unset, which is the default, only the node's own
+status decides, in addition to the deny list for in-cluster names and addresses
+that always applies. Like `serviceCIDR`, this is read by each controller at
+startup and isn't part of the [dynamic configuration].
+
+| Element    | Description                                                                                                                                                                                                                                  |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cidrs`    | List of CIDRs that contain the nodes' IP addresses. IP addresses outside of all of them are refused. If empty, IP addresses are unrestricted.                                                                                                |
+| `dnsNames` | List of patterns for the nodes' DNS names. DNS names matching none of them are refused. Patterns are matched case-insensitively, and `*` matches any sequence of characters within a single DNS label. If empty, DNS names are unrestricted. |
+
+[kubelet serving certificates]: worker-node-config.md#kubelet-serving-certificates
+[dynamic configuration]: dynamic-configuration.md
+
 ### `spec.controllerManager`
 
 | Element     | Description                                                                                                                                                                                                                                                                            |
