@@ -63,7 +63,7 @@ etcd_build_go_ldflags = -w -s
 #etcd_build_go_ldflags_extra =
 
 # renovate: datasource=github-tags depName=kubernetes-sigs/apiserver-network-proxy
-konnectivity_version_and_rev = 0.37.0@ed32d91095e040b9f5c4cc6d01281fb21cd46dab
+konnectivity_version_and_rev = 0.37.1@fd1351124d4fd9f962b8aedc2ac433eeed55cc64
 konnectivity_revision = $(word 2,$(subst @, ,$(konnectivity_version_and_rev)))
 konnectivity_version = $(word 1,$(subst @, ,$(konnectivity_version_and_rev)))
 konnectivity_buildimage = $(golang_buildimage)
