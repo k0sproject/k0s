@@ -13,11 +13,10 @@ import (
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/build"
-	"github.com/k0sproject/k0s/pkg/component/controller/leasecounter"
+	"github.com/k0sproject/k0s/pkg/kubernetes"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/kubernetes"
 )
 
 // ClusterInfo holds cluster related information that the update server can use to determine which updates to push to clusters
@@ -38,9 +37,10 @@ type WorkerData struct {
 }
 
 type ClusterInfoCollector struct {
-	client          kubernetes.Interface
-	storageType     v1beta1.StorageType
-	networkProvider string
+	clientFactory        kubernetes.ClientFactoryInterface
+	storageType          v1beta1.StorageType
+	networkProvider      string
+	numActiveControllers func() uint
 }
 
 func (ci *ClusterInfo) AsMap() map[string]string {
@@ -62,11 +62,12 @@ func (ci *ClusterInfo) AsMap() map[string]string {
 
 }
 
-func NewClusterInfoCollector(nodeConfig *v1beta1.ClusterConfig, client kubernetes.Interface) *ClusterInfoCollector {
+func NewClusterInfoCollector(nodeConfig *v1beta1.ClusterConfig, clientFactory kubernetes.ClientFactoryInterface, numActiveControllers func() uint) *ClusterInfoCollector {
 	return &ClusterInfoCollector{
-		client:          client,
-		storageType:     nodeConfig.Spec.Storage.Type,
-		networkProvider: nodeConfig.Spec.Network.Provider,
+		clientFactory:        clientFactory,
+		storageType:          nodeConfig.Spec.Storage.Type,
+		networkProvider:      nodeConfig.Spec.Network.Provider,
+		numActiveControllers: numActiveControllers,
 	}
 }
 
@@ -80,7 +81,11 @@ func (c *ClusterInfoCollector) CollectData(ctx context.Context) (*ClusterInfo, e
 	}
 
 	// Collect cluster ID
-	ns, err := c.client.CoreV1().Namespaces().Get(ctx,
+	client, err := c.clientFactory.GetClient()
+	if err != nil {
+		return nil, err
+	}
+	ns, err := client.CoreV1().Namespaces().Get(ctx,
 		metav1.NamespaceSystem,
 		metav1.GetOptions{})
 	if err != nil {
@@ -90,7 +95,7 @@ func (c *ClusterInfoCollector) CollectData(ctx context.Context) (*ClusterInfo, e
 	ci.ClusterID = ns.UID
 
 	// Collect worker node infos
-	wns, err := c.client.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
+	wns, err := client.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return ci, err
 	}
@@ -120,12 +125,9 @@ func (c *ClusterInfoCollector) CollectData(ctx context.Context) (*ClusterInfo, e
 		ci.WorkerData.Runtimes[runtime]++
 	}
 
-	// Collect control plane node count
-	activeLeases, err := leasecounter.ActiveLeases(ctx, c.client)
-	if err != nil {
-		return ci, fmt.Errorf("can't collect control plane nodes count: %w", err)
-	}
-	ci.ControlPlaneNodesCount = uint(len(activeLeases))
+	// Collect control plane node count. The controller collecting the data is
+	// running, so there's at least one, even if the count isn't known yet.
+	ci.ControlPlaneNodesCount = max(c.numActiveControllers(), 1)
 
 	return ci, nil
 }

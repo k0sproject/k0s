@@ -33,7 +33,6 @@ type plansSingleControllerSuite struct {
 var envTemplate = `
 export K0S_UPDATE_SERVER={{.Address}}
 export K0S_UPDATE_PERIOD=1m
-export K0S_UPDATE_CHECK_INTERVAL=1m
 `
 
 // SetupTest prepares the controller and filesystem, getting it into a consistent
