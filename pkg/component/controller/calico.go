@@ -79,6 +79,8 @@ type calicoNodeConfig struct {
 
 type calicoClusterConfig struct {
 	MTU                  int
+	MTU6                 int
+	PodMTU               int
 	Mode                 calicoMode
 	VxlanPort            int
 	VxlanVNI             int
@@ -317,6 +319,7 @@ func (c *Calico) getConfig(clusterConfig *v1beta1.ClusterConfig) (*calicoCluster
 	isDualStack := clusterConfig.Spec.Network.DualStack.Enabled
 	config := calicoClusterConfig{
 		MTU:                        clusterConfig.Spec.Network.Calico.MTU,
+		MTU6:                       clusterConfig.Spec.Network.Calico.MTU6,
 		VxlanPort:                  clusterConfig.Spec.Network.Calico.VxlanPort,
 		VxlanVNI:                   clusterConfig.Spec.Network.Calico.VxlanVNI,
 		EnableWireguard:            clusterConfig.Spec.Network.Calico.EnableWireguard,
@@ -335,6 +338,8 @@ func (c *Calico) getConfig(clusterConfig *v1beta1.ClusterConfig) (*calicoCluster
 		PullPolicy:                 clusterConfig.Spec.Images.DefaultPullPolicy,
 	}
 
+	config.PodMTU = calicoPodMTU(config.MTU, config.MTU6, config.EnableIPv6)
+
 	switch clusterConfig.Spec.Network.Calico.Mode {
 	case v1beta1.CalicoModeBIRD, v1beta1.CalicoModeIPIP:
 		config.Mode = calicoModeBIRD
@@ -345,6 +350,19 @@ func (c *Calico) getConfig(clusterConfig *v1beta1.ClusterConfig) (*calicoCluster
 	}
 
 	return &config, nil
+}
+
+// Pods have a single MTU for both address families, so it has to fit into the
+// IPv4 and the IPv6 tunnels, if IPv6 is enabled. A zero MTU lets Calico detect
+// it on each node, in which case Calico picks the pod MTU as well.
+func calicoPodMTU(mtu, mtu6 int, enableIPv6 bool) int {
+	if !enableIPv6 {
+		return mtu
+	}
+	if mtu == 0 || mtu6 == 0 {
+		return 0
+	}
+	return min(mtu, mtu6)
 }
 
 // Stop implements [manager.Component].
