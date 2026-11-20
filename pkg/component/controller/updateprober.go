@@ -5,6 +5,7 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"time"
@@ -18,6 +19,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
+	"github.com/k0sproject/k0s/pkg/leaderelection"
 
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -36,6 +38,7 @@ type UpdateProber struct {
 	log             logrus.FieldLogger
 	leaderElector   leaderelector.Interface
 	collector       *updates.ClusterInfoCollector
+	stop            func()
 }
 
 func NewUpdateProber(apClientFactory kubeutil.ClientFactoryInterface, leaderElector leaderelector.Interface, collector *updates.ClusterInfoCollector) *UpdateProber {
@@ -51,53 +54,51 @@ func (u *UpdateProber) Init(ctx context.Context) error {
 	return nil
 }
 
-func (u *UpdateProber) Start(ctx context.Context) error {
-	u.log.Debug("starting up")
-	// Check for updates in 30min intervals from default update server
-	// ENV var only to be used for testing purposes
-	updateCheckInterval := 30 * time.Minute
-	if os.Getenv("K0S_UPDATE_CHECK_INTERVAL") != "" {
-		d, err := time.ParseDuration(os.Getenv("K0S_UPDATE_CHECK_INTERVAL"))
-		if err != nil {
-			u.log.Warnf("failed to parse K0S_UPDATE_CHECK_INTERVAL, using default value of 30mins: %s", err.Error())
-		} else {
-			updateCheckInterval = d
-		}
-	}
-	u.log.Debugf("using interval %s", updateCheckInterval.String())
+func (u *UpdateProber) Start(context.Context) error {
+	proberCtx, cancel := context.WithCancelCause(context.Background())
+	done := make(chan struct{})
+	stopErr := errors.New("update prober is stopping")
+
 	go func() {
-		ticker := time.NewTicker(updateCheckInterval)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ticker.C:
-				u.checkUpdates(ctx)
-			case <-ctx.Done():
-				return
+		defer close(done)
+		u.log.Debug("Checking for updates roughly every 30 minutes")
+		leaderelection.RunLeaderTasks(proberCtx, u.leaderElector.CurrentStatus, func(ctx context.Context) {
+			for {
+				if err := u.checkUpdates(ctx); err != nil && !errors.Is(err, stopErr) && !errors.Is(err, proberCtx.Err()) {
+					u.log.WithError(err).Error("Failed to check for updates")
+				}
+
+				select {
+				// [1600, 2000] seconds, i.e. 30m ± 3m20s
+				case <-time.After(wait.Jitter(1600*time.Second, 0.25)):
+				case <-ctx.Done():
+					return
+				}
 			}
-		}
+		})
 	}()
+
+	u.stop = func() { cancel(stopErr); <-done }
+
 	return nil
 }
 
 func (u *UpdateProber) Stop() error {
+	if stop := u.stop; stop != nil {
+		stop()
+	}
 	return nil
 }
 
-func (u *UpdateProber) checkUpdates(ctx context.Context) {
-	if !u.leaderElector.IsLeader() {
-		u.log.Debug("not leader, skipping check")
-	}
-
+func (u *UpdateProber) checkUpdates(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
 	defer cancel()
 
 	if reason, err := u.skipUpdateCheck(ctx); err != nil {
-		u.log.WithError(err).Warn("Skipping update check")
-		return
+		return err
 	} else if reason != "" {
 		u.log.WithField("reason", reason).Info("Skipping update check")
-		return
+		return nil
 	}
 
 	u.log.Debug("checking updates")
@@ -110,8 +111,7 @@ func (u *UpdateProber) checkUpdates(ctx context.Context) {
 	u.log.Debugf("using update server: %s", updateServer)
 	uc, err := channels.NewChannelClient(updateServer, "latest", "")
 	if err != nil {
-		u.log.Errorf("failed to create update channel client: %s", err.Error())
-		return
+		return fmt.Errorf("failed to create update channel client: %w", err)
 	}
 
 	// Collect cluster info
@@ -123,8 +123,7 @@ func (u *UpdateProber) checkUpdates(ctx context.Context) {
 		ci, err = u.collector.CollectData(ctx)
 		return
 	}); err != nil {
-		u.log.Errorf("failed to collect cluster info: %s", err.Error())
-		return
+		return fmt.Errorf("failed to collect cluster info: %w", err)
 	}
 	extraHeaders := ci.AsMap()
 	u.log.Debugf("checking for updates from %s", updateServer)
@@ -138,18 +137,16 @@ func (u *UpdateProber) checkUpdates(ctx context.Context) {
 		v, err = uc.GetLatest(ctx, extraHeaders)
 		return
 	}); err != nil {
-		u.log.Errorf("failed to get latest version: %s", err.Error())
-		return
+		return fmt.Errorf("failed to detect latest version: %w", err)
 	}
 	u.log.Debugf("got latest version: %s", v.Version)
 
 	// Check if current version is outdated
 	if isNewer, err := v.IsNewerThan(build.Version); err != nil {
-		u.log.Errorf("failed to compare versions: %s", err.Error())
-		return
+		return fmt.Errorf("failed to compare versions: %w", err)
 	} else if !isNewer {
 		u.log.Debug("No newer version available")
-		return
+		return nil
 	}
 
 	// Create event to notify admin
@@ -191,9 +188,10 @@ func (u *UpdateProber) checkUpdates(ctx context.Context) {
 		}
 		return err
 	}); err != nil {
-		u.log.Errorf("failed to create event: %s", err.Error())
-		return
+		return fmt.Errorf("failed to create event: %w", err)
 	}
+
+	return nil
 }
 
 func (u *UpdateProber) skipUpdateCheck(ctx context.Context) (string, error) {
