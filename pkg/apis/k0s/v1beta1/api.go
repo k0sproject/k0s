@@ -116,25 +116,30 @@ func (a *APISpec) ExternalPort() int {
 
 // APIAddressURL returns kube-apiserver external URI
 func (a *APISpec) APIAddressURL() string {
-	return a.getExternalURIForPort(a.Port)
+	return a.getExternalURIForPort(a.Port, false).String()
 }
 
 // K0sControlPlaneAPIAddress returns the controller join APIs address
 func (a *APISpec) K0sControlPlaneAPIAddress() string {
-	return a.getExternalURIForPort(a.K0sAPIPort)
+	return a.getExternalURIForPort(a.K0sAPIPort, true).String()
 }
 
-func (a *APISpec) getExternalURIForPort(port int) string {
-	addr := a.Address
+// getExternalURIForPort returns the HTTPS URL for port on the external address,
+// or on the address if there's no external address. A port in ExternalAddress
+// is the kube-apiserver port of the load balancer. It's kept as is, unless
+// replacePort is set, in which case port takes its place.
+func (a *APISpec) getExternalURIForPort(port int, replacePort bool) *url.URL {
+	host := a.Address
 	if a.ExternalAddress != "" {
-		// If ExternalAddress is a full host:port address, return it as is
-		if a.ExternalHost() != a.ExternalAddress {
-			return (&url.URL{Scheme: "https", Host: a.ExternalAddress}).String()
+		host = a.ExternalAddress
+		if h, _, err := net.SplitHostPort(a.ExternalAddress); err == nil && h != "" {
+			if !replacePort {
+				return &url.URL{Scheme: "https", Host: a.ExternalAddress}
+			}
+			host = h
 		}
-
-		addr = a.ExternalAddress
 	}
-	return (&url.URL{Scheme: "https", Host: net.JoinHostPort(addr, strconv.Itoa(port))}).String()
+	return &url.URL{Scheme: "https", Host: net.JoinHostPort(host, strconv.Itoa(port))}
 }
 
 func isAnyAddress(address string) bool {
@@ -165,8 +170,8 @@ func (a *APISpec) Validate() []error {
 
 	if a.ExternalAddress != "" {
 		validateIPAddressOrDNSName(field.NewPath("externalAddress"), a.ExternalHost())
-		if isAnyAddress(a.ExternalAddress) {
-			errors = append(errors, field.Invalid(field.NewPath("externalAddress"), a.Address, "invalid INADDR_ANY"))
+		if isAnyAddress(a.ExternalHost()) {
+			errors = append(errors, field.Invalid(field.NewPath("externalAddress"), a.ExternalAddress, "invalid INADDR_ANY"))
 		}
 	}
 
