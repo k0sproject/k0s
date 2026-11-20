@@ -7,6 +7,9 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/k0sproject/k0s/internal/featuregate"
+
+	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -97,6 +100,48 @@ func TestLogLevelsFlagSet(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			var underTest logLevelsFlag
 			assert.ErrorContains(t, underTest.Set(test.input), test.msg)
+		})
+	}
+}
+
+func TestFeatureGatesFlag(t *testing.T) {
+	t.Run("worker", func(t *testing.T) {
+		t.Cleanup(func() { featuregate.FlushDefaultFeatureGates(t) })
+
+		flags := GetWorkerFlags()
+		require.NoError(t, flags.Parse([]string{"--feature-gates=IPv6SingleStack=true"}))
+		assert.True(t, featuregate.IsEnabled(featuregate.IPv6SingleStack))
+	})
+
+	t.Run("worker_unknown_gate", func(t *testing.T) {
+		t.Cleanup(func() { featuregate.FlushDefaultFeatureGates(t) })
+
+		flags := GetWorkerFlags()
+		assert.ErrorContains(t, flags.Parse([]string{"--feature-gates=Unknown=true"}), `unknown feature gate "Unknown"`)
+	})
+
+	for _, test := range []struct {
+		name string
+		args []string
+		mode ControllerMode
+	}{
+		{"controller", nil, ControllerOnlyMode},
+		{"controller_with_worker", []string{"--enable-worker"}, ControllerPlusWorkerMode},
+		{"single_node", []string{"--single"}, SingleNodeMode},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Cleanup(func() { featuregate.FlushDefaultFeatureGates(t) })
+
+			var controllerOpts ControllerOptions
+			flags := pflag.NewFlagSet("controller", pflag.ContinueOnError)
+			flags.AddFlagSet(GetControllerFlags(&controllerOpts))
+			flags.AddFlagSet(GetWorkerFlags())
+
+			args := append([]string{"--feature-gates=IPv6SingleStack=true"}, test.args...)
+			require.NoError(t, flags.Parse(args))
+			assert.Equal(t, test.mode, controllerOpts.Mode())
+			assert.Equal(t, "IPv6SingleStack=true", controllerOpts.FeatureGates.String())
+			assert.True(t, featuregate.IsEnabled(featuregate.IPv6SingleStack))
 		})
 	}
 }
