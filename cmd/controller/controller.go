@@ -683,11 +683,12 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 		logrus.Info("Telemetry is disabled")
 	}
 
+	clusterInfoCollector := updates.NewClusterInfoCollector(nodeConfig, adminClientFactory, func() uint {
+		num, _ := numActiveControllers.Peek()
+		return num
+	})
+
 	if !disableAutopilot {
-		client, err := adminClientFactory.GetClient()
-		if err != nil {
-			return err
-		}
 		apiAddress, err := netip.ParseAddr(nodeConfig.Spec.API.Address)
 		if err != nil {
 			return fmt.Errorf("failed to parse API address: %w", err)
@@ -700,20 +701,16 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 			KubeAPIPort:          nodeConfig.Spec.API.Port,
 			AdminClientFactory:   adminClientFactory,
 			LeaderElector:        leaderElector,
-			ClusterInfoCollector: updates.NewClusterInfoCollector(nodeConfig, client),
+			ClusterInfoCollector: clusterInfoCollector,
 			Workloads:            controllerMode.WorkloadsEnabled(),
 		})
 	}
 
 	if !slices.Contains(flags.DisableComponents, constant.UpdateProberComponentName) {
-		client, err := adminClientFactory.GetClient()
-		if err != nil {
-			return err
-		}
 		clusterComponents.Add(ctx, controller.NewUpdateProber(
 			adminClientFactory,
 			leaderElector,
-			updates.NewClusterInfoCollector(nodeConfig, client),
+			clusterInfoCollector,
 		))
 	}
 
