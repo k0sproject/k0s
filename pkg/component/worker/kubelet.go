@@ -85,6 +85,10 @@ func (k *Kubelet) lookupNodeName(ctx context.Context) (ipv4, ipv6 net.IP, _ erro
 	}
 
 	for _, addr := range ipaddrs {
+		if addr.IP.IsLoopback() || addr.IP.IsLinkLocalUnicast() || addr.IP.IsUnspecified() {
+			continue
+		}
+
 		if ipv4 == nil && addr.IP.To4() != nil {
 			ipv4 = addr.IP
 		} else if ipv6 == nil && addr.IP.To16() != nil && addr.IP.To4() == nil {
