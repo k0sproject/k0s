@@ -6,6 +6,7 @@
 package backup
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -33,7 +34,7 @@ func (c configurationStep) Name() string {
 	return "k0s-config"
 }
 
-func (c configurationStep) Backup() (StepResult, error) {
+func (c configurationStep) Backup(context.Context) (StepResult, error) {
 	return StepResult{filesForBackup: []string{c.cfgPath}}, nil
 }
 
