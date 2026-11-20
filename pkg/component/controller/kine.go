@@ -33,8 +33,9 @@ const kineGID = 0
 
 // Kine implement the component interface to run kine
 type Kine struct {
-	Config  *v1beta1.KineConfig
-	K0sVars *config.CfgVars
+	Config   *v1beta1.KineConfig
+	K0sVars  *config.CfgVars
+	UserName string
 
 	supervisor     *supervisor.Supervisor
 	executablePath string
@@ -49,9 +50,9 @@ var _ manager.Ready = (*Kine)(nil)
 func (k *Kine) Init(_ context.Context) error {
 	logrus.Infof("initializing kine")
 	var err error
-	k.uid, err = users.LookupUID(constant.KineUser)
+	k.uid, err = users.LookupUID(k.UserName)
 	if err != nil {
-		err = fmt.Errorf("failed to lookup UID for %q: %w", constant.KineUser, err)
+		err = fmt.Errorf("failed to lookup UID for %q: %w", k.UserName, err)
 		k.uid = users.RootUID
 		logrus.WithError(err).Warn("Running kine as root")
 	}
