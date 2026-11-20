@@ -20,7 +20,6 @@ import (
 	"github.com/k0sproject/k0s/pkg/constant"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
@@ -67,7 +66,6 @@ func (r *Repository) IsInsecure() bool {
 type ClientGetter interface {
 	GetRESTConfig() (*rest.Config, error)
 	GetClient() (kubernetes.Interface, error)
-	GetDiscoveryClient() (discovery.CachedDiscoveryInterface, error)
 }
 
 // Commands run different helm command in the same way as CLI tool
