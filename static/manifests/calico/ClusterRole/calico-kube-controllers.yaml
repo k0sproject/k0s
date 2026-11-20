@@ -41,6 +41,23 @@ rules:
       - list
       - update
       - watch
+  # ServiceAccounts are listed by the namespace controller for
+  # serviceaccount-based namespace isolation.
+  - apiGroups: [""]
+    resources:
+      - serviceaccounts
+    verbs:
+      - get
+      - list
+      - watch
+  # Kubernetes NetworkPolicies are watched by the policy controller.
+  - apiGroups: ["networking.k8s.io"]
+    resources:
+      - networkpolicies
+    verbs:
+      - get
+      - list
+      - watch
   # IPAM resources are manipulated in response to node and block updates, as well as periodic triggers.
   - apiGroups: ["projectcalico.org", "crd.projectcalico.org"]
     resources:
