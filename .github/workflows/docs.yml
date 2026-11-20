@@ -17,6 +17,10 @@ on:
       - '**.md'
       - .github/workflows/docs.yml
       - .markdownlint.jsonc
+
+permissions:
+  contents: read
+
 jobs:
   lint:
     name: Lint markdown

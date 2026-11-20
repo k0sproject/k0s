@@ -3,6 +3,9 @@ name: Merge
 on:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   check_for_merge_commit:
     name: mergeable

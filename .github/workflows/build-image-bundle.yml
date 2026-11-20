@@ -26,6 +26,9 @@ on:
 env:
   MAKEFLAGS: -j
 
+permissions:
+  contents: read
+
 jobs:
   build:
     name: "${{ inputs.image-bundle-name }}-${{ inputs.image-bundle-platform }}"
