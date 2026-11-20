@@ -23,6 +23,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/sirupsen/logrus"
 )
@@ -113,15 +114,15 @@ func (u *UpdateProber) checkUpdates(ctx context.Context) {
 		return
 	}
 
-	kc, err := u.APClientFactory.GetClient()
-	if err != nil {
-		u.log.Errorf("failed to create k8s client: %s", err.Error())
-		return
-	}
-
 	// Collect cluster info
-	ci, err := u.collector.CollectData(ctx)
-	if err != nil {
+	var ci *updates.ClusterInfo
+	if err := u.retryOnError(ctx, func(err error) bool {
+		u.log.WithError(err).Debug("Failed to collect cluster info, retrying after backoff")
+		return true
+	}, func(ctx context.Context) (err error) {
+		ci, err = u.collector.CollectData(ctx)
+		return
+	}); err != nil {
 		u.log.Errorf("failed to collect cluster info: %s", err.Error())
 		return
 	}
@@ -129,23 +130,41 @@ func (u *UpdateProber) checkUpdates(ctx context.Context) {
 	u.log.Debugf("checking for updates from %s", updateServer)
 
 	// Check for updates
-	v, err := uc.GetLatest(ctx, extraHeaders)
-	if err != nil {
+	var v channels.VersionInfo
+	if err := u.retryOnError(ctx, func(err error) bool {
+		u.log.WithError(err).Debug("Failed to detect latest version, retrying after backoff")
+		return true
+	}, func(ctx context.Context) (err error) {
+		v, err = uc.GetLatest(ctx, extraHeaders)
+		return
+	}); err != nil {
 		u.log.Errorf("failed to get latest version: %s", err.Error())
 		return
 	}
 	u.log.Debugf("got latest version: %s", v.Version)
 
 	// Check if current version is outdated
-	isNewer, err := v.IsNewerThan(build.Version)
-	if err != nil {
+	if isNewer, err := v.IsNewerThan(build.Version); err != nil {
 		u.log.Errorf("failed to compare versions: %s", err.Error())
 		return
+	} else if !isNewer {
+		u.log.Debug("No newer version available")
+		return
 	}
-	if isNewer {
-		// Create event to notify admin
-		u.log.Infof("New version available: %s", v.Version)
-		name := fmt.Sprintf("k0s-update-probe-%s-%d", v.Version, time.Now().Unix())
+
+	// Create event to notify admin
+	message := "New version available: " + v.Version
+	u.log.Info(message)
+	name := fmt.Sprintf("k0s-update-probe-%s-%d", v.Version, time.Now().Unix())
+	if err := u.retryOnError(ctx, func(err error) bool {
+		u.log.WithError(err).Debug("Failed to create event, retrying after backoff")
+		return true
+	}, func(ctx context.Context) error {
+		kc, err := u.APClientFactory.GetClient()
+		if err != nil {
+			return fmt.Errorf("failed to create k8s client: %w", err)
+		}
+
 		e := corev1.Event{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      name,
@@ -159,45 +178,76 @@ func (u *UpdateProber) checkUpdates(ctx context.Context) {
 				UID:        ci.ClusterID,
 			},
 			Reason:  "NewVersionAvailable",
-			Message: "New version available: " + v.Version,
+			Message: message,
 			Type:    "Normal",
 			Source: corev1.EventSource{
 				Component: "k0s",
 			},
 		}
-		if _, err := kc.CoreV1().Events(metav1.NamespaceSystem).Create(ctx, &e, metav1.CreateOptions{}); err != nil {
-			u.log.Errorf("failed to create event: %s", err.Error())
-			return
+		_, err = kc.CoreV1().Events(metav1.NamespaceSystem).Create(ctx, &e, metav1.CreateOptions{})
+		// A previous attempt may have created the event despite failing.
+		if apierrors.IsAlreadyExists(err) {
+			err = nil
 		}
-	} else {
-		u.log.Debugf("no newer version availablen")
+		return err
+	}); err != nil {
+		u.log.Errorf("failed to create event: %s", err.Error())
+		return
 	}
 }
 
 func (u *UpdateProber) skipUpdateCheck(ctx context.Context) (string, error) {
 	// Check if there's an active UpdateConfig, if there is no need to do this generic polling
-	client, err := u.APClientFactory.GetMetadataClient()
-	if err != nil {
-		return "", fmt.Errorf("failed to create k8s client: %w", err)
+
+	var updateConfigs *metav1.PartialObjectMetadataList
+	if err := u.retryOnError(
+		ctx,
+		func(err error) bool {
+			u.log.WithError(err).Debug("Failed to list update configs, retrying after backoff")
+			return true
+		},
+		func(ctx context.Context) error {
+			client, err := u.APClientFactory.GetMetadataClient()
+			if err != nil {
+				return fmt.Errorf("failed to create k8s client: %w", err)
+			}
+			updateConfigs, err = client.Resource(schema.GroupVersionResource{
+				Group:    apv1beta2.GroupVersion.Group,
+				Version:  apv1beta2.GroupVersion.Version,
+				Resource: "updateconfigs",
+			}).List(ctx, metav1.ListOptions{})
+			if apierrors.IsNotFound(err) {
+				err = nil
+			}
+			return err
+		},
+	); err != nil {
+		return "", err
 	}
 
-	updateConfigs, err := client.Resource(schema.GroupVersionResource{
-		Group:    apv1beta2.GroupVersion.Group,
-		Version:  apv1beta2.GroupVersion.Version,
-		Resource: "updateconfigs",
-	}).List(ctx, metav1.ListOptions{})
-	if err != nil {
-		if apierrors.IsNotFound(err) {
-			return "", nil
+	if updateConfigs != nil {
+		numUpdateConfigs := len(updateConfigs.Items)
+		u.log.Debugf("Found %d update configs", numUpdateConfigs)
+		if numUpdateConfigs > 0 {
+			return "some Autopilot update configs exist in the cluster", nil
 		}
-		return "", fmt.Errorf("failed to list update configs: %w", err)
-	}
-
-	numUpdateConfigs := len(updateConfigs.Items)
-	u.log.Debugf("Found %d update configs", numUpdateConfigs)
-	if numUpdateConfigs > 0 {
-		return "some Autopilot update configs exist in the cluster", nil
 	}
 
 	return "", nil
+}
+
+// Attempts to call f seven times, max overall waiting time ~ 32 secs.
+func (*UpdateProber) retryOnError(ctx context.Context, retriable func(error) bool, f func(ctx context.Context) error) error {
+	for attempt, delay := 1, 500*time.Millisecond; ; attempt, delay = attempt+1, delay*2 {
+		err := f(ctx)
+		if err == nil || attempt >= 7 || ctx.Err() != nil || !retriable(err) {
+			return err
+		}
+
+		select {
+		case <-time.After(wait.Jitter(delay, 0.1)):
+		case <-ctx.Done():
+			return fmt.Errorf("%w (last error: %w)", context.Cause(ctx), err)
+		}
+	}
 }
