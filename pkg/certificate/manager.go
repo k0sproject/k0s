@@ -27,6 +27,7 @@ import (
 
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/internal/pkg/stringslice"
+	"github.com/k0sproject/k0s/internal/secret"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 )
@@ -43,7 +44,7 @@ type Request struct {
 
 // Certificate is a helper struct to be able to return the created key and cert data
 type Certificate struct {
-	Key  string
+	Key  secret.Bytes
 	Cert string
 }
 
@@ -112,11 +113,15 @@ func (m *Manager) EnsureCertificate(certReq Request, ownerID int, expiry time.Du
 		req.KeyRequest.S = 2048
 		req.Hosts = stringslice.Unique(certReq.Hostnames)
 
-		var key, csrBytes []byte
+		var (
+			csrBytes []byte
+			key      secret.Bytes
+		)
 		g := &csr.Generator{Validator: genkey.Validator}
-		csrBytes, key, err := g.ProcessRequest(&req)
-		if err != nil {
+		if csr, rawKey, err := g.ProcessRequest(&req); err != nil {
 			return Certificate{}, err
+		} else {
+			csrBytes, key = csr, secret.FromBytes(rawKey)
 		}
 		config := cli.Config{
 			CAFile:    "file:" + certReq.CACert,
@@ -148,10 +153,13 @@ func (m *Manager) EnsureCertificate(certReq Request, ownerID int, expiry time.Du
 			return Certificate{}, err
 		}
 		c := Certificate{
-			Key:  string(key),
+			Key:  key,
 			Cert: string(cert),
 		}
-		err = file.WriteContentAtomically(keyFile, key, constant.CertSecureMode)
+		err = file.AtomicWithTarget(keyFile).WithPermissions(constant.CertSecureMode).Do(func(w file.AtomicWriter) error {
+			_, err := key.Use(w.Write)
+			return err
+		})
 		if err != nil {
 			return Certificate{}, err
 		}
@@ -180,13 +188,13 @@ func (m *Manager) EnsureCertificate(certReq Request, ownerID int, expiry time.Du
 	if err != nil {
 		return Certificate{}, fmt.Errorf("failed to read ca cert %s for %s: %w", certFile, certReq.Name, err)
 	}
-	key, err := os.ReadFile(keyFile)
+	key, err := secret.ReadFile(keyFile)
 	if err != nil {
 		return Certificate{}, fmt.Errorf("failed to read ca key %s for %s: %w", keyFile, certReq.Name, err)
 	}
 
 	return Certificate{
-		Key:  string(key),
+		Key:  key,
 		Cert: string(cert),
 	}, nil
 
