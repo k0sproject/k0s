@@ -23,25 +23,26 @@ import (
 // Some of the variables are duplicates of the ones in the CLIOptions struct
 // for historical and convenience reasons.
 type CfgVars struct {
-	InvocationID               string              // Unique ID for this invocation of k0s
-	AdminKubeConfigPath        string              // The cluster admin kubeconfig location
-	BinDir                     string              // location for all pki related binaries
-	CertRootDir                string              // CertRootDir defines the root location for all pki related artifacts
-	DataDir                    string              // Data directory containing k0s state
-	KubeletRootDir             string              // Root directory for kubelet
-	EtcdCertDir                string              // EtcdCertDir contains etcd certificates
-	EtcdDataDir                string              // EtcdDataDir contains etcd state
-	KineSocketPath             string              // The unix socket path for kine
-	KonnectivitySocketDir      string              // location of konnectivity's socket path
-	KubeletAuthConfigPath      string              // KubeletAuthConfigPath defines the default kubelet auth config path
-	ManifestsDir               string              // location for all stack manifests
-	RunDir                     string              // location of supervised pid files and sockets
-	KonnectivityKubeConfigPath string              // location for konnectivity kubeconfig
-	OCIBundleDir               string              // location for OCI bundles
-	DefaultStorageType         v1beta1.StorageType // Default backend storage
-	RuntimeConfigPath          string              // A static copy of the config loaded at startup
-	StatusSocketPath           string              // The unix socket path for k0s status API
-	StartupConfigPath          string              // The path to the config file used at startup
+	InvocationID                string              // Unique ID for this invocation of k0s
+	AdminKubeConfigPath         string              // The cluster admin kubeconfig location
+	BinDir                      string              // location for all pki related binaries
+	CertRootDir                 string              // CertRootDir defines the root location for all pki related artifacts
+	DataDir                     string              // Data directory containing k0s state
+	KubeletRootDir              string              // Root directory for kubelet
+	EtcdCertDir                 string              // EtcdCertDir contains etcd certificates
+	EtcdDataDir                 string              // EtcdDataDir contains etcd state
+	KineSocketPath              string              // The unix socket path for kine
+	KonnectivitySocketDir       string              // location of konnectivity's socket path
+	KubeletAuthConfigPath       string              // KubeletAuthConfigPath defines the default kubelet auth config path
+	ManifestsDir                string              // location for all stack manifests
+	RunDir                      string              // location of supervised pid files and sockets
+	KonnectivityKubeConfigPath  string              // location for konnectivity kubeconfig
+	K0sControlAPIKubeConfigPath string              // location for the k0s control API kubeconfig
+	OCIBundleDir                string              // location for OCI bundles
+	DefaultStorageType          v1beta1.StorageType // Default backend storage
+	RuntimeConfigPath           string              // A static copy of the config loaded at startup
+	StatusSocketPath            string              // The unix socket path for k0s status API
+	StartupConfigPath           string              // The path to the config file used at startup
 
 	// Helm config
 	HelmHome             string
@@ -163,24 +164,25 @@ func NewCfgVars(cobraCmd command, dirs ...string) (*CfgVars, error) {
 	}
 
 	vars := &CfgVars{
-		InvocationID:               hex.EncodeToString(invocationID[:]),
-		AdminKubeConfigPath:        filepath.Join(certDir, "admin.conf"),
-		BinDir:                     filepath.Join(dataDir, "bin"),
-		OCIBundleDir:               filepath.Join(dataDir, "images"),
-		CertRootDir:                certDir,
-		DataDir:                    dataDir,
-		KubeletRootDir:             kubeletRootDir,
-		EtcdCertDir:                filepath.Join(certDir, "etcd"),
-		EtcdDataDir:                filepath.Join(dataDir, "etcd"),
-		KineSocketPath:             filepath.Join(runDir, constant.KineSocket),
-		KonnectivitySocketDir:      filepath.Join(runDir, "konnectivity-server"),
-		KubeletAuthConfigPath:      filepath.Join(dataDir, "kubelet.conf"),
-		ManifestsDir:               filepath.Join(dataDir, "manifests"),
-		RunDir:                     runDir,
-		KonnectivityKubeConfigPath: filepath.Join(certDir, "konnectivity.conf"),
-		RuntimeConfigPath:          filepath.Join(runDir, "k0s.yaml"),
-		StatusSocketPath:           statusSocketPath,
-		StartupConfigPath:          constant.K0sConfigPathDefault,
+		InvocationID:                hex.EncodeToString(invocationID[:]),
+		AdminKubeConfigPath:         filepath.Join(certDir, "admin.conf"),
+		BinDir:                      filepath.Join(dataDir, "bin"),
+		OCIBundleDir:                filepath.Join(dataDir, "images"),
+		CertRootDir:                 certDir,
+		DataDir:                     dataDir,
+		KubeletRootDir:              kubeletRootDir,
+		EtcdCertDir:                 filepath.Join(certDir, "etcd"),
+		EtcdDataDir:                 filepath.Join(dataDir, "etcd"),
+		KineSocketPath:              filepath.Join(runDir, constant.KineSocket),
+		KonnectivitySocketDir:       filepath.Join(runDir, "konnectivity-server"),
+		KubeletAuthConfigPath:       filepath.Join(dataDir, "kubelet.conf"),
+		ManifestsDir:                filepath.Join(dataDir, "manifests"),
+		RunDir:                      runDir,
+		KonnectivityKubeConfigPath:  filepath.Join(certDir, "konnectivity.conf"),
+		K0sControlAPIKubeConfigPath: filepath.Join(certDir, "k0s-control-api.conf"),
+		RuntimeConfigPath:           filepath.Join(runDir, "k0s.yaml"),
+		StatusSocketPath:            statusSocketPath,
+		StartupConfigPath:           constant.K0sConfigPathDefault,
 
 		// Helm Config
 		HelmHome:             helmHome,
