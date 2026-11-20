@@ -207,19 +207,30 @@ type konnectivityAgentConfig struct {
 
 const konnectivityAgentTemplate = `
 apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: k0s:konnectivity-server
+  labels:
+    kubernetes.io/cluster-service: "true"
+rules:
+  - apiGroups: [authentication.k8s.io]
+    resources: [tokenreviews]
+    verbs: [create]
+---
+apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: system:konnectivity-server
+  name: k0s:konnectivity-server
   labels:
     kubernetes.io/cluster-service: "true"
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: system:auth-delegator
+  name: k0s:konnectivity-server
 subjects:
   - apiGroup: rbac.authorization.k8s.io
     kind: User
-    name: system:konnectivity-server
+    name: k0s:konnectivity-server
 ---
 apiVersion: v1
 kind: ServiceAccount
