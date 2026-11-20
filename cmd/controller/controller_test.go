@@ -32,22 +32,19 @@ func TestControllerCmd_Help(t *testing.T) {
 	assert.Equal(t, `Run controller
 
 Usage:
-  k0s controller [join-token] [flags]
+  k0s controller [flags]
 
 Aliases:
   controller, server
 
 Examples:
 	Command to associate master nodes:
-	CLI argument:
-	$ k0s controller [join-token]
-
-	or CLI flag:
+	CLI flag:
 	$ k0s controller --token-file [path_to_file]
 
 	or environment variable:
 	$ K0S_TOKEN=[token] k0s controller
-	Note: Token can be passed either as a CLI argument, a flag, or an environment variable
+	Note: Passing a join token as a CLI argument is deprecated. Use --token-file or K0S_TOKEN instead.
 
 Flags:
       --api-server-stop-timeout duration               time to wait for the API server to stop

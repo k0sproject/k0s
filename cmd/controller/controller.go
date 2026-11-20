@@ -68,19 +68,16 @@ func NewControllerCmd() *cobra.Command {
 	)
 
 	cmd := &cobra.Command{
-		Use:     "controller [join-token]",
+		Use:     "controller",
 		Short:   "Run controller",
 		Aliases: []string{"server"},
 		Example: `	Command to associate master nodes:
-	CLI argument:
-	$ k0s controller [join-token]
-
-	or CLI flag:
+	CLI flag:
 	$ k0s controller --token-file [path_to_file]
 
 	or environment variable:
 	$ K0S_TOKEN=[token] k0s controller
-	Note: Token can be passed either as a CLI argument, a flag, or an environment variable`,
+	Note: Passing a join token as a CLI argument is deprecated. Use --token-file or K0S_TOKEN instead.`,
 		Args:             cobra.MaximumNArgs(1),
 		PersistentPreRun: debugFlags.Run,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -97,6 +94,7 @@ func NewControllerCmd() *cobra.Command {
 			if err := internal.CheckSingleTokenSource(c.TokenArg, c.TokenFile); err != nil {
 				return err
 			}
+			internal.WarnDeprecatedTokenArg(c.TokenArg)
 			if err := controllerFlags.Normalize(); err != nil {
 				return err
 			}
