@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/k0sproject/k0s/internal/certificate"
 	"github.com/k0sproject/k0s/internal/pkg/users"
-	"github.com/k0sproject/k0s/pkg/certificate"
 	"github.com/k0sproject/k0s/pkg/config"
 
 	"k8s.io/client-go/tools/clientcmd"
