@@ -18,7 +18,7 @@ const (
 	// The nginx HTTP server.
 	//
 	// renovate: versioning=regex:^(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)-alpine(?<build>\d+)\.(?<revision>\d+)$
-	Nginx = "docker.io/library/nginx:1.31.9-alpine3.24@sha256:90b6bd2aec278b16b98221d64deb1d6d35d164567f507ab0716e6053878315aa"
+	Nginx = "docker.io/library/nginx:1.31.9-alpine3.24@sha256:fb4658584bd9a916ffb6f6e365f97c25cfdb2923801f551ea08356e695f14ff7"
 )
 
 // Returns the default Alpine image to be used.
