@@ -31,6 +31,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/etcd"
 	"github.com/k0sproject/k0s/pkg/supervisor"
 )
 
@@ -372,7 +373,7 @@ func addEtcdArgs(args stringmap.StringMap, storage *v1beta1.StorageSpec, k0sVars
 		} // kine endpoint
 		args["etcd-servers"] = sockURL.String()
 	case v1beta1.EtcdStorageType:
-		args["etcd-servers"] = storage.Etcd.GetEndpointsAsString()
+		args["etcd-servers"] = strings.Join(etcd.Endpoints(storage.Etcd, k0sVars.EtcdSocketPath), ",")
 		if storage.Etcd.IsTLSEnabled() {
 			args["etcd-cafile"] = storage.Etcd.GetCaFilePath(k0sVars.EtcdCertDir)
 			args["etcd-certfile"] = storage.Etcd.GetCertFilePath(k0sVars.CertRootDir)
