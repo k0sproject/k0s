@@ -3222,7 +3222,7 @@ The command provides backup archive using following naming convention: <code>k0s
 <p>To output the backup archive to standard output, use <code>-</code> as the save path.</p>
 <h3 id="restore-local">Restore (local)<a class="headerlink" href="#restore-local" title="Permanent link">#</a></h3>
 <p>To restore cluster state from the archive use the following command on the controller node:</p>
-<div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>restore<span class="w"> </span>/tmp/k0s_backup_2021-04-26T19_51_57_000Z.tar.gz
+<div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>restore<span class="w"> </span>/tmp/k0s_backup_2021-04-26T19_51_57_137Z.tar.gz
 </code></pre></div>
 <p>The command would fail if the data directory for the current controller has overlapping data with the backup archive content.</p>
 <p>The command would use the archived <code>k0s.yaml</code> as the cluster configuration description.
