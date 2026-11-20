@@ -175,7 +175,7 @@ func (k *Keepalived) Start(ctx context.Context) error {
 				k.watchReconcilerUpdatesKeepalived(templ)
 			}()
 		} else {
-			if err := k.startReverseProxy(); err != nil {
+			if err := k.startReverseProxy(ctx); err != nil {
 				return fmt.Errorf("failed to start reverse proxy: %w", err)
 			}
 			go func() {
@@ -224,7 +224,7 @@ func (k *Keepalived) Stop() error {
 	}
 
 	// Only clean iptables rules if we are using the userspace reverse proxy
-	return k.redirectToProxyIPTables(iptablesCommandDelete)
+	return k.redirectToProxyIPTables(context.TODO(), iptablesCommandDelete)
 }
 
 // configureDummy creates the dummy interface and sets the virtual IPs on it.
@@ -398,7 +398,7 @@ func (k *Keepalived) generateTemplate(templ *template.Template, path string) err
 	return nil
 }
 
-func (k *Keepalived) startReverseProxy() error {
+func (k *Keepalived) startReverseProxy(ctx context.Context) error {
 	k.proxy = tcpproxy.Proxy{}
 	// We don't know how long until we get the first update, so initially we
 	// forward everything to localhost
@@ -406,7 +406,7 @@ func (k *Keepalived) startReverseProxy() error {
 	if err := k.proxy.Start(); err != nil {
 		return fmt.Errorf("failed to start proxy: %w", err)
 	}
-	return k.redirectToProxyIPTables(iptablesCommandAppend)
+	return k.redirectToProxyIPTables(ctx, iptablesCommandAppend)
 }
 
 func (k *Keepalived) watchReconcilerUpdatesReverseProxy(ctx context.Context) {
@@ -436,7 +436,7 @@ func (k *Keepalived) setProxyRoutes() {
 	k.proxy.SetRoutes(fmt.Sprintf(":%d", k.Config.UserSpaceProxyPort), routes)
 }
 
-func (k *Keepalived) redirectToProxyIPTables(op string) error {
+func (k *Keepalived) redirectToProxyIPTables(ctx context.Context, op string) error {
 	for _, vrrp := range k.Config.VRRPInstances {
 		for _, vipCIDR := range vrrp.VirtualIPs {
 			vip, _, _ := strings.Cut(vipCIDR, "/")
@@ -459,7 +459,7 @@ func (k *Keepalived) redirectToProxyIPTables(op string) error {
 			if ip != nil && ip.To4() == nil {
 				iptablesBin = "ip6tables"
 			}
-			cmd := exec.Command(filepath.Join(k.K0sVars.BinDir, iptablesBin), cmdArgs...)
+			cmd := exec.CommandContext(ctx, filepath.Join(k.K0sVars.BinDir, iptablesBin), cmdArgs...)
 			output, err := cmd.CombinedOutput()
 			if err != nil {
 				return fmt.Errorf("failed to execute iptables command: %w, output: %s", err, output)
