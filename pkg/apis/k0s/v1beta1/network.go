@@ -128,9 +128,6 @@ func (n *Network) Validate() []error {
 	}
 
 	if n.DualStack.Enabled {
-		if n.Provider == "calico" && n.Calico.Mode != CalicoModeBIRD {
-			errors = append(errors, field.Forbidden(field.NewPath("calico", "mode"), fmt.Sprintf("dual-stack for calico is only supported for mode `%s`", CalicoModeBIRD)))
-		}
 		ipv6PodIP, _, err := net.ParseCIDR(n.DualStack.IPv6PodCIDR)
 		if err != nil {
 			errors = append(errors, field.Invalid(field.NewPath("dualStack", "IPv6podCIDR"), n.DualStack.IPv6PodCIDR, "invalid CIDR address"))

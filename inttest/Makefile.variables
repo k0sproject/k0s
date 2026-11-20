@@ -47,6 +47,7 @@ smoketests := \
 	check-disabledcomponents \
 	check-dualstack-calico \
 	check-dualstack-calico-dynamicconfig \
+	check-dualstack-calico-vxlan \
 	check-dualstack-kuberouter \
 	check-dualstack-kuberouter-dynamicconfig \
 	check-embedded-binaries \

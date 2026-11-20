@@ -384,6 +384,18 @@ func (s *NetworkSuite) TestValidation() {
 		s.Empty(n.Validate())
 	})
 
+	s.Run("calico_dualstack_vxlan", func() {
+		n := DefaultNetwork()
+		n.Calico = DefaultCalico()
+		n.Calico.Mode = CalicoModeVXLAN
+		n.DualStack = DefaultDualStack()
+		n.DualStack.Enabled = true
+		n.KubeProxy.Mode = "ipvs"
+		n.DualStack.IPv6PodCIDR = "fd00::/108"
+		n.DualStack.IPv6ServiceCIDR = "fdc0:1::/104"
+		s.Empty(n.Validate())
+	})
+
 	s.Run("invalid_ipv6_pod_cidr", func() {
 		n := DefaultNetwork()
 		n.Calico = DefaultCalico()
