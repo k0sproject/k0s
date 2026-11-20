@@ -48,11 +48,18 @@ written with mode `0600`.
 
 Inside `<run-dir>` (default `/run/k0s`):
 
-| Path                    | Purpose                                                                 | Mode            |
-| ----------------------- | ----------------------------------------------------------------------- | --------------- |
-| `<run-dir>/`            | Top-level run directory.                                                | `0755`          |
-| `<run-dir>/*.pid`       | PID files for supervised processes (kubelet, etcd, containerd, …).      | `0644`          |
-| `<run-dir>/status.sock` | Unix socket exposing local status to `k0s status` and similar commands. | (process umask) |
+| Path                            | Purpose                                                                           | Mode            |
+| ------------------------------- | --------------------------------------------------------------------------------- | --------------- |
+| `<run-dir>/`                    | Top-level run directory.                                                          | `0755`          |
+| `<run-dir>/*.pid`               | PID files for supervised processes (kubelet, etcd, containerd, …).                | `0644`          |
+| `<run-dir>/status.sock`         | Unix socket exposing local status to `k0s status` and similar commands.           | (process umask) |
+| `<run-dir>/etcd/`               | Directory of the embedded etcd's client socket, owned by the etcd user.           | `0755`          |
+| `<run-dir>/etcd/localhost:2379` | TLS unix socket of the embedded etcd. k0s components connect to etcd through it.¹ | `0666`          |
+
+¹ This path is stable, so tools on the node can connect to etcd at
+`unixs://<run-dir>/etcd/localhost:2379` with the etcd client certificates. The
+name is not a TCP address. See [etcd client
+URLs](configuration.md#specstorageetcdextraargs-client-urls).
 
 The run directory is intentionally outside the data directory so that on
 systems where `/run` is a tmpfs, runtime state is cleared on reboot while

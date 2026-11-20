@@ -12,8 +12,8 @@ import (
 )
 
 // CheckEtcdReady returns true if etcd responds to the metrics endpoint with a status code of 200
-func CheckEtcdReady(ctx context.Context, certDir string, etcdCertDir string, etcdConf *v1beta1.EtcdConfig) error {
-	c, err := NewClient(certDir, etcdCertDir, etcdConf)
+func CheckEtcdReady(ctx context.Context, certDir, etcdCertDir, etcdSocketPath string, etcdConf *v1beta1.EtcdConfig) error {
+	c, err := NewClient(certDir, etcdCertDir, etcdSocketPath, etcdConf)
 	if err != nil {
 		logrus.Errorf("failed to initialize etcd client: %v", err)
 		return err
