@@ -57,6 +57,11 @@ spec:
                         description: The expiration duration of the CA certificate
                         type: string
                     type: object
+                  clusterInfoDiscovery:
+                    description: |-
+                      Publishes cluster-info and what nodes joining via bootstrap tokens read, and lets anonymous users read cluster-info.
+                      The latter is skipped if authentication-config, anonymous-auth or OIDC flags are set via extraArgs or rawArgs.
+                    type: boolean
                   externalAddress:
                     description: The loadbalancer address (for k0s controllers running
                       behind a loadbalancer)
