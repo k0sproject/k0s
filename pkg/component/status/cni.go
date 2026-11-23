@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
-	"github.com/k0sproject/k0s/pkg/constant"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -51,36 +50,6 @@ func apiErrorCondition(err error) Condition {
 		return cniCondition(corev1.ConditionUnknown, reasonTimeout, "CNI status check timed out")
 	}
 	return cniCondition(corev1.ConditionUnknown, reasonError, err.Error())
-}
-
-func isManagedCNI(network *v1beta1.Network) bool {
-	if network == nil {
-		return false
-	}
-	switch network.Provider {
-	case constant.CNIProviderKubeRouter, constant.CNIProviderCalico:
-		return true
-	default:
-		return false
-	}
-}
-
-// evaluateCNI reports managed CNI health from DaemonSet and Deployment status.
-// A CNI conf file on disk is not used: kubelet treats that file as enough to
-// mark the node Ready even when the CNI is not operational.
-// Custom CNI is skipped (ok=false). Callers must pass a live API client.
-func evaluateCNI(ctx context.Context, client kubernetes.Interface, network *v1beta1.Network, hasWindowsNodes func() (*bool, <-chan struct{})) (Condition, bool) {
-	if network == nil {
-		return Condition{}, false
-	}
-	switch network.Provider {
-	case constant.CNIProviderKubeRouter:
-		return daemonSetCNICondition(ctx, client, kubeRouterDaemonSet), true
-	case constant.CNIProviderCalico:
-		return calicoCNICondition(ctx, client, network, hasWindowsNodes), true
-	default:
-		return Condition{}, false
-	}
 }
 
 func calicoCNICondition(ctx context.Context, client kubernetes.Interface, network *v1beta1.Network, hasWindowsNodes func() (*bool, <-chan struct{})) Condition {

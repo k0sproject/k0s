@@ -9,12 +9,14 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/component/prober"
+	"github.com/k0sproject/k0s/pkg/constant"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 
 	"github.com/sirupsen/logrus"
@@ -65,16 +67,6 @@ func (c *clusterConfigUpdater) Reconcile(_ context.Context, cfg *v1beta1.Cluster
 		network = cfg.Spec.Network
 	}
 	c.status.network.Store(network)
-	return nil
-}
-
-func (s *Status) cniNetwork(snapshot *K0sStatus) *v1beta1.Network {
-	if network := s.network.Load(); network != nil {
-		return network
-	}
-	if snapshot != nil && snapshot.ClusterConfig != nil && snapshot.ClusterConfig.Spec != nil {
-		return snapshot.ClusterConfig.Spec.Network
-	}
 	return nil
 }
 
@@ -148,12 +140,14 @@ func (sh *statusHandler) getCurrentStatus(ctx context.Context) K0sStatus {
 	defer cancel()
 
 	status := sh.Status.StatusInformation
+	var wg sync.WaitGroup
 	if status.Workloads {
-		sh.probeWorkerAPI(ctx, &status)
+		wg.Go(func() { sh.probeWorkerAPI(ctx, &status) })
 	}
 	if sh.Status.ControllerClientFactory != nil {
-		sh.setCNICondition(ctx, &status)
+		wg.Go(func() { sh.setCNICondition(ctx, &status) })
 	}
+	wg.Wait()
 	return status
 }
 
@@ -174,9 +168,23 @@ func (sh *statusHandler) probeWorkerAPI(ctx context.Context, status *K0sStatus) 
 	status.WorkerToAPIConnectionStatus = ProbeStatus{Success: true}
 }
 
+// setCNICondition reports managed CNI health from DaemonSet and Deployment status.
+// A CNI conf file on disk is not used: kubelet treats that file as enough to
+// mark the node Ready even when the CNI is not operational.
 func (sh *statusHandler) setCNICondition(ctx context.Context, status *K0sStatus) {
-	network := sh.Status.cniNetwork(status)
-	if !isManagedCNI(network) {
+	network := sh.Status.network.Load()
+	if network == nil {
+		status.Conditions = []Condition{cniCondition(
+			corev1.ConditionUnknown,
+			reasonError,
+			"network configuration has not been reconciled yet",
+		)}
+		return
+	}
+
+	switch network.Provider {
+	case constant.CNIProviderKubeRouter, constant.CNIProviderCalico:
+	default:
 		return
 	}
 
@@ -186,8 +194,14 @@ func (sh *statusHandler) setCNICondition(ctx context.Context, status *K0sStatus)
 		return
 	}
 
-	cond, ok := evaluateCNI(ctx, client, network, sh.Status.HasWindowsNodes)
-	if ok {
-		status.Conditions = []Condition{cond}
+	var cond Condition
+	switch network.Provider {
+	case constant.CNIProviderKubeRouter:
+		cond = daemonSetCNICondition(ctx, client, kubeRouterDaemonSet)
+	case constant.CNIProviderCalico:
+		cond = calicoCNICondition(ctx, client, network, sh.Status.HasWindowsNodes)
+	default:
+		return
 	}
+	status.Conditions = []Condition{cond}
 }
