@@ -58,7 +58,8 @@ func (m *Manager) EnsureCA(name, cn string, expiry time.Duration) error {
 	certFile := filepath.Join(m.K0sVars.CertRootDir, name+".crt")
 
 	if file.Exists(keyFile) && file.Exists(certFile) {
-		return nil
+		// k0s won't re-issue an existing CA, so refuse to go on if it's expired.
+		return checkNotExpired(certFile, time.Now())
 	}
 
 	req := new(csr.CertificateRequest)
@@ -172,6 +173,12 @@ func (m *Manager) EnsureCertificate(certReq Request, ownerID int, expiry time.Du
 		return c, nil
 	}
 
+	// The certificate exists and isn't managed by k0s, so it won't be
+	// re-issued. Refuse to go on if it's expired.
+	if err := checkNotExpired(certFile, time.Now()); err != nil {
+		return Certificate{}, err
+	}
+
 	// certs exist, let's just verify their permissions
 	_ = os.Chown(keyFile, ownerID, -1)
 	_ = os.Chown(certFile, ownerID, -1)
@@ -190,6 +197,28 @@ func (m *Manager) EnsureCertificate(certReq Request, ownerID int, expiry time.Du
 		Cert: string(cert),
 	}, nil
 
+}
+
+// checkNotExpired returns an error if the certificate in the given PEM file
+// has expired at the given point in time. Only NotAfter is considered.
+func checkNotExpired(certFile string, now time.Time) error {
+	data, err := os.ReadFile(certFile)
+	if err != nil {
+		return fmt.Errorf("failed to read certificate %s: %w", certFile, err)
+	}
+	block, _ := pem.Decode(data)
+	if block == nil {
+		return fmt.Errorf("failed to decode certificate %s: no PEM data found", certFile)
+	}
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		return fmt.Errorf("failed to parse certificate %s: %w", certFile, err)
+	}
+	if now.After(cert.NotAfter) {
+		return fmt.Errorf("certificate %s (subject %q) expired at %s; k0s doesn't renew it, replace or remove it",
+			certFile, cert.Subject.CommonName, cert.NotAfter.UTC().Format(time.RFC3339))
+	}
+	return nil
 }
 
 // if regenerateCert does not need to do any changes, it will return false
