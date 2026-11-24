@@ -79,6 +79,28 @@ const (
 	MemberRoleLeader              // Voting member and leader.
 )
 
+// Labels on a controller's EtcdMember that tell the other controllers what that
+// controller does. Their value is the controller's invocation ID, so that a
+// label left behind by an earlier k0s process on the same node is ignored.
+const (
+	// The controller removes itself from the etcd cluster when it is shut
+	// down for a leave. Controllers older than k0s 1.35.5 just stop.
+	LeavesOnShutdownLabel = "k0s.k0sproject.io/leaves-on-shutdown"
+	// The controller promotes etcd learners when it is the leader. Controllers
+	// older than k0s 1.35.5 never do.
+	PromotesLearnersLabel = "k0s.k0sproject.io/promotes-learners"
+)
+
+// Older labels on a controller's EtcdMember, which help to find the EtcdMember
+// of a controller that doesn't set the labels above.
+const (
+	// The name of the lease that the controller holds while it runs.
+	ControllerLeaseLabel = "k0s.k0sproject.io/controller-lease"
+	// The controller's invocation ID. The controller shuts down when the
+	// leader asks it to after it has been marked to leave.
+	ShutdownOnLeaveLabel = "k0s.k0sproject.io/shutdown-on-leave"
+)
+
 // The status of the local etcd endpoint.
 type EndpointStatus struct {
 	ID   uint64     // Member ID in the etcd cluster.

@@ -22,15 +22,21 @@ import (
 
 	"github.com/k0sproject/k0s/cmd/internal"
 	mw "github.com/k0sproject/k0s/internal/pkg/middleware"
+	etcdv1beta1 "github.com/k0sproject/k0s/pkg/apis/etcd/v1beta1"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
+	k0sclientset "github.com/k0sproject/k0s/pkg/client/clientset"
+	etcdclient "github.com/k0sproject/k0s/pkg/client/clientset/typed/etcd/v1beta1"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/etcd"
 	"github.com/k0sproject/k0s/pkg/k0scontext"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 
+	coordinationv1 "k8s.io/api/coordination/v1"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 	clientcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	tokenutil "k8s.io/cluster-bootstrap/token/util"
 	bootstraptokenv1 "k8s.io/kubernetes/cmd/kubeadm/app/apis/bootstraptoken/v1"
@@ -139,6 +145,15 @@ func buildServer(log logrus.FieldLogger, k0sVars *config.CfgVars, nodeConfig *v1
 		return nil, err
 	}
 	secrets := client.CoreV1().Secrets(metav1.NamespaceSystem)
+	restConfig, err := kubeutil.ClientConfig(kubeutil.KubeconfigFromFile(k0sVars.AdminKubeConfigPath))
+	if err != nil {
+		return nil, err
+	}
+	k0sClient, err := k0sclientset.NewForConfig(restConfig)
+	if err != nil {
+		return nil, err
+	}
+	etcdMembers := k0sClient.EtcdV1beta1().EtcdMembers()
 
 	prefix := "/v1beta1"
 	mux := http.NewServeMux()
@@ -148,7 +163,7 @@ func buildServer(log logrus.FieldLogger, k0sVars *config.CfgVars, nodeConfig *v1
 		// Only mount the etcd handler if we're running on internal etcd storage
 		// by default the mux will return 404 back which the caller should handle
 		mux.Handle(prefix+"/etcd/members", mw.AllowMethods(http.MethodPost)(
-			authMiddleware(etcdHandler(log, k0sVars.CertRootDir, k0sVars.EtcdCertDir), log, secrets, "controller-join")))
+			authMiddleware(etcdHandler(log, k0sVars.CertRootDir, k0sVars.EtcdCertDir, leaderPromotesLearners(client, etcdMembers)), log, secrets, "controller-join")))
 	}
 
 	if storage.IsJoinable() {
@@ -182,7 +197,77 @@ func buildServer(log logrus.FieldLogger, k0sVars *config.CfgVars, nodeConfig *v1
 	}, nil
 }
 
-func etcdHandler(log logrus.FieldLogger, certRootDir, etcdCertDir string) http.Handler {
+const (
+	// The name of the lease that the leading controller holds.
+	leaderLeaseName = "k0s-endpoint-reconciler"
+	// The name prefix of the lease that each controller holds while it runs,
+	// under the same identity as the leader lease.
+	controllerLeasePrefix = "k0s-ctrl-"
+)
+
+// Returns a function that reports whether the leading controller promotes etcd
+// learners. A leader older than k0s 1.35.5 never does, so that a member added
+// as a learner while it leads would never get to vote.
+//
+// The leader tells by labeling its EtcdMember. The function fails while that
+// can't be told yet, e.g. while the leader hasn't created or updated its
+// EtcdMember after starting: guessing would either add a voting member to a
+// cluster that could have added a learner, or a learner that is never
+// promoted. Joining controllers retry.
+func leaderPromotesLearners(client kubernetes.Interface, etcdMembers etcdclient.EtcdMemberInterface) func(context.Context) (bool, error) {
+	return func(ctx context.Context) (bool, error) {
+		leases := client.CoordinationV1().Leases(corev1.NamespaceNodeLease)
+		lease, err := leases.Get(ctx, leaderLeaseName, metav1.GetOptions{})
+		if err != nil {
+			return false, fmt.Errorf("failed to get the leader lease: %w", err)
+		}
+		if lease.Spec.HolderIdentity == nil || *lease.Spec.HolderIdentity == "" {
+			return false, errors.New("no controller is leading")
+		}
+		leader := *lease.Spec.HolderIdentity
+
+		// Find out which controller is leading.
+		controllerLeases, err := leases.List(ctx, metav1.ListOptions{})
+		if err != nil {
+			return false, fmt.Errorf("failed to list controller leases: %w", err)
+		}
+		idx := slices.IndexFunc(controllerLeases.Items, func(l coordinationv1.Lease) bool {
+			return strings.HasPrefix(l.Name, controllerLeasePrefix) &&
+				l.Spec.HolderIdentity != nil && *l.Spec.HolderIdentity == leader
+		})
+		if idx < 0 {
+			return false, fmt.Errorf("the leading controller %s holds no controller lease", leader)
+		}
+		leaderLease := controllerLeases.Items[idx].Name
+
+		// Find the leading controller's EtcdMember. Depending on its k0s
+		// version, it's labeled with its lease or invocation ID, or neither,
+		// in which case it's named like its lease.
+		members, err := etcdMembers.List(ctx, metav1.ListOptions{})
+		if err != nil {
+			return false, fmt.Errorf("failed to list etcd members: %w", err)
+		}
+		idx = slices.IndexFunc(members.Items, func(m etcdv1beta1.EtcdMember) bool {
+			return m.Labels[etcd.ControllerLeaseLabel] == leaderLease ||
+				m.Labels[etcd.ShutdownOnLeaveLabel] == leader ||
+				controllerLeasePrefix+m.Name == leaderLease
+		})
+		if idx < 0 {
+			return false, fmt.Errorf("the leading controller (%s) has no EtcdMember yet", leaderLease)
+		}
+
+		switch promotes, labeled := members.Items[idx].Labels[etcd.PromotesLearnersLabel]; {
+		case !labeled:
+			return false, nil // The leader runs an older k0s.
+		case promotes == leader:
+			return true, nil
+		default: // Left behind by an earlier k0s process on the same node.
+			return false, fmt.Errorf("the leading controller (%s) hasn't updated its EtcdMember yet", leaderLease)
+		}
+	}
+}
+
+func etcdHandler(log logrus.FieldLogger, certRootDir, etcdCertDir string, leaderPromotesLearners func(context.Context) (bool, error)) http.Handler {
 	return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 		var etcdReq v1beta1.EtcdRequest
@@ -191,7 +276,6 @@ func etcdHandler(log logrus.FieldLogger, certRootDir, etcdCertDir string) http.H
 			sendError(err, resp)
 			return
 		}
-		log.Infof("etcd API, adding new learner member: %s", etcdReq.PeerAddress)
 		err = etcdReq.Validate()
 		if err != nil {
 			sendError(err, resp)
@@ -205,7 +289,20 @@ func etcdHandler(log logrus.FieldLogger, certRootDir, etcdCertDir string) http.H
 		}
 		defer etcdClient.Close()
 
-		memberList, err := etcdClient.AddMemberAsLearner(ctx, etcdReq.Node, etcdReq.PeerAddress)
+		asLearner, err := leaderPromotesLearners(ctx)
+		if err != nil {
+			sendError(err, resp)
+			return
+		}
+
+		var memberList []string
+		if asLearner {
+			log.Infof("etcd API, adding new learner member: %s", etcdReq.PeerAddress)
+			memberList, err = etcdClient.AddMemberAsLearner(ctx, etcdReq.Node, etcdReq.PeerAddress)
+		} else {
+			log.Infof("etcd API, adding new voting member, the leader doesn't promote learners: %s", etcdReq.PeerAddress)
+			memberList, err = etcdClient.AddMember(ctx, etcdReq.Node, etcdReq.PeerAddress)
+		}
 		if err != nil {
 			sendError(err, resp)
 			return

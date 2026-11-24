@@ -17,6 +17,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/stretchr/testify/suite"
@@ -163,8 +164,17 @@ func (s *EtcdLearnerSuite) callJoinEtcd(ctx context.Context, node string, req v1
 	client, err := token.JoinClientFromKubeconfig(cfg)
 	s.Require().NoError(err)
 
-	resp, err := client.JoinEtcd(ctx, req)
-	s.Require().NoError(err)
+	// Retry like a joining controller does: the join API fails until it can
+	// tell whether the leader promotes learners, i.e. until the leader has
+	// created its EtcdMember.
+	var resp v1beta1.EtcdResponse
+	s.Require().NoError(wait.PollUntilContextCancel(ctx, 2*time.Second, true, func(ctx context.Context) (bool, error) {
+		if resp, err = client.JoinEtcd(ctx, req); err != nil {
+			s.T().Log("Join API call failed, retrying: ", err)
+			return false, nil
+		}
+		return true, nil
+	}))
 	s.Require().NotEmpty(resp.InitialCluster, "join API returned no initial-cluster")
 }
 

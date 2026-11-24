@@ -52,6 +52,7 @@ smoketests := \
 	check-embedded-binaries \
 	check-etcdlearner \
 	check-etcdmember \
+	check-etcdmixedversion \
 	check-externaletcd \
 	check-extraargs \
 	check-hacontrolplane \

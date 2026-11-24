@@ -38,8 +38,8 @@ import (
 )
 
 const (
-	controllerLeaseLabelName = "k0s.k0sproject.io/controller-lease"
-	shutdownOnLeaveLabelName = "k0s.k0sproject.io/shutdown-on-leave"
+	controllerLeaseLabelName = etcd.ControllerLeaseLabel
+	shutdownOnLeaveLabelName = etcd.ShutdownOnLeaveLabel
 	shutdownLabelName        = "k0s.k0sproject.io/shutdown"
 )
 
@@ -459,8 +459,10 @@ func (e *EtcdMemberReconciler) createMemberObject(ctx context.Context, client et
 				ObjectMeta: metav1.ObjectMeta{
 					Name: name,
 					Labels: map[string]string{
-						controllerLeaseLabelName: controllerLeaseName,
-						shutdownOnLeaveLabelName: e.k0sVars.InvocationID,
+						controllerLeaseLabelName:   controllerLeaseName,
+						shutdownOnLeaveLabelName:   e.k0sVars.InvocationID,
+						etcd.LeavesOnShutdownLabel: e.k0sVars.InvocationID,
+						etcd.PromotesLearnersLabel: e.k0sVars.InvocationID,
 					},
 				},
 				Spec: etcdv1beta1.EtcdMemberSpec{
@@ -487,8 +489,10 @@ func (e *EtcdMemberReconciler) createMemberObject(ctx context.Context, client et
 	}
 
 	em.Labels = labels.Merge(em.Labels, labels.Set{
-		controllerLeaseLabelName: controllerLeaseName,
-		shutdownOnLeaveLabelName: e.k0sVars.InvocationID,
+		controllerLeaseLabelName:   controllerLeaseName,
+		shutdownOnLeaveLabelName:   e.k0sVars.InvocationID,
+		etcd.LeavesOnShutdownLabel: e.k0sVars.InvocationID,
+		etcd.PromotesLearnersLabel: e.k0sVars.InvocationID,
 	})
 	delete(em.Labels, shutdownLabelName) // Clear any lingering shutdown request on re-join.
 	em.Spec.Leave = false
@@ -656,9 +660,13 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, etcdClient *
 				log.WithError(err).Error("Failed to update member state")
 			}
 			return false
-		} else if memberLease.Spec.RenewTime != nil && time.Since(memberLease.Spec.RenewTime.Time) < 5*time.Minute {
+		} else if member.Labels[etcd.LeavesOnShutdownLabel] == memberInvocationID &&
+			memberLease.Spec.RenewTime != nil && time.Since(memberLease.Spec.RenewTime.Time) < 5*time.Minute {
 			// The lease has only just been released.
 			// Give some time for the self-leave to take place.
+			// A member that doesn't leave by itself is removed right away:
+			// its etcd is about to stop, and with it possibly the quorum
+			// that the removal needs.
 			msg := "Member is offline; waiting for it to leave"
 			log.Info(msg)
 			member.Status.Message = msg
