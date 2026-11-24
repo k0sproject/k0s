@@ -13,6 +13,7 @@ import (
 
 	"github.com/k0sproject/k0s/inttest/common"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
+	"github.com/k0sproject/k0s/pkg/etcd"
 	"github.com/k0sproject/k0s/pkg/token"
 
 	corev1 "k8s.io/api/core/v1"
@@ -49,6 +50,15 @@ func (s *EtcdLearnerSuite) TestUnreachableLearnerPreservesQuorum() {
 		&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "pre-phantom"}},
 		metav1.CreateOptions{})
 	s.Require().NoError(err, "single-node cluster must accept writes before any peer is added")
+
+	// The join API adds learners only once the leader advertises that it
+	// promotes them, which it does on its EtcdMember shortly after starting.
+	etcdMembers, err := s.EtcdMemberClient(s.ControllerNode(0))
+	s.Require().NoError(err)
+	s.Require().NoError(common.Poll(ctx, func(ctx context.Context) (bool, error) {
+		members, err := etcdMembers.EtcdMembers().List(ctx, metav1.ListOptions{LabelSelector: etcd.PromotesLearnersLabel})
+		return err == nil && len(members.Items) > 0, nil
+	}), "controller0 never advertised that it promotes learners")
 
 	// Register a phantom peer through the k0s join API. The phantom's
 	// advertised peer URL is TEST-NET-1 (RFC 5737), guaranteed

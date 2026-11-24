@@ -459,8 +459,10 @@ func (e *EtcdMemberReconciler) createMemberObject(ctx context.Context, client et
 				ObjectMeta: metav1.ObjectMeta{
 					Name: name,
 					Labels: map[string]string{
-						controllerLeaseLabelName: controllerLeaseName,
-						shutdownOnLeaveLabelName: e.k0sVars.InvocationID,
+						controllerLeaseLabelName:   controllerLeaseName,
+						shutdownOnLeaveLabelName:   e.k0sVars.InvocationID,
+						etcd.LeavesOnShutdownLabel: e.k0sVars.InvocationID,
+						etcd.PromotesLearnersLabel: e.k0sVars.InvocationID,
 					},
 				},
 				Spec: etcdv1beta1.EtcdMemberSpec{
@@ -487,8 +489,10 @@ func (e *EtcdMemberReconciler) createMemberObject(ctx context.Context, client et
 	}
 
 	em.Labels = labels.Merge(em.Labels, labels.Set{
-		controllerLeaseLabelName: controllerLeaseName,
-		shutdownOnLeaveLabelName: e.k0sVars.InvocationID,
+		controllerLeaseLabelName:   controllerLeaseName,
+		shutdownOnLeaveLabelName:   e.k0sVars.InvocationID,
+		etcd.LeavesOnShutdownLabel: e.k0sVars.InvocationID,
+		etcd.PromotesLearnersLabel: e.k0sVars.InvocationID,
 	})
 	delete(em.Labels, shutdownLabelName) // Clear any lingering shutdown request on re-join.
 	em.Spec.Leave = false
@@ -637,6 +641,45 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, etcdClient *
 			msg := "Member is still active; waiting for it to shutdown"
 			if ident := memberLease.Spec.HolderIdentity; ident != nil && *ident == memberInvocationID {
 				if member.Labels[shutdownLabelName] != memberInvocationID {
+					// A member that doesn't remove itself from the etcd cluster
+					// when it shuts down (k0s older than 1.35.5) is removed while
+					// it still runs: once its etcd stops, the cluster may have
+					// lost the quorum that the removal needs, e.g. when it's one
+					// of two members.
+					if member.Labels[etcd.LeavesOnShutdownLabel] != memberInvocationID {
+						log.Info("Deleting member from cluster while it still runs, as it won't leave by itself")
+						if err := deleteMember(ctx, etcdClient, memberID); err != nil {
+							log.WithError(err).Error("Failed to delete member from cluster")
+							member.Status.ReconcileStatus = etcdv1beta1.ReconcileStatusFailed
+							member.Status.Message = "Failed to delete member from cluster: " + err.Error()
+							if _, err := client.UpdateStatus(ctx, member, metav1.UpdateOptions{}); err != nil {
+								log.WithError(err).Error("Failed to update EtcdMember status")
+							}
+							return false
+						}
+						log.Info("Member has been deleted from cluster")
+
+						// Ask the controller to shut down nonetheless. This is best
+						// effort: its API server is backed by the etcd member that
+						// has just been removed, so it may never get to see this.
+						member.Labels[shutdownLabelName] = memberInvocationID
+						if updated, err := client.Update(ctx, member, metav1.UpdateOptions{}); err != nil {
+							log.WithError(err).Warn("Failed to request shutdown of the removed member")
+						} else {
+							member = updated
+						}
+
+						member.Status.ReconcileStatus = etcdv1beta1.ReconcileStatusSuccess
+						member.Status.Message = "Member removed from cluster"
+						member.Status.SetCondition(etcdv1beta1.ConditionTypeJoined, etcdv1beta1.ConditionFalse, member.Status.Message, time.Now())
+						if _, err := client.UpdateStatus(ctx, member, metav1.UpdateOptions{}); err != nil {
+							// The next resync will find the member gone and set the condition.
+							log.WithError(err).Error("Failed to update EtcdMember status")
+							return false
+						}
+						return true
+					}
+
 					log.Info("Requesting member shutdown before deletion")
 					member.Labels[shutdownLabelName] = memberInvocationID
 					if _, err := client.Update(ctx, member, metav1.UpdateOptions{}); err != nil {
@@ -656,9 +699,13 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, etcdClient *
 				log.WithError(err).Error("Failed to update member state")
 			}
 			return false
-		} else if memberLease.Spec.RenewTime != nil && time.Since(memberLease.Spec.RenewTime.Time) < 5*time.Minute {
+		} else if member.Labels[etcd.LeavesOnShutdownLabel] == memberInvocationID &&
+			memberLease.Spec.RenewTime != nil && time.Since(memberLease.Spec.RenewTime.Time) < 5*time.Minute {
 			// The lease has only just been released.
 			// Give some time for the self-leave to take place.
+			// A member that doesn't leave by itself has been removed
+			// before its shutdown was requested above; if it was already
+			// gone when it was marked to leave, it's removed right away.
 			msg := "Member is offline; waiting for it to leave"
 			log.Info(msg)
 			member.Status.Message = msg
@@ -671,27 +718,7 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, etcdClient *
 	}
 
 	log.Debug("Deleting member from cluster")
-	err = retry.Do(func() error {
-		return etcdClient.DeleteMember(ctx, memberID)
-	},
-		retry.Delay(5*time.Second),
-		retry.LastErrorOnly(true),
-		retry.Attempts(5),
-		retry.Context(ctx),
-		retry.RetryIf(func(err error) bool {
-			// In case etcd reports unhealthy cluster, retry
-			msg := err.Error()
-			switch {
-			case strings.Contains(msg, "unhealthy cluster"):
-				return true
-			case strings.Contains(msg, "leader changed"):
-				return true
-			}
-			return false
-		}),
-	)
-
-	if err != nil {
+	if err := deleteMember(ctx, etcdClient, memberID); err != nil {
 		log.WithError(err).Error("Failed to delete member from cluster")
 		member.Status.ReconcileStatus = etcdv1beta1.ReconcileStatusFailed
 		member.Status.Message = "Failed to delete member from cluster: " + err.Error()
@@ -712,6 +739,30 @@ func (e *EtcdMemberReconciler) reconcileMember(ctx context.Context, etcdClient *
 	}
 
 	return true
+}
+
+// Deletes the given member from the etcd cluster, retrying while etcd reports
+// that it can't do so right now.
+func deleteMember(ctx context.Context, etcdClient *etcd.Client, memberID uint64) error {
+	return retry.Do(func() error {
+		return etcdClient.DeleteMember(ctx, memberID)
+	},
+		retry.Delay(5*time.Second),
+		retry.LastErrorOnly(true),
+		retry.Attempts(5),
+		retry.Context(ctx),
+		retry.RetryIf(func(err error) bool {
+			// In case etcd reports unhealthy cluster, retry
+			msg := err.Error()
+			switch {
+			case strings.Contains(msg, "unhealthy cluster"):
+				return true
+			case strings.Contains(msg, "leader changed"):
+				return true
+			}
+			return false
+		}),
+	)
 }
 
 // promoteLearners walks the etcd member list and tries to promote at most
