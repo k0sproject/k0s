@@ -5,6 +5,7 @@ package v1beta1
 
 import (
 	"math"
+	"strings"
 	"testing"
 	"time"
 
@@ -225,6 +226,34 @@ func TestValidateVRRPInstances(t *testing.T) {
 			}},
 			wantErr: `vrrpInstances[0].authPass: Invalid value: "}": must not be { or }`,
 		}, {
+			name: "Interface with characters that are special to keepalived",
+			vrrps: VRRPInstances{{
+				Interface:  `e{#!\'$}`,
+				VirtualIPs: []string{"192.168.1.1/24"},
+				AuthPass:   "123456",
+			}},
+			expectedVRRPs: VRRPInstances{{
+				VirtualRouterID:       defaultVirtualRouterID,
+				Interface:             `e{#!\'$}`,
+				AdvertIntervalSeconds: defaultAdvertIntervalSeconds,
+			}},
+		}, {
+			name: "Interface with a braced keepalived definition",
+			vrrps: VRRPInstances{{
+				Interface:  `${_ENV}`,
+				VirtualIPs: []string{"192.168.1.1/24"},
+				AuthPass:   "123456",
+			}},
+			wantErr: `vrrpInstances[0].interface: Invalid value: "${_ENV}": must not contain $_ or ${_`,
+		}, {
+			name: "Too long interface",
+			vrrps: VRRPInstances{{
+				Interface:  strings.Repeat("x", 60),
+				VirtualIPs: []string{"192.168.1.1/24"},
+				AuthPass:   "123456",
+			}},
+			wantErr: `vrrpInstances[0].interface: Too long: may not be more than 59 bytes`,
+		}, {
 			name: "No virtual IPs",
 			vrrps: VRRPInstances{{
 				Interface: "eth0",
@@ -340,6 +369,23 @@ func TestValidateVRRPInstances(t *testing.T) {
 		}
 		assert.EqualValues(t, 255, underTest[len(underTest)-2].VirtualRouterID)
 		assert.Zero(t, underTest[len(underTest)-1].VirtualRouterID)
+	})
+
+	t.Run("default interface that keepalived can't express", func(t *testing.T) {
+		underTest := VRRPInstances{{
+			VirtualIPs: []string{"192.168.1.1/24"},
+			AuthPass:   "123456",
+		}}
+
+		errs := underTest.validate(field.NewPath("vrrpInstances"), func() (string, error) {
+			return `eth"0`, nil
+		})
+
+		if assert.Len(t, errs, 1, "Expected exactly one error") {
+			assert.ErrorContains(t, errs[0],
+				`vrrpInstances[0].interface: Invalid value: "eth\"0": must not contain double quotes, newlines or NUL characters`,
+			)
+		}
 	})
 }
 

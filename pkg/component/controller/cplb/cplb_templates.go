@@ -14,7 +14,7 @@ vrrp_instance k0s-vip-{{$i}} {
     # it doesn't perform a failover. This must be combined with the priority.
     state BACKUP
     # Make sure the interface is aligned with your server's network interface.
-    interface {{ .Interface }}
+    interface "{{ .Interface }}"
     # The virtual router ID must be unique to each VRRP instance that you define.
     virtual_router_id {{ $instance.VirtualRouterID }}
     # All servers have the same priority so that when a new one comes up we don't

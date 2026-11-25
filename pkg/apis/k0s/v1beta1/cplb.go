@@ -98,6 +98,15 @@ type VRRPInstance struct {
 	// If not specified, k0s will use the interface that owns the default route.
 	// If a MAC address is specified instead of an interface name, k0s will
 	// try to resolve the interface name based on the MAC address.
+	// Interface must be 59 characters or less, which fits the longest notation
+	// of a MAC address. It must not contain double quotes, newlines, NUL
+	// characters, `$_` or `${_`, and must not end with a backslash or be just
+	// `{` or `}`.
+	// +kubebuilder:validation:MaxLength=59
+	// +kubebuilder:validation:XValidation:rule=`!self.contains('"') && !self.contains('\n') && !self.contains('\x00')`,message="must not contain double quotes, newlines or NUL characters"
+	// +kubebuilder:validation:XValidation:rule=`!self.endsWith('\\')`,message="must not end with a backslash"
+	// +kubebuilder:validation:XValidation:rule=`!self.contains('$_') && !self.contains('${_')`,message="must not contain $_ or ${_"
+	// +kubebuilder:validation:XValidation:rule=`!self.matches('^[{}]$')`,message="must not be { or }"
 	Interface string `json:"interface,omitempty"`
 
 	// VirtualRouterID is the VRRP router ID. If not specified, k0s will
@@ -171,6 +180,10 @@ func (i *VRRPInstance) validate(path *field.Path, offset int, getDefaultNICFn fu
 			i.Interface = nic
 		}
 	}
+	if maxLen := 59; len(i.Interface) > maxLen {
+		errs = append(errs, field.TooLong(path.Child("interface"), i.Interface, maxLen))
+	}
+	errs = append(errs, validateKeepalivedWord(path.Child("interface"), i.Interface)...)
 
 	if id := i.VirtualRouterID; id == 0 {
 		if id := defaultVirtualRouterID + int32(offset); id > 255 {
@@ -198,21 +211,7 @@ func (i *VRRPInstance) validate(path *field.Path, offset int, getDefaultNICFn fu
 	} else if maxLen := 8; len(i.AuthPass) > maxLen {
 		errs = append(errs, field.TooLong(path.Child("authPass"), i.AuthPass, maxLen))
 	}
-	// There's no way to escape special characters for auth_pass, and
-	// keepalived expands its builtin definitions even inside quotes. It also
-	// takes a word that is just a brace as a block delimiter, quoted or not.
-	if strings.ContainsAny(i.AuthPass, "\"\n\x00") {
-		errs = append(errs, field.Invalid(path.Child("authPass"), i.AuthPass, "must not contain double quotes, newlines or NUL characters"))
-	}
-	if strings.HasSuffix(i.AuthPass, `\`) {
-		errs = append(errs, field.Invalid(path.Child("authPass"), i.AuthPass, "must not end with a backslash"))
-	}
-	if strings.Contains(i.AuthPass, "$_") || strings.Contains(i.AuthPass, "${_") {
-		errs = append(errs, field.Invalid(path.Child("authPass"), i.AuthPass, "must not contain $_ or ${_"))
-	}
-	if i.AuthPass == "{" || i.AuthPass == "}" {
-		errs = append(errs, field.Invalid(path.Child("authPass"), i.AuthPass, "must not be { or }"))
-	}
+	errs = append(errs, validateKeepalivedWord(path.Child("authPass"), i.AuthPass)...)
 
 	if len(i.VirtualIPs) == 0 {
 		errs = append(errs, field.Required(path.Child("virtualIPs"), ""))
@@ -236,6 +235,26 @@ func (i *VRRPInstance) validate(path *field.Path, offset int, getDefaultNICFn fu
 		}
 	}
 
+	return errs
+}
+
+// Checks if keepalived takes word as is when it's rendered in double quotes.
+// There's no way to escape special characters in quoted words, and keepalived
+// expands its builtin definitions even inside quotes. It also takes a word
+// that is just a brace as a block delimiter, quoted or not.
+func validateKeepalivedWord(path *field.Path, word string) (errs field.ErrorList) {
+	if strings.ContainsAny(word, "\"\n\x00") {
+		errs = append(errs, field.Invalid(path, word, "must not contain double quotes, newlines or NUL characters"))
+	}
+	if strings.HasSuffix(word, `\`) {
+		errs = append(errs, field.Invalid(path, word, "must not end with a backslash"))
+	}
+	if strings.Contains(word, "$_") || strings.Contains(word, "${_") {
+		errs = append(errs, field.Invalid(path, word, "must not contain $_ or ${_"))
+	}
+	if word == "{" || word == "}" {
+		errs = append(errs, field.Invalid(path, word, "must not be { or }"))
+	}
 	return errs
 }
 

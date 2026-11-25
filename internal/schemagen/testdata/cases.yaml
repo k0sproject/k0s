@@ -173,6 +173,18 @@ validation:
   - name: VRRP password that is just a closing brace
     input: '{"spec":{"network":{"controlPlaneLoadBalancing":{"keepalived":{"vrrpInstances":[{"authPass":"}","virtualIPs":["192.0.2.1/24"]}]}}}}}'
     valid: false
+  - name: VRRP interface with characters that are special to keepalived
+    input: '{"spec":{"network":{"controlPlaneLoadBalancing":{"keepalived":{"vrrpInstances":[{"interface":"e{#!\\''$}","authPass":"123456","virtualIPs":["192.0.2.1/24"]}]}}}}}'
+    valid: true
+  - name: VRRP interface with a braced keepalived definition
+    input: '{"spec":{"network":{"controlPlaneLoadBalancing":{"keepalived":{"vrrpInstances":[{"interface":"${_ENV}","authPass":"123456","virtualIPs":["192.0.2.1/24"]}]}}}}}'
+    valid: false
+  - name: VRRP interface that is a 20-octet MAC address
+    input: '{"spec":{"network":{"controlPlaneLoadBalancing":{"keepalived":{"vrrpInstances":[{"interface":"00:00:00:00:fe:80:00:00:00:00:00:00:02:00:5e:10:00:00:00:01","authPass":"123456","virtualIPs":["192.0.2.1/24"]}]}}}}}'
+    valid: true
+  - name: too long VRRP interface
+    input: '{"spec":{"network":{"controlPlaneLoadBalancing":{"keepalived":{"vrrpInstances":[{"interface":"00:00:00:00:fe:80:00:00:00:00:00:00:02:00:5e:10:00:00:00:01x","authPass":"123456","virtualIPs":["192.0.2.1/24"]}]}}}}}'
+    valid: false
   - name: zero proxy konnectivity port
     input: '{"spec":{"network":{"nodeLocalLoadBalancing":{"envoyProxy":{"konnectivityServerBindPort":0}}}}}'
     valid: false

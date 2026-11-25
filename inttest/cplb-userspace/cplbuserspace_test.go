@@ -208,7 +208,7 @@ func (s *CPLBUserSpaceSuite) TestK0sGetsUp() {
 	s.T().Log("Verify that controllers resolved the interface name from the MAC address correctly")
 	for idx := range s.ControllerCount {
 		keepalivedCfg := s.getFile(ctx, s.ControllerNode(idx), "/run/k0s/keepalived.conf")
-		s.Require().Contains(keepalivedCfg, "interface eth0", "Expected keepalived to resolve the interface name from the MAC address")
+		s.Require().Contains(keepalivedCfg, `interface "eth0"`, "Expected keepalived to resolve the interface name from the MAC address")
 		if idx == 2 {
 			s.Require().NotContains(keepalivedCfg, s.getMAC(ctx, s.ControllerNode(idx)), "Expected keepalived to have an interface configured")
 		}

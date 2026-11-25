@@ -845,7 +845,23 @@ spec:
                                     If not specified, k0s will use the interface that owns the default route.
                                     If a MAC address is specified instead of an interface name, k0s will
                                     try to resolve the interface name based on the MAC address.
+                                    Interface must be 59 characters or less, which fits the longest notation
+                                    of a MAC address. It must not contain double quotes, newlines, NUL
+                                    characters, `$_` or `${_`, and must not end with a backslash or be just
+                                    `{` or `}`.
+                                  maxLength: 59
                                   type: string
+                                  x-kubernetes-validations:
+                                  - message: must not contain double quotes, newlines
+                                      or NUL characters
+                                    rule: '!self.contains(''"'') && !self.contains(''\n'')
+                                      && !self.contains(''\x00'')'
+                                  - message: must not end with a backslash
+                                    rule: '!self.endsWith(''\\'')'
+                                  - message: must not contain $_ or ${_
+                                    rule: '!self.contains(''$_'') && !self.contains(''${_'')'
+                                  - message: must not be { or }
+                                    rule: '!self.matches(''^[{}]$'')'
                                 unicastPeers:
                                   description: |-
                                     UnicastPeers is a list of unicast peers. If not specified, k0s will use multicast.

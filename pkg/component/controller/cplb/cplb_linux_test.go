@@ -28,6 +28,16 @@ func TestKeepalivedVRRPConfigTemplate(t *testing.T) {
 		require.NoError(t, err)
 		assert.Contains(t, rendered.String(), "\n        auth_pass \"fake #!\"\n")
 	})
+
+	t.Run("quotes the interface", func(t *testing.T) {
+		var rendered strings.Builder
+		err := templ.Execute(&rendered, &keepalivedConfig{
+			VRRPInstances: []k0sAPI.VRRPInstance{{Interface: "fake#nic!0"}},
+		})
+
+		require.NoError(t, err)
+		assert.Contains(t, rendered.String(), "\n    interface \"fake#nic!0\"\n")
+	})
 }
 
 func TestEscapeSingleQuotes(t *testing.T) {
