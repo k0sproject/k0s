@@ -119,8 +119,9 @@ type VRRPInstance struct {
 	VirtualRouterID int32 `json:"virtualRouterID,omitempty"`
 
 	// AdvertIntervalSeconds is the advertisement interval in seconds. Defaults to 1
-	// second.
+	// second. AdvertIntervalSeconds must be in the range of 1-255.
 	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=255
 	// +kubebuilder:default=1
 	AdvertIntervalSeconds int32 `json:"advertIntervalSeconds,omitempty"`
 
@@ -202,8 +203,10 @@ func (i *VRRPInstance) validate(path *field.Path, offset int, getDefaultNICFn fu
 		errs = append(errs, field.Invalid(path.Child("addressLabel"), i.AddressLabel, "0xffffffff is reserved"))
 	}
 
-	if i.AdvertIntervalSeconds == 0 {
+	if secs := i.AdvertIntervalSeconds; secs == 0 {
 		i.AdvertIntervalSeconds = defaultAdvertIntervalSeconds
+	} else if lo, hi := int32(1), int32(255); lo > secs || secs > hi {
+		errs = append(errs, field.Invalid(path.Child("advertIntervalSeconds"), secs, fmt.Sprintf("must be between %d and %d, inclusive", lo, hi)))
 	}
 
 	if i.AuthPass == "" {

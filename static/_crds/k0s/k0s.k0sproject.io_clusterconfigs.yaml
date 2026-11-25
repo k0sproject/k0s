@@ -814,8 +814,9 @@ spec:
                                   default: 1
                                   description: |-
                                     AdvertIntervalSeconds is the advertisement interval in seconds. Defaults to 1
-                                    second.
+                                    second. AdvertIntervalSeconds must be in the range of 1-255.
                                   format: int32
+                                  maximum: 255
                                   minimum: 1
                                   type: integer
                                 authPass:

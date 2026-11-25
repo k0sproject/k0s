@@ -226,6 +226,24 @@ func TestValidateVRRPInstances(t *testing.T) {
 			}},
 			wantErr: `vrrpInstances[0].authPass: Invalid value: "}": must not be { or }`,
 		}, {
+			name: "Negative advertisement interval",
+			vrrps: VRRPInstances{{
+				Interface:             "eth0",
+				VirtualIPs:            []string{"192.168.1.1/24"},
+				AuthPass:              "123456",
+				AdvertIntervalSeconds: -1,
+			}},
+			wantErr: `vrrpInstances[0].advertIntervalSeconds: Invalid value: -1: must be between 1 and 255, inclusive`,
+		}, {
+			name: "Too long advertisement interval",
+			vrrps: VRRPInstances{{
+				Interface:             "eth0",
+				VirtualIPs:            []string{"192.168.1.1/24"},
+				AuthPass:              "123456",
+				AdvertIntervalSeconds: 256,
+			}},
+			wantErr: `vrrpInstances[0].advertIntervalSeconds: Invalid value: 256: must be between 1 and 255, inclusive`,
+		}, {
 			name: "Interface with characters that are special to keepalived",
 			vrrps: VRRPInstances{{
 				Interface:  `e{#!\'$}`,
