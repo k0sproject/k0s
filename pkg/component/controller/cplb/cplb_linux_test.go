@@ -10,8 +10,11 @@ import (
 	"strings"
 	"testing"
 	"text/template"
+	"time"
 
 	k0sAPI "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -88,6 +91,34 @@ func TestKeepalivedVRRPConfigTemplate(t *testing.T) {
 		})
 
 		assert.NoError(t, err, "Paths that aren't rendered shouldn't be checked")
+	})
+}
+
+func TestKeepalivedVirtualServersConfigTemplate(t *testing.T) {
+	templ, err := template.New("virtualservers").Parse(KeepalivedVirtualServersConfigTemplate)
+	require.NoError(t, err)
+
+	t.Run("delayLoop", func(t *testing.T) {
+		for _, test := range []struct {
+			name      string
+			delayLoop time.Duration
+			rendered  string
+		}{
+			{"whole seconds", time.Minute, "60.000000"},
+			{"fractions of a second", 1500 * time.Millisecond, "1.500000"},
+			{"a few microseconds", 50 * time.Microsecond, "0.000050"},
+		} {
+			t.Run(test.name, func(t *testing.T) {
+				var rendered strings.Builder
+				err := templ.Execute(&rendered, &keepalivedConfig{
+					VirtualServers: []k0sAPI.VirtualServer{{DelayLoop: metav1.Duration{Duration: test.delayLoop}}},
+					RealServers:    []string{"192.0.2.1"},
+				})
+
+				require.NoError(t, err)
+				assert.Contains(t, rendered.String(), "\n    delay_loop "+test.rendered+"\n")
+			})
+		}
 	})
 }
 

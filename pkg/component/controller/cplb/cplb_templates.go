@@ -67,7 +67,7 @@ const KeepalivedVirtualServersConfigTemplate = `
 {{ if gt (len $RealServers) 0 }}
 {{ range .VirtualServers }}
 virtual_server {{ .IPAddress }} {{ $APIServerPort }} {
-    delay_loop {{ .DelayLoop.Seconds }}
+    delay_loop {{ printf "%.6f" .DelayLoop.Seconds }}
     lb_algo {{ .LBAlgo }}
     lb_kind {{ .LBKind }}
     persistence_timeout {{ .PersistenceTimeoutSeconds }}
