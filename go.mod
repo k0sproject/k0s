@@ -24,6 +24,7 @@ require (
 	github.com/go-logr/logr v1.4.4
 	github.com/go-openapi/jsonpointer v1.0.2
 	github.com/go-playground/validator/v10 v10.30.6
+	github.com/google/cel-go v0.29.2
 	github.com/google/go-cmp v0.7.0
 	github.com/k0sproject/bootloose v0.9.6
 	github.com/k0sproject/version v0.8.0
@@ -165,7 +166,6 @@ require (
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/btree v1.1.3 // indirect
 	github.com/google/cadvisor/lib v0.60.5 // indirect
-	github.com/google/cel-go v0.29.2 // indirect
 	github.com/google/certificate-transparency-go v1.1.8 // indirect
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/google/uuid v1.6.0 // indirect

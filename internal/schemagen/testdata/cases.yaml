@@ -242,6 +242,157 @@ structural:
       - '{"key":"value"}'
     invalid:
       - '{"key":false}'
+  - name: CEL contains
+    schema: '{"type":"string","x-kubernetes-validations":[{"rule":"self.contains(''a.b'')"}]}'
+    valid:
+      - '"xa.by"'
+    invalid:
+      - '"xaXby"'
+      - '"ab"'
+  - name: CEL starts with
+    schema: '{"type":"string","x-kubernetes-validations":[{"rule":"self.startsWith(''a.'')"}]}'
+    valid:
+      - '"a.b"'
+    invalid:
+      - '"aXb"'
+      - '"ba."'
+  - name: CEL ends with
+    schema: '{"type":"string","x-kubernetes-validations":[{"rule":"self.endsWith(''.a'')"}]}'
+    valid:
+      - '"b.a"'
+    invalid:
+      - '"bXa"'
+      - '".ab"'
+  - name: CEL matches
+    schema: '{"type":"string","x-kubernetes-validations":[{"rule":"self.matches(''^[a-z]+$'')"}]}'
+    valid:
+      - '"abc"'
+    invalid:
+      - '"abc1"'
+  - name: CEL negation
+    schema: '{"type":"string","x-kubernetes-validations":[{"rule":"!self.contains(''a'')"}]}'
+    valid:
+      - '"b"'
+    invalid:
+      - '"bab"'
+  - name: CEL conjunction
+    schema: '{"type":"string","x-kubernetes-validations":[{"rule":"self.startsWith(''a'') && !self.contains(''b'') && !self.endsWith(''c'')"}]}'
+    expected: '{"type":"string","allOf":[{"pattern":"^a"},{"not":{"pattern":"b"}},{"not":{"pattern":"c$"}}]}'
+    valid:
+      - '"acd"'
+    invalid:
+      - '"cd"'
+      - '"abd"'
+      - '"adc"'
+  - name: CEL disjunction
+    schema: '{"type":"string","x-kubernetes-validations":[{"rule":"self.startsWith(''a'') || !self.contains(''b'') || !self.endsWith(''c'')"}]}'
+    valid:
+      - '"a"'
+      - '"b"'
+      - '"c"'
+      - '"cb"'
+      - '"axx"'
+      - '"abc"'
+      - '"d"'
+    invalid:
+      - '"bc"'
+  - name: CEL disjunction within a conjunction
+    schema: '{"type":"string","x-kubernetes-validations":[{"rule":"self.startsWith(''a'') && (self.endsWith(''b'') || self.endsWith(''c''))"}]}'
+    expected: '{"type":"string","allOf":[{"pattern":"^a"},{"anyOf":[{"pattern":"b$"},{"pattern":"c$"}]}]}'
+    valid:
+      - '"ab"'
+      - '"ac"'
+    invalid:
+      - '"ad"'
+      - '"db"'
+      - '"dc"'
+  - name: CEL negated conjunction
+    schema: '{"type":"string","x-kubernetes-validations":[{"rule":"!(self.startsWith(''a'') && self.endsWith(''c''))"}]}'
+    valid:
+      - '"ab"'
+      - '"bc"'
+      - '"b"'
+    invalid:
+      - '"abc"'
+      - '"ac"'
+  - name: CEL negated disjunction
+    schema: '{"type":"string","x-kubernetes-validations":[{"rule":"!(self.startsWith(''a'') || self.endsWith(''c''))"}]}'
+    valid:
+      - '"b"'
+    invalid:
+      - '"ab"'
+      - '"bc"'
+      - '"ac"'
+  - name: multiple CEL rules
+    schema: '{"type":"string","x-kubernetes-validations":[{"rule":"self.startsWith(''a'')"},{"rule":"!self.endsWith(''c'')"}]}'
+    expected: '{"type":"string","pattern":"^a","not":{"pattern":"c$"}}'
+    valid:
+      - '"acd"'
+    invalid:
+      - '"cd"'
+      - '"adc"'
+  - name: several negated CEL rules
+    schema: '{"type":"string","x-kubernetes-validations":[{"rule":"!self.contains(''a'')"},{"rule":"!self.contains(''b'')"},{"rule":"!self.contains(''c'')"}]}'
+    expected: '{"type":"string","not":{"pattern":"a"},"allOf":[{"not":{"pattern":"b"}},{"not":{"pattern":"c"}}]}'
+    valid:
+      - '"d"'
+    invalid:
+      - '"da"'
+      - '"db"'
+      - '"dc"'
+  - name: CEL conjunctions in several rules
+    schema: '{"type":"string","x-kubernetes-validations":[{"rule":"!self.contains(''a'') && !self.contains(''b'')"},{"rule":"!self.endsWith(''c'')"},{"rule":"!self.contains(''d'') && !self.contains(''e'')"}]}'
+    expected: '{"type":"string","not":{"pattern":"c$"},"allOf":[{"not":{"pattern":"a"}},{"not":{"pattern":"b"}},{"not":{"pattern":"d"}},{"not":{"pattern":"e"}}]}'
+    valid:
+      - '"cf"'
+    invalid:
+      - '"fa"'
+      - '"fb"'
+      - '"fc"'
+      - '"fd"'
+      - '"fe"'
+  - name: single positive CEL rule next to a pattern
+    schema: '{"type":"string","description":"made up","pattern":"^[a-z]+$","x-kubernetes-validations":[{"rule":"self.startsWith(''a'')"}]}'
+    expected: '{"type":"string","description":"made up","pattern":"^[a-z]+$","allOf":[{"pattern":"^a"}]}'
+    valid:
+      - '"ab"'
+    invalid:
+      - '"a1"'
+      - '"b"'
+  - name: several positive CEL rules next to a pattern
+    schema: '{"type":"string","pattern":"^[a-z]+$","x-kubernetes-validations":[{"rule":"self.startsWith(''a'')"},{"rule":"self.endsWith(''c'')"}]}'
+    expected: '{"type":"string","pattern":"^[a-z]+$","allOf":[{"pattern":"^a"},{"pattern":"c$"}]}'
+    valid:
+      - '"abc"'
+    invalid:
+      - '"a1c"'
+      - '"bc"'
+      - '"ab"'
+  - name: CEL rule equal to the pattern
+    schema: '{"type":"string","pattern":"^a","x-kubernetes-validations":[{"rule":"self.startsWith(''a'')"}]}'
+    expected: '{"type":"string","pattern":"^a"}'
+    valid:
+      - '"ab"'
+    invalid:
+      - '"b"'
+  - name: CEL conjunction next to a pattern
+    schema: '{"type":"string","pattern":"^[a-z]+$","x-kubernetes-validations":[{"rule":"self.startsWith(''a'') && !self.endsWith(''c'')"}]}'
+    expected: '{"type":"string","pattern":"^[a-z]+$","allOf":[{"pattern":"^a"},{"not":{"pattern":"c$"}}]}'
+    valid:
+      - '"ab"'
+    invalid:
+      - '"a1"'
+      - '"b"'
+      - '"ac"'
+  - name: CEL string escapes
+    schema: '{"type":"string","x-kubernetes-validations":[{"rule":"!self.contains(''\"'') && !self.contains(''\\n'') && !self.contains(''\\x00'') && !self.endsWith(''\\\\'')"}]}'
+    valid:
+      - '"a\\b"'
+    invalid:
+      - '"a\"b"'
+      - '"a\nb"'
+      - '"a\u0000b"'
+      - '"ab\\"'
 unsupported:
   - name: nullable
     schema: '{"type":"string","nullable":true}'
@@ -252,9 +403,85 @@ unsupported:
   - name: all of
     schema: '{"allOf":[{"type":"string"}]}'
     error: 'unsupported schema keyword "allOf"'
-  - name: kubernetes validations
-    schema: '{"x-kubernetes-validations":[{"rule":"self > 0"}]}'
-    error: 'unsupported schema keyword "x-kubernetes-validations"'
+  - name: CEL rule on a non-string
+    schema: '{"type":"integer","x-kubernetes-validations":[{"rule":"self > 0"}]}'
+    error: >-
+      x-kubernetes-validations:
+      failed to produce JSON Schemas for CEL validation rules:
+      unsupported operation:
+      schema type integer
+  - name: CEL function without a translation
+    schema: '{"type":"string","x-kubernetes-validations":[{"rule":"self.size() < 5"}]}'
+    error: >-
+      x-kubernetes-validations:
+      failed to produce JSON Schemas for CEL validation rules:
+      rule "self.size() < 5":
+      unsupported operation:
+      function call "_<_"
+  - name: CEL string function without a translation
+    schema: '{"type":"string","x-kubernetes-validations":[{"rule":"self.foo(''a'')"}]}'
+    error: >-
+      x-kubernetes-validations:
+      failed to produce JSON Schemas for CEL validation rules:
+      rule "self.foo('a')":
+      unsupported operation:
+      function call "self.foo"
+  - name: CEL expression that is not a function call
+    schema: '{"type":"string","x-kubernetes-validations":[{"rule":"self"}]}'
+    error: >-
+      x-kubernetes-validations:
+      failed to produce JSON Schemas for CEL validation rules:
+      rule "self":
+      unsupported operation:
+      not a function call
+  - name: CEL argument that is not a literal
+    schema: '{"type":"string","x-kubernetes-validations":[{"rule":"self.contains(self)"}]}'
+    error: >-
+      x-kubernetes-validations:
+      failed to produce JSON Schemas for CEL validation rules:
+      rule "self.contains(self)":
+      unsupported operation:
+      function call "self.contains" is not receiving a single literal string
+  - name: CEL argument that is not a string
+    schema: '{"type":"string","x-kubernetes-validations":[{"rule":"self.contains(1)"}]}'
+    error: >-
+      x-kubernetes-validations:
+      failed to produce JSON Schemas for CEL validation rules:
+      rule "self.contains(1)":
+      unsupported operation:
+      function call "self.contains" is not receiving a single literal string
+  - name: CEL receiver other than self
+    schema: '{"type":"string","x-kubernetes-validations":[{"rule":"''abc''.contains(self)"}]}'
+    error: >-
+      x-kubernetes-validations:
+      failed to produce JSON Schemas for CEL validation rules:
+      rule "'abc'.contains(self)":
+      unsupported operation:
+      function call "contains" is not targeting self
+  - name: CEL transition rule
+    schema: '{"type":"string","x-kubernetes-validations":[{"rule":"oldSelf.startsWith(''a'')"}]}'
+    error: >-
+      x-kubernetes-validations:
+      failed to produce JSON Schemas for CEL validation rules:
+      rule "oldSelf.startsWith('a')":
+      unsupported operation:
+      function call "oldSelf.startsWith" is not targeting self
+  - name: CEL conjunction with an operand without a translation
+    schema: '{"type":"string","x-kubernetes-validations":[{"rule":"self.contains(''a'') && self.size() < 5"}]}'
+    error: >-
+      x-kubernetes-validations:
+      failed to produce JSON Schemas for CEL validation rules:
+      rule "self.contains('a') && self.size() < 5":
+      unsupported operation:
+      function call "_<_"
+  - name: CEL negation of an operand without a translation
+    schema: '{"type":"string","x-kubernetes-validations":[{"rule":"!self.foo(''a'')"}]}'
+    error: >-
+      x-kubernetes-validations:
+      failed to produce JSON Schemas for CEL validation rules:
+      rule "!self.foo('a')":
+      unsupported operation:
+      function call "self.foo"
   - name: int32 string format
     schema: '{"type":"string","format":"int32"}'
     error: 'unsupported format int32 for type string'
