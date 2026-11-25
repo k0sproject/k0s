@@ -638,8 +638,10 @@ The templates are only read during the k0s bootstrap. If a template is changed i
 | Variable                                 | Description                                              |
 |------------------------------------------|----------------------------------------------------------|
 | `.IPVSLoadBalancer`                      | Determines whether IPVS load balancer is enabled or not. |
-| `.K0sBin`                                | K0s binary path.                                         |
-| `.RunDir`                                | K0s run directory.                                       |
+| `.K0sBin`                                | K0s binary path with escaped single quotes.              |
+| `.K0sBinInNotifyScript`                  | K0s binary path, checked for use in notify scripts.      |
+| `.RunDir`                                | K0s run directory with escaped single quotes.            |
+| `.RunDirInNotifyScript`                  | K0s run directory, checked for use in notify scripts.    |
 | `.VRRPInstances`                         | Struct holding all the VRRP instances.                   |
 | `.VRRPInstances[].AdvertIntervalSeconds` | Advert interval of the VRRP instance.                    |
 | `.VRRPInstances[].AuthPass`              | Password for accessing VRRPD.                            |

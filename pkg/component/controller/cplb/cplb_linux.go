@@ -113,8 +113,8 @@ func (k *Keepalived) Start(ctx context.Context) error {
 		VRRPInstances:  k.Config.VRRPInstances,
 		VirtualServers: k.Config.VirtualServers,
 		APIServerPort:  k.APIPort,
-		K0sBin:         escapeSingleQuotes(os.Args[0]),
-		RunDir:         escapeSingleQuotes(k.K0sVars.RunDir),
+		k0sBin:         os.Args[0],
+		runDir:         k.K0sVars.RunDir,
 	}
 
 	if len(k.Config.VirtualServers) > 0 {
@@ -538,8 +538,32 @@ type keepalivedConfig struct {
 	RealServers      []string
 	APIServerPort    int
 	IPVSLoadBalancer bool
-	K0sBin           string
-	RunDir           string
+	k0sBin           string
+	runDir           string
+}
+
+func (c *keepalivedConfig) K0sBin() string {
+	return escapeSingleQuotes(c.k0sBin)
+}
+
+func (c *keepalivedConfig) RunDir() string {
+	return escapeSingleQuotes(c.runDir)
+}
+
+func (c *keepalivedConfig) K0sBinInNotifyScript() (string, error) {
+	return toNotifyScriptWord(c.k0sBin)
+}
+
+func (c *keepalivedConfig) RunDirInNotifyScript() (string, error) {
+	return toNotifyScriptWord(c.runDir)
+}
+
+// Escapes path for use inside single quotes in a notify script.
+func toNotifyScriptWord(path string) (string, error) {
+	if strings.ContainsAny(path, "\"\\\n\x00") || strings.Contains(path, "$_") || strings.Contains(path, "${_") {
+		return "", fmt.Errorf("can't use %q in a keepalived notify script: must not contain double quotes, backslashes, newlines, NUL characters, $_ or ${_", path)
+	}
+	return escapeSingleQuotes(path), nil
 }
 
 const dummyLinkName = "dummyvip0"

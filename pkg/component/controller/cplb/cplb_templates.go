@@ -5,8 +5,6 @@ package cplb
 
 const KeepalivedVRRPConfigTemplate = `
 {{ $ipvsLoadBalancer := .IPVSLoadBalancer }}
-{{ $k0s := .K0sBin }}
-{{ $runDir := .RunDir }}
 {{ $VRRPInstancesLen := len .VRRPInstances }}
 {{ range $i, $instance := .VRRPInstances }}
 vrrp_instance k0s-vip-{{$i}} {
@@ -24,8 +22,8 @@ vrrp_instance k0s-vip-{{$i}} {
     {{ if and ($ipvsLoadBalancer) (eq $VRRPInstancesLen 1) }}
     # Required to prevent routing loops when we use keepalived
     # virtual_servers: https://github.com/k0sproject/k0s/issues/5178
-    notify_master "'{{ $k0s }}' keepalived-setstate -r '{{ $runDir }}' -s MASTER"
-    notify_backup "'{{ $k0s }}' keepalived-setstate -r '{{ $runDir }}' -s BACKUP"
+    notify_master "'{{ $.K0sBinInNotifyScript }}' keepalived-setstate -r '{{ $.RunDirInNotifyScript }}' -s MASTER"
+    notify_backup "'{{ $.K0sBinInNotifyScript }}' keepalived-setstate -r '{{ $.RunDirInNotifyScript }}' -s BACKUP"
     {{ end }}
 
 	#advertisement interval, 1 second by default
