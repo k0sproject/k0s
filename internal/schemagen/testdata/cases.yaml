@@ -146,6 +146,33 @@ validation:
   - name: long VRRP password
     input: '{"spec":{"network":{"controlPlaneLoadBalancing":{"keepalived":{"vrrpInstances":[{"authPass":"too-long-password","virtualIPs":["192.0.2.1/24"]}]}}}}}'
     valid: false
+  - name: VRRP password with characters that are special to keepalived
+    input: '{"spec":{"network":{"controlPlaneLoadBalancing":{"keepalived":{"vrrpInstances":[{"authPass":"{#! \\''$}","virtualIPs":["192.0.2.1/24"]}]}}}}}'
+    valid: true
+  - name: VRRP password with a double quote
+    input: '{"spec":{"network":{"controlPlaneLoadBalancing":{"keepalived":{"vrrpInstances":[{"authPass":"123\"456","virtualIPs":["192.0.2.1/24"]}]}}}}}'
+    valid: false
+  - name: VRRP password with a newline
+    input: '{"spec":{"network":{"controlPlaneLoadBalancing":{"keepalived":{"vrrpInstances":[{"authPass":"123\n456","virtualIPs":["192.0.2.1/24"]}]}}}}}'
+    valid: false
+  - name: VRRP password with a NUL character
+    input: '{"spec":{"network":{"controlPlaneLoadBalancing":{"keepalived":{"vrrpInstances":[{"authPass":"123\u0000456","virtualIPs":["192.0.2.1/24"]}]}}}}}'
+    valid: false
+  - name: VRRP password ending with a backslash
+    input: '{"spec":{"network":{"controlPlaneLoadBalancing":{"keepalived":{"vrrpInstances":[{"authPass":"123456\\","virtualIPs":["192.0.2.1/24"]}]}}}}}'
+    valid: false
+  - name: VRRP password with a braced keepalived definition
+    input: '{"spec":{"network":{"controlPlaneLoadBalancing":{"keepalived":{"vrrpInstances":[{"authPass":"${_PWD}","virtualIPs":["192.0.2.1/24"]}]}}}}}'
+    valid: false
+  - name: VRRP password with an unbraced keepalived definition
+    input: '{"spec":{"network":{"controlPlaneLoadBalancing":{"keepalived":{"vrrpInstances":[{"authPass":"$_PWD x","virtualIPs":["192.0.2.1/24"]}]}}}}}'
+    valid: false
+  - name: VRRP password that is just an opening brace
+    input: '{"spec":{"network":{"controlPlaneLoadBalancing":{"keepalived":{"vrrpInstances":[{"authPass":"{","virtualIPs":["192.0.2.1/24"]}]}}}}}'
+    valid: false
+  - name: VRRP password that is just a closing brace
+    input: '{"spec":{"network":{"controlPlaneLoadBalancing":{"keepalived":{"vrrpInstances":[{"authPass":"}","virtualIPs":["192.0.2.1/24"]}]}}}}}'
+    valid: false
   - name: zero proxy konnectivity port
     input: '{"spec":{"network":{"nodeLocalLoadBalancing":{"envoyProxy":{"konnectivityServerBindPort":0}}}}}'
     valid: false

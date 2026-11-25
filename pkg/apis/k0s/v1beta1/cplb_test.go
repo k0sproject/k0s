@@ -149,6 +149,82 @@ func TestValidateVRRPInstances(t *testing.T) {
 			},
 			wantErr: `vrrpInstances[0].authPass: Too long: may not be more than 8 bytes`,
 		}, {
+			name: "Password with characters that are special to keepalived",
+			vrrps: VRRPInstances{{
+				Interface:  "eth0",
+				VirtualIPs: []string{"192.168.1.1/24"},
+				AuthPass:   `{#! \'$}`,
+			}},
+			expectedVRRPs: VRRPInstances{{
+				VirtualRouterID:       defaultVirtualRouterID,
+				Interface:             "eth0",
+				AdvertIntervalSeconds: defaultAdvertIntervalSeconds,
+			}},
+		}, {
+			name: "Password with a double quote",
+			vrrps: VRRPInstances{{
+				Interface:  "eth0",
+				VirtualIPs: []string{"192.168.1.1/24"},
+				AuthPass:   `123"456`,
+			}},
+			wantErr: `vrrpInstances[0].authPass: Invalid value: "123\"456": must not contain double quotes, newlines or NUL characters`,
+		}, {
+			name: "Password with a newline",
+			vrrps: VRRPInstances{{
+				Interface:  "eth0",
+				VirtualIPs: []string{"192.168.1.1/24"},
+				AuthPass:   "123\n456",
+			}},
+			wantErr: `vrrpInstances[0].authPass: Invalid value: "123\n456": must not contain double quotes, newlines or NUL characters`,
+		}, {
+			name: "Password with a NUL character",
+			vrrps: VRRPInstances{{
+				Interface:  "eth0",
+				VirtualIPs: []string{"192.168.1.1/24"},
+				AuthPass:   "123\x00456",
+			}},
+			wantErr: `vrrpInstances[0].authPass: Invalid value: "123\x00456": must not contain double quotes, newlines or NUL characters`,
+		}, {
+			name: "Password ending with a backslash",
+			vrrps: VRRPInstances{{
+				Interface:  "eth0",
+				VirtualIPs: []string{"192.168.1.1/24"},
+				AuthPass:   `123456\`,
+			}},
+			wantErr: `vrrpInstances[0].authPass: Invalid value: "123456\\": must not end with a backslash`,
+		}, {
+			name: "Password with a braced keepalived definition",
+			vrrps: VRRPInstances{{
+				Interface:  "eth0",
+				VirtualIPs: []string{"192.168.1.1/24"},
+				AuthPass:   `${_PWD}`,
+			}},
+			wantErr: `vrrpInstances[0].authPass: Invalid value: "${_PWD}": must not contain $_ or ${_`,
+		}, {
+			name: "Password with an unbraced keepalived definition",
+			vrrps: VRRPInstances{{
+				Interface:  "eth0",
+				VirtualIPs: []string{"192.168.1.1/24"},
+				AuthPass:   `$_PWD x`,
+			}},
+			wantErr: `vrrpInstances[0].authPass: Invalid value: "$_PWD x": must not contain $_ or ${_`,
+		}, {
+			name: "Password that is just an opening brace",
+			vrrps: VRRPInstances{{
+				Interface:  "eth0",
+				VirtualIPs: []string{"192.168.1.1/24"},
+				AuthPass:   `{`,
+			}},
+			wantErr: `vrrpInstances[0].authPass: Invalid value: "{": must not be { or }`,
+		}, {
+			name: "Password that is just a closing brace",
+			vrrps: VRRPInstances{{
+				Interface:  "eth0",
+				VirtualIPs: []string{"192.168.1.1/24"},
+				AuthPass:   `}`,
+			}},
+			wantErr: `vrrpInstances[0].authPass: Invalid value: "}": must not be { or }`,
+		}, {
 			name: "No virtual IPs",
 			vrrps: VRRPInstances{{
 				Interface: "eth0",

@@ -9,6 +9,7 @@ import (
 	"math"
 	"net"
 	"slices"
+	"strings"
 	"sync"
 	"time"
 
@@ -116,9 +117,15 @@ type VRRPInstance struct {
 
 	// AuthPass is the password for accessing VRRPD. This is not a security
 	// feature but a way to prevent accidental misconfigurations.
-	// AuthPass must be 8 characters or less.
+	// AuthPass must be 8 characters or less. It must not contain double
+	// quotes, newlines, NUL characters, `$_` or `${_`, and must not end with
+	// a backslash or be just `{` or `}`.
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=8
+	// +kubebuilder:validation:XValidation:rule=`!self.contains('"') && !self.contains('\n') && !self.contains('\x00')`,message="must not contain double quotes, newlines or NUL characters"
+	// +kubebuilder:validation:XValidation:rule=`!self.endsWith('\\')`,message="must not end with a backslash"
+	// +kubebuilder:validation:XValidation:rule=`!self.contains('$_') && !self.contains('${_')`,message="must not contain $_ or ${_"
+	// +kubebuilder:validation:XValidation:rule=`!self.matches('^[{}]$')`,message="must not be { or }"
 	AuthPass string `json:"authPass"`
 
 	// UnicastPeers is a list of unicast peers. If not specified, k0s will use multicast.
@@ -190,6 +197,21 @@ func (i *VRRPInstance) validate(path *field.Path, offset int, getDefaultNICFn fu
 		errs = append(errs, field.Required(path.Child("authPass"), ""))
 	} else if maxLen := 8; len(i.AuthPass) > maxLen {
 		errs = append(errs, field.TooLong(path.Child("authPass"), i.AuthPass, maxLen))
+	}
+	// There's no way to escape special characters for auth_pass, and
+	// keepalived expands its builtin definitions even inside quotes. It also
+	// takes a word that is just a brace as a block delimiter, quoted or not.
+	if strings.ContainsAny(i.AuthPass, "\"\n\x00") {
+		errs = append(errs, field.Invalid(path.Child("authPass"), i.AuthPass, "must not contain double quotes, newlines or NUL characters"))
+	}
+	if strings.HasSuffix(i.AuthPass, `\`) {
+		errs = append(errs, field.Invalid(path.Child("authPass"), i.AuthPass, "must not end with a backslash"))
+	}
+	if strings.Contains(i.AuthPass, "$_") || strings.Contains(i.AuthPass, "${_") {
+		errs = append(errs, field.Invalid(path.Child("authPass"), i.AuthPass, "must not contain $_ or ${_"))
+	}
+	if i.AuthPass == "{" || i.AuthPass == "}" {
+		errs = append(errs, field.Invalid(path.Child("authPass"), i.AuthPass, "must not be { or }"))
 	}
 
 	if len(i.VirtualIPs) == 0 {

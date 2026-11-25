@@ -5,12 +5,30 @@ package cplb
 
 import (
 	"net"
+	"strings"
 	"testing"
+	"text/template"
 
 	k0sAPI "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
+
+func TestKeepalivedVRRPConfigTemplate(t *testing.T) {
+	templ, err := template.New("vrrp").Parse(KeepalivedVRRPConfigTemplate)
+	require.NoError(t, err)
+
+	t.Run("quotes the password", func(t *testing.T) {
+		var rendered strings.Builder
+		err := templ.Execute(&rendered, &keepalivedConfig{
+			VRRPInstances: []k0sAPI.VRRPInstance{{AuthPass: "fake #!"}},
+		})
+
+		require.NoError(t, err)
+		assert.Contains(t, rendered.String(), "\n        auth_pass \"fake #!\"\n")
+	})
+}
 
 func TestEscapeSingleQuotes(t *testing.T) {
 	assert.Equal(t, `It\'s a "nice" \'test\'`, escapeSingleQuotes(`It's a "nice" \'test'`))

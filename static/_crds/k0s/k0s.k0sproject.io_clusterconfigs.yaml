@@ -822,10 +822,23 @@ spec:
                                   description: |-
                                     AuthPass is the password for accessing VRRPD. This is not a security
                                     feature but a way to prevent accidental misconfigurations.
-                                    AuthPass must be 8 characters or less.
+                                    AuthPass must be 8 characters or less. It must not contain double
+                                    quotes, newlines, NUL characters, `$_` or `${_`, and must not end with
+                                    a backslash or be just `{` or `}`.
                                   maxLength: 8
                                   minLength: 1
                                   type: string
+                                  x-kubernetes-validations:
+                                  - message: must not contain double quotes, newlines
+                                      or NUL characters
+                                    rule: '!self.contains(''"'') && !self.contains(''\n'')
+                                      && !self.contains(''\x00'')'
+                                  - message: must not end with a backslash
+                                    rule: '!self.endsWith(''\\'')'
+                                  - message: must not contain $_ or ${_
+                                    rule: '!self.contains(''$_'') && !self.contains(''${_'')'
+                                  - message: must not be { or }
+                                    rule: '!self.matches(''^[{}]$'')'
                                 interface:
                                   description: |-
                                     Interface specifies the NIC used by the virtual router.
