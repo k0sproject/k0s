@@ -50,15 +50,13 @@ engines:
   local:
     lvm:
       enabled: true
-    rawfile:
-      enabled: true
     zfs:
       enabled: true
     rawfile:
-        enabled: false
+      enabled: false
   replicated:
     mayastor:
-      enabled: true
+      enabled: false
 ```
 
 ### Monitoring
