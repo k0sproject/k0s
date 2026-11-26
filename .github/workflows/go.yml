@@ -223,6 +223,25 @@ jobs:
       name: ap-${{ matrix.smoke-suite }}
       k0s-reference-version: ${{ matrix.version }}
 
+  etcd-mixed-version-tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ${{fromJson(needs.prepare.outputs.autopilot-matrix)}}
+        include:
+          # The last release that neither joins etcd members as learners nor
+          # promotes them. Upgrades from it are what the test is about.
+          - version: v1.35.4+k0s.0
+
+    name: "check-etcdmixedversion :: ${{ matrix.version }}"
+    needs: [prepare, build-k0s]
+
+    uses: ./.github/workflows/smoketest.yaml
+    with:
+      arch: amd64
+      name: etcdmixedversion
+      k0s-reference-version: ${{ matrix.version }}
+
   build-arm:
     name: "Build :: k0s :: arm"
     if: github.repository == 'k0sproject/k0s'
