@@ -63,11 +63,8 @@ updates:
     directory: /
     schedule:
       interval: daily
-    # gh-aw lock files are generated, and the gh-aw runtime they pin has to
-    # match the compiler that generated them. They are updated by recompiling
-    # with a newer gh-aw (`gh aw compile`), never by bumping actions in place.
     exclude-paths:
-      - .github/workflows/*.lock.yml
+      - .github/workflows/*.lock.yml # `gh aw compile` handles this
 
   - package-ecosystem: pip
     directory: /docs
