@@ -80,7 +80,7 @@ require (
 	k8s.io/kubernetes v1.37.2
 	k8s.io/mount-utils v0.37.2
 	k8s.io/utils v0.0.0-20260626114624-be93311217bd
-	modernc.org/sqlite v1.62.0
+	modernc.org/sqlite v1.63.0
 	oras.land/oras-go/v2 v2.7.0
 	sigs.k8s.io/controller-runtime v0.25.3
 	sigs.k8s.io/yaml v1.6.0
