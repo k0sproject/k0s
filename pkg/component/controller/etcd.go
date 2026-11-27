@@ -16,12 +16,12 @@ import (
 	"time"
 
 	"github.com/k0sproject/k0s/internal/assets"
+	"github.com/k0sproject/k0s/internal/certificate"
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
 	"github.com/k0sproject/k0s/internal/pkg/users"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
-	"github.com/k0sproject/k0s/pkg/certificate"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"

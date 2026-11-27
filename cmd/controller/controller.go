@@ -22,6 +22,7 @@ import (
 
 	"github.com/k0sproject/k0s/cmd/internal"
 	workercmd "github.com/k0sproject/k0s/cmd/worker"
+	"github.com/k0sproject/k0s/internal/certificate"
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
@@ -32,7 +33,6 @@ import (
 	"github.com/k0sproject/k0s/pkg/applier"
 	"github.com/k0sproject/k0s/pkg/autopilot/controller/updates"
 	"github.com/k0sproject/k0s/pkg/build"
-	"github.com/k0sproject/k0s/pkg/certificate"
 	"github.com/k0sproject/k0s/pkg/component/controller"
 	"github.com/k0sproject/k0s/pkg/component/controller/clusterconfig"
 	"github.com/k0sproject/k0s/pkg/component/controller/cplb"
