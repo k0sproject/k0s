@@ -6,8 +6,8 @@ package common
 import (
 	"os"
 
+	"github.com/k0sproject/k0s/internal/node"
 	"github.com/k0sproject/k0s/internal/pkg/flags"
-	"github.com/k0sproject/k0s/pkg/node"
 )
 
 const (
