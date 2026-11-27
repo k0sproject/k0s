@@ -6,19 +6,29 @@ package schemagen
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/fs"
 	"maps"
 	"math"
 	"path"
+	"reflect"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
 
-	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	"sigs.k8s.io/yaml"
-
 	"github.com/k0sproject/k0s/static"
+
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+
+	celcommon "github.com/google/cel-go/common"
+	celast "github.com/google/cel-go/common/ast"
+	celoperators "github.com/google/cel-go/common/operators"
+	celtypes "github.com/google/cel-go/common/types"
+	celparser "github.com/google/cel-go/parser"
+
+	"sigs.k8s.io/yaml"
 )
 
 // Identifier identifies a versioned Kubernetes resource schema.
@@ -131,6 +141,7 @@ func structuralSchema(source map[string]any, openObject, root bool) (map[string]
 			schema["additionalProperties"] = false
 		}
 	}
+	var validationSchemas []map[string]any
 	for key := range source {
 		switch key {
 		case "default", "description", "enum", "maxItems", "maxLength", "maximum",
@@ -171,6 +182,16 @@ func structuralSchema(source map[string]any, openObject, root bool) (map[string]
 			delete(schema, key)
 		case "x-kubernetes-list-type", "x-kubernetes-list-map-keys", "x-kubernetes-preserve-unknown-fields":
 			delete(schema, key)
+		case "x-kubernetes-validations":
+			delete(schema, key)
+			validations, err := cast[[]any](source[key])
+			if err != nil {
+				return nil, fmt.Errorf(`x-kubernetes-validations: %w`, err)
+			}
+			validationSchemas, err = validationRulesToJSONSchemas(validations, source["type"])
+			if err != nil {
+				return nil, fmt.Errorf(`x-kubernetes-validations: failed to produce JSON Schemas for CEL validation rules: %w`, err)
+			}
 		case "properties":
 			properties := source[key].(map[string]any)
 			converted := make(map[string]any, len(properties))
@@ -194,5 +215,160 @@ func structuralSchema(source map[string]any, openObject, root bool) (map[string]
 			return nil, fmt.Errorf("unsupported schema keyword %q", key)
 		}
 	}
+	// Merge once all keywords are converted, so that the merge only sees and
+	// touches what belongs to the converted schema.
+	for _, validationSchema := range validationSchemas {
+		mergeJSONSchemas(schema, validationSchema)
+	}
 	return schema, nil
+}
+
+// Converts each CEL validation rule into a JSON Schema.
+func validationRulesToJSONSchemas(validations []any, schemaType any) (schemas []map[string]any, _ error) {
+	if schemaType != "string" {
+		return nil, fmt.Errorf("%w: schema type %v", errors.ErrUnsupported, schemaType)
+	}
+	parser, err := celparser.NewParser()
+	if err != nil {
+		return nil, err
+	}
+
+	for i, validation := range validations {
+		validation, err := cast[map[string]any](validation)
+		if err != nil {
+			return nil, fmt.Errorf("validation %d: %w", i, err)
+		}
+		rule, err := cast[string](validation["rule"])
+		if err != nil {
+			return nil, fmt.Errorf("validation %d: failed to get rule: %w", i, err)
+		}
+		ast, errs := parser.Parse(celcommon.NewTextSource(rule))
+		if errs := errs.GetErrors(); len(errs) > 0 {
+			return nil, fmt.Errorf("rule %q: %s", rule, errs[0].Message)
+		}
+		schema, err := celExpressionToJSONSchema(ast.Expr())
+		if err != nil {
+			return nil, fmt.Errorf("rule %q: %w", rule, err)
+		}
+		schemas = append(schemas, schema)
+	}
+
+	return
+}
+
+// Converts the CEL expression into a JSON Schema.
+func celExpressionToJSONSchema(e celast.Expr) (map[string]any, error) {
+	if e.Kind() != celast.CallKind {
+		return nil, fmt.Errorf("%w: not a function call", errors.ErrUnsupported)
+	}
+
+	call := e.AsCall()
+	fn := call.FunctionName()
+
+	// Handle string predicates on self and convert them to RE2 regexes.
+	if call.IsMemberFunction() {
+		target := call.Target()
+		if target.Kind() != celast.IdentKind {
+			return nil, fmt.Errorf("%w: function call \"%s\" is not targeting self", errors.ErrUnsupported, fn)
+		}
+		ident := target.AsIdent()
+		if ident != "self" {
+			return nil, fmt.Errorf("%w: function call \"%v.%s\" is not targeting self", errors.ErrUnsupported, ident, fn)
+		}
+		if len(call.Args()) != 1 || call.Args()[0].Kind() != celast.LiteralKind {
+			return nil, fmt.Errorf("%w: function call \"%v.%s\" is not receiving a single literal string", errors.ErrUnsupported, ident, fn)
+		}
+		var arg string
+		if lit, ok := call.Args()[0].AsLiteral().(celtypes.String); !ok {
+			return nil, fmt.Errorf(
+				"%w: function call \"%v.%s\" is not receiving a single literal string", errors.ErrUnsupported, ident, fn)
+		} else {
+			arg = string(lit)
+		}
+
+		var pattern string
+		switch fn {
+		case "contains":
+			pattern = regexp.QuoteMeta(arg)
+		case "startsWith":
+			pattern = "^" + regexp.QuoteMeta(arg)
+		case "endsWith":
+			pattern = regexp.QuoteMeta(arg) + "$"
+		case "matches":
+			pattern = arg
+		default:
+			return nil, fmt.Errorf("%w: function call \"%v.%s\"", errors.ErrUnsupported, ident, fn)
+		}
+
+		return map[string]any{"pattern": pattern}, nil
+	}
+
+	// Resolve "&&", "||" and "!"
+	var keyword string
+	switch fn {
+	case celoperators.LogicalAnd:
+		keyword = "allOf"
+	case celoperators.LogicalOr:
+		keyword = "anyOf"
+	case celoperators.LogicalNot:
+		schema, err := celExpressionToJSONSchema(call.Args()[0])
+		if err != nil {
+			return nil, err
+		}
+		return map[string]any{"not": schema}, nil
+	default:
+		return nil, fmt.Errorf("%w: function call \"%s\"", errors.ErrUnsupported, fn)
+	}
+
+	var schemas []any
+	for _, operand := range call.Args() {
+		schema, err := celExpressionToJSONSchema(operand)
+		if err != nil {
+			return nil, err
+		}
+		// Flatten operands of the same operator.
+		if nested, ok := schema[keyword].([]any); ok {
+			schemas = append(schemas, nested...)
+		} else {
+			schemas = append(schemas, schema)
+		}
+	}
+	return map[string]any{keyword: schemas}, nil
+}
+
+// Merges from into the JSON Schema into, so that into accepts what both schemas accept.
+func mergeJSONSchemas(into, from map[string]any) {
+	conflicts := map[string]any{}
+	for keyword, value := range from {
+		switch keyword {
+		case "allOf", "anyOf", "not", "pattern":
+		default:
+			panic("keyword handling not implemented for " + keyword)
+		}
+
+		existing, exists := into[keyword]
+		switch {
+		case !exists:
+			into[keyword] = value
+		case reflect.DeepEqual(existing, value):
+		case keyword == "allOf":
+			// Clip, so that appending never writes into a shared array.
+			into[keyword] = append(slices.Clip(existing.([]any)), value.([]any)...)
+		default:
+			conflicts[keyword] = value
+		}
+	}
+
+	if len(conflicts) > 0 {
+		allOf, _ := into["allOf"].([]any)
+		into["allOf"] = append(slices.Clip(allOf), conflicts)
+	}
+}
+
+func cast[T any](x any) (T, error) {
+	t, ok := x.(T)
+	if ok {
+		return t, nil
+	}
+	return t, fmt.Errorf("expected %T, got %T", t, x)
 }

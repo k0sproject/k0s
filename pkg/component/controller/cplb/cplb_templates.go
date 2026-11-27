@@ -5,8 +5,6 @@ package cplb
 
 const KeepalivedVRRPConfigTemplate = `
 {{ $ipvsLoadBalancer := .IPVSLoadBalancer }}
-{{ $k0s := .K0sBin }}
-{{ $runDir := .RunDir }}
 {{ $VRRPInstancesLen := len .VRRPInstances }}
 {{ range $i, $instance := .VRRPInstances }}
 vrrp_instance k0s-vip-{{$i}} {
@@ -14,7 +12,7 @@ vrrp_instance k0s-vip-{{$i}} {
     # it doesn't perform a failover. This must be combined with the priority.
     state BACKUP
     # Make sure the interface is aligned with your server's network interface.
-    interface {{ .Interface }}
+    interface "{{ .Interface }}"
     # The virtual router ID must be unique to each VRRP instance that you define.
     virtual_router_id {{ $instance.VirtualRouterID }}
     # All servers have the same priority so that when a new one comes up we don't
@@ -24,15 +22,15 @@ vrrp_instance k0s-vip-{{$i}} {
     {{ if and ($ipvsLoadBalancer) (eq $VRRPInstancesLen 1) }}
     # Required to prevent routing loops when we use keepalived
     # virtual_servers: https://github.com/k0sproject/k0s/issues/5178
-    notify_master "'{{ $k0s }}' keepalived-setstate -r '{{ $runDir }}' -s MASTER"
-    notify_backup "'{{ $k0s }}' keepalived-setstate -r '{{ $runDir }}' -s BACKUP"
+    notify_master "'{{ $.K0sBinInNotifyScript }}' keepalived-setstate -r '{{ $.RunDirInNotifyScript }}' -s MASTER"
+    notify_backup "'{{ $.K0sBinInNotifyScript }}' keepalived-setstate -r '{{ $.RunDirInNotifyScript }}' -s BACKUP"
     {{ end }}
 
 	#advertisement interval, 1 second by default
     advert_int {{ $instance.AdvertIntervalSeconds }}
     authentication {
         auth_type PASS
-        auth_pass {{ $instance.AuthPass }}
+        auth_pass "{{ $instance.AuthPass }}"
     }
     virtual_ipaddress {
         {{ range $instance.VirtualIPs }}
@@ -69,7 +67,7 @@ const KeepalivedVirtualServersConfigTemplate = `
 {{ if gt (len $RealServers) 0 }}
 {{ range .VirtualServers }}
 virtual_server {{ .IPAddress }} {{ $APIServerPort }} {
-    delay_loop {{ .DelayLoop.Seconds }}
+    delay_loop {{ printf "%.6f" .DelayLoop.Seconds }}
     lb_algo {{ .LBAlgo }}
     lb_kind {{ .LBKind }}
     persistence_timeout {{ .PersistenceTimeoutSeconds }}

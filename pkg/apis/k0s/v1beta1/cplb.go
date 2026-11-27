@@ -9,6 +9,7 @@ import (
 	"math"
 	"net"
 	"slices"
+	"strings"
 	"sync"
 	"time"
 
@@ -97,6 +98,15 @@ type VRRPInstance struct {
 	// If not specified, k0s will use the interface that owns the default route.
 	// If a MAC address is specified instead of an interface name, k0s will
 	// try to resolve the interface name based on the MAC address.
+	// Interface must be 59 characters or less, which fits the longest notation
+	// of a MAC address. It must not contain double quotes, newlines, NUL
+	// characters, `$_` or `${_`, and must not end with a backslash or be just
+	// `{` or `}`.
+	// +kubebuilder:validation:MaxLength=59
+	// +kubebuilder:validation:XValidation:rule=`!self.contains('"') && !self.contains('\n') && !self.contains('\x00')`,message="must not contain double quotes, newlines or NUL characters"
+	// +kubebuilder:validation:XValidation:rule=`!self.endsWith('\\')`,message="must not end with a backslash"
+	// +kubebuilder:validation:XValidation:rule=`!self.contains('$_') && !self.contains('${_')`,message="must not contain $_ or ${_"
+	// +kubebuilder:validation:XValidation:rule=`!self.matches('^[{}]$')`,message="must not be { or }"
 	Interface string `json:"interface,omitempty"`
 
 	// VirtualRouterID is the VRRP router ID. If not specified, k0s will
@@ -109,16 +119,23 @@ type VRRPInstance struct {
 	VirtualRouterID int32 `json:"virtualRouterID,omitempty"`
 
 	// AdvertIntervalSeconds is the advertisement interval in seconds. Defaults to 1
-	// second.
+	// second. AdvertIntervalSeconds must be in the range of 1-255.
 	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=255
 	// +kubebuilder:default=1
 	AdvertIntervalSeconds int32 `json:"advertIntervalSeconds,omitempty"`
 
 	// AuthPass is the password for accessing VRRPD. This is not a security
 	// feature but a way to prevent accidental misconfigurations.
-	// AuthPass must be 8 characters or less.
+	// AuthPass must be 8 characters or less. It must not contain double
+	// quotes, newlines, NUL characters, `$_` or `${_`, and must not end with
+	// a backslash or be just `{` or `}`.
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=8
+	// +kubebuilder:validation:XValidation:rule=`!self.contains('"') && !self.contains('\n') && !self.contains('\x00')`,message="must not contain double quotes, newlines or NUL characters"
+	// +kubebuilder:validation:XValidation:rule=`!self.endsWith('\\')`,message="must not end with a backslash"
+	// +kubebuilder:validation:XValidation:rule=`!self.contains('$_') && !self.contains('${_')`,message="must not contain $_ or ${_"
+	// +kubebuilder:validation:XValidation:rule=`!self.matches('^[{}]$')`,message="must not be { or }"
 	AuthPass string `json:"authPass"`
 
 	// UnicastPeers is a list of unicast peers. If not specified, k0s will use multicast.
@@ -164,6 +181,10 @@ func (i *VRRPInstance) validate(path *field.Path, offset int, getDefaultNICFn fu
 			i.Interface = nic
 		}
 	}
+	if maxLen := 59; len(i.Interface) > maxLen {
+		errs = append(errs, field.TooLong(path.Child("interface"), i.Interface, maxLen))
+	}
+	errs = append(errs, validateKeepalivedWord(path.Child("interface"), i.Interface)...)
 
 	if id := i.VirtualRouterID; id == 0 {
 		if id := defaultVirtualRouterID + int32(offset); id > 255 {
@@ -182,8 +203,10 @@ func (i *VRRPInstance) validate(path *field.Path, offset int, getDefaultNICFn fu
 		errs = append(errs, field.Invalid(path.Child("addressLabel"), i.AddressLabel, "0xffffffff is reserved"))
 	}
 
-	if i.AdvertIntervalSeconds == 0 {
+	if secs := i.AdvertIntervalSeconds; secs == 0 {
 		i.AdvertIntervalSeconds = defaultAdvertIntervalSeconds
+	} else if lo, hi := int32(1), int32(255); lo > secs || secs > hi {
+		errs = append(errs, field.Invalid(path.Child("advertIntervalSeconds"), secs, fmt.Sprintf("must be between %d and %d, inclusive", lo, hi)))
 	}
 
 	if i.AuthPass == "" {
@@ -191,6 +214,7 @@ func (i *VRRPInstance) validate(path *field.Path, offset int, getDefaultNICFn fu
 	} else if maxLen := 8; len(i.AuthPass) > maxLen {
 		errs = append(errs, field.TooLong(path.Child("authPass"), i.AuthPass, maxLen))
 	}
+	errs = append(errs, validateKeepalivedWord(path.Child("authPass"), i.AuthPass)...)
 
 	if len(i.VirtualIPs) == 0 {
 		errs = append(errs, field.Required(path.Child("virtualIPs"), ""))
@@ -214,6 +238,26 @@ func (i *VRRPInstance) validate(path *field.Path, offset int, getDefaultNICFn fu
 		}
 	}
 
+	return errs
+}
+
+// Checks if keepalived takes word as is when it's rendered in double quotes.
+// There's no way to escape special characters in quoted words, and keepalived
+// expands its builtin definitions even inside quotes. It also takes a word
+// that is just a brace as a block delimiter, quoted or not.
+func validateKeepalivedWord(path *field.Path, word string) (errs field.ErrorList) {
+	if strings.ContainsAny(word, "\"\n\x00") {
+		errs = append(errs, field.Invalid(path, word, "must not contain double quotes, newlines or NUL characters"))
+	}
+	if strings.HasSuffix(word, `\`) {
+		errs = append(errs, field.Invalid(path, word, "must not end with a backslash"))
+	}
+	if strings.Contains(word, "$_") || strings.Contains(word, "${_") {
+		errs = append(errs, field.Invalid(path, word, "must not contain $_ or ${_"))
+	}
+	if word == "{" || word == "}" {
+		errs = append(errs, field.Invalid(path, word, "must not be { or }"))
+	}
 	return errs
 }
 

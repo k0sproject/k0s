@@ -5,6 +5,7 @@ package v1beta1
 
 import (
 	"math"
+	"strings"
 	"testing"
 	"time"
 
@@ -149,6 +150,128 @@ func TestValidateVRRPInstances(t *testing.T) {
 			},
 			wantErr: `vrrpInstances[0].authPass: Too long: may not be more than 8 bytes`,
 		}, {
+			name: "Password with characters that are special to keepalived",
+			vrrps: VRRPInstances{{
+				Interface:  "eth0",
+				VirtualIPs: []string{"192.168.1.1/24"},
+				AuthPass:   `{#! \'$}`,
+			}},
+			expectedVRRPs: VRRPInstances{{
+				VirtualRouterID:       defaultVirtualRouterID,
+				Interface:             "eth0",
+				AdvertIntervalSeconds: defaultAdvertIntervalSeconds,
+			}},
+		}, {
+			name: "Password with a double quote",
+			vrrps: VRRPInstances{{
+				Interface:  "eth0",
+				VirtualIPs: []string{"192.168.1.1/24"},
+				AuthPass:   `123"456`,
+			}},
+			wantErr: `vrrpInstances[0].authPass: Invalid value: "123\"456": must not contain double quotes, newlines or NUL characters`,
+		}, {
+			name: "Password with a newline",
+			vrrps: VRRPInstances{{
+				Interface:  "eth0",
+				VirtualIPs: []string{"192.168.1.1/24"},
+				AuthPass:   "123\n456",
+			}},
+			wantErr: `vrrpInstances[0].authPass: Invalid value: "123\n456": must not contain double quotes, newlines or NUL characters`,
+		}, {
+			name: "Password with a NUL character",
+			vrrps: VRRPInstances{{
+				Interface:  "eth0",
+				VirtualIPs: []string{"192.168.1.1/24"},
+				AuthPass:   "123\x00456",
+			}},
+			wantErr: `vrrpInstances[0].authPass: Invalid value: "123\x00456": must not contain double quotes, newlines or NUL characters`,
+		}, {
+			name: "Password ending with a backslash",
+			vrrps: VRRPInstances{{
+				Interface:  "eth0",
+				VirtualIPs: []string{"192.168.1.1/24"},
+				AuthPass:   `123456\`,
+			}},
+			wantErr: `vrrpInstances[0].authPass: Invalid value: "123456\\": must not end with a backslash`,
+		}, {
+			name: "Password with a braced keepalived definition",
+			vrrps: VRRPInstances{{
+				Interface:  "eth0",
+				VirtualIPs: []string{"192.168.1.1/24"},
+				AuthPass:   `${_PWD}`,
+			}},
+			wantErr: `vrrpInstances[0].authPass: Invalid value: "${_PWD}": must not contain $_ or ${_`,
+		}, {
+			name: "Password with an unbraced keepalived definition",
+			vrrps: VRRPInstances{{
+				Interface:  "eth0",
+				VirtualIPs: []string{"192.168.1.1/24"},
+				AuthPass:   `$_PWD x`,
+			}},
+			wantErr: `vrrpInstances[0].authPass: Invalid value: "$_PWD x": must not contain $_ or ${_`,
+		}, {
+			name: "Password that is just an opening brace",
+			vrrps: VRRPInstances{{
+				Interface:  "eth0",
+				VirtualIPs: []string{"192.168.1.1/24"},
+				AuthPass:   `{`,
+			}},
+			wantErr: `vrrpInstances[0].authPass: Invalid value: "{": must not be { or }`,
+		}, {
+			name: "Password that is just a closing brace",
+			vrrps: VRRPInstances{{
+				Interface:  "eth0",
+				VirtualIPs: []string{"192.168.1.1/24"},
+				AuthPass:   `}`,
+			}},
+			wantErr: `vrrpInstances[0].authPass: Invalid value: "}": must not be { or }`,
+		}, {
+			name: "Negative advertisement interval",
+			vrrps: VRRPInstances{{
+				Interface:             "eth0",
+				VirtualIPs:            []string{"192.168.1.1/24"},
+				AuthPass:              "123456",
+				AdvertIntervalSeconds: -1,
+			}},
+			wantErr: `vrrpInstances[0].advertIntervalSeconds: Invalid value: -1: must be between 1 and 255, inclusive`,
+		}, {
+			name: "Too long advertisement interval",
+			vrrps: VRRPInstances{{
+				Interface:             "eth0",
+				VirtualIPs:            []string{"192.168.1.1/24"},
+				AuthPass:              "123456",
+				AdvertIntervalSeconds: 256,
+			}},
+			wantErr: `vrrpInstances[0].advertIntervalSeconds: Invalid value: 256: must be between 1 and 255, inclusive`,
+		}, {
+			name: "Interface with characters that are special to keepalived",
+			vrrps: VRRPInstances{{
+				Interface:  `e{#!\'$}`,
+				VirtualIPs: []string{"192.168.1.1/24"},
+				AuthPass:   "123456",
+			}},
+			expectedVRRPs: VRRPInstances{{
+				VirtualRouterID:       defaultVirtualRouterID,
+				Interface:             `e{#!\'$}`,
+				AdvertIntervalSeconds: defaultAdvertIntervalSeconds,
+			}},
+		}, {
+			name: "Interface with a braced keepalived definition",
+			vrrps: VRRPInstances{{
+				Interface:  `${_ENV}`,
+				VirtualIPs: []string{"192.168.1.1/24"},
+				AuthPass:   "123456",
+			}},
+			wantErr: `vrrpInstances[0].interface: Invalid value: "${_ENV}": must not contain $_ or ${_`,
+		}, {
+			name: "Too long interface",
+			vrrps: VRRPInstances{{
+				Interface:  strings.Repeat("x", 60),
+				VirtualIPs: []string{"192.168.1.1/24"},
+				AuthPass:   "123456",
+			}},
+			wantErr: `vrrpInstances[0].interface: Too long: may not be more than 59 bytes`,
+		}, {
 			name: "No virtual IPs",
 			vrrps: VRRPInstances{{
 				Interface: "eth0",
@@ -264,6 +387,23 @@ func TestValidateVRRPInstances(t *testing.T) {
 		}
 		assert.EqualValues(t, 255, underTest[len(underTest)-2].VirtualRouterID)
 		assert.Zero(t, underTest[len(underTest)-1].VirtualRouterID)
+	})
+
+	t.Run("default interface that keepalived can't express", func(t *testing.T) {
+		underTest := VRRPInstances{{
+			VirtualIPs: []string{"192.168.1.1/24"},
+			AuthPass:   "123456",
+		}}
+
+		errs := underTest.validate(field.NewPath("vrrpInstances"), func() (string, error) {
+			return `eth"0`, nil
+		})
+
+		if assert.Len(t, errs, 1, "Expected exactly one error") {
+			assert.ErrorContains(t, errs[0],
+				`vrrpInstances[0].interface: Invalid value: "eth\"0": must not contain double quotes, newlines or NUL characters`,
+			)
+		}
 	})
 }
 

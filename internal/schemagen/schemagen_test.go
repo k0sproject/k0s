@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/santhosh-tekuri/jsonschema/v6"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"sigs.k8s.io/yaml"
 )
@@ -20,11 +21,12 @@ type testCases struct {
 		Valid bool
 	}
 	Structural []struct {
-		Name    string
-		Schema  string
-		Root    bool
-		Valid   []string
-		Invalid []string
+		Name     string
+		Schema   string
+		Root     bool
+		Expected string
+		Valid    []string
+		Invalid  []string
 	}
 	Unsupported []struct {
 		Name   string
@@ -85,21 +87,26 @@ func TestStructuralSchemaCases(t *testing.T) {
 			require.NoError(t, err)
 			converted, err := structuralSchema(source, false, test.Root)
 			require.NoError(t, err)
+			if test.Expected != "" {
+				actual, err := json.Marshal(converted)
+				require.NoError(t, err)
+				assert.JSONEq(t, test.Expected, string(actual), "converted schema should have the expected shape")
+			}
 			converted["$schema"] = "http://json-schema.org/draft-07/schema#"
 			schema := compile(t, converted)
 			for _, input := range test.Valid {
 				var value any
-				require.NoError(t, json.Unmarshal([]byte(input), &value))
-				require.NoError(t, schema.Validate(value))
+				require.NoErrorf(t, json.Unmarshal([]byte(input), &value), "input %q should be valid JSON", input)
+				assert.NoErrorf(t, schema.Validate(value), "input %q should be accepted", input)
 			}
 			for _, input := range test.Invalid {
 				var value any
-				require.NoError(t, json.Unmarshal([]byte(input), &value))
-				require.Error(t, schema.Validate(value))
+				require.NoErrorf(t, json.Unmarshal([]byte(input), &value), "input %q should be valid JSON", input)
+				assert.Errorf(t, schema.Validate(value), "input %q should be rejected", input)
 			}
 			unchanged, err := json.Marshal(source)
 			require.NoError(t, err)
-			require.JSONEq(t, string(original), string(unchanged), "conversion must not mutate the CRD")
+			assert.JSONEq(t, string(original), string(unchanged), "conversion must not mutate the CRD")
 		})
 	}
 }
