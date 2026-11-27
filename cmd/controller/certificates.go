@@ -108,8 +108,7 @@ func (c *Certificates) Init(ctx context.Context) error {
 			// konnectivity kubeconfig
 			konnectivityReq := certificate.Request{
 				Name:   "konnectivity",
-				CN:     "kubernetes-konnectivity",
-				O:      "system:masters", // TODO: We need to figure out if konnectivity really needs superpowers
+				CN:     "k0s:konnectivity-server",
 				CACert: caCertPath,
 				CAKey:  caCertKey,
 			}
