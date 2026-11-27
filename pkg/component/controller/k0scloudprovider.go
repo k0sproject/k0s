@@ -7,8 +7,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/k0sproject/k0s/internal/k0scloudprovider"
 	"github.com/k0sproject/k0s/pkg/component/manager"
-	"github.com/k0sproject/k0s/pkg/k0scloudprovider"
 )
 
 type K0sCloudProvider struct {
