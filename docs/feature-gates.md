@@ -23,17 +23,20 @@ eventually removed.
 
 ## Using Feature Gates
 
-Feature gates can be configured using the `--feature-gates` flag when starting the k0s controllers:
+Feature gates can be configured using the `--feature-gates` flag when starting k0s controllers
+and workers:
 
 ```shell
 k0s controller --feature-gates="ExampleFeature=true,AnotherFeature=false"
+k0s worker --feature-gates="ExampleFeature=true"
 ```
 
-The feature gates configuration must be consistent across all controllers in the cluster.
+The feature gates configuration must be consistent across all controllers in the cluster. Gates
+that affect workers have to be set on each worker that should use them. Controllers running a
+worker (`--enable-worker` or `--single`) apply their feature gates to that worker as well.
 
 **Important notes:**
 
-- Currently feature gates apply only to the controllers. They may be added to workers in future releases
 - Setting a GA feature gate to false will cause k0s startup to fail
 - Unknown feature gates will cause k0s start up to fail
 - Feature gates use case-sensitive CamelCase names
