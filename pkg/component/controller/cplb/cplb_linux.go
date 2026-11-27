@@ -22,11 +22,11 @@ import (
 	"github.com/k0sproject/k0s/internal/assets"
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/internal/pkg/users"
+	"github.com/k0sproject/k0s/internal/supervisor"
 	k0sAPI "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/controller/cplb/tcpproxy"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
-	"github.com/k0sproject/k0s/pkg/supervisor"
 	"github.com/sirupsen/logrus"
 	"github.com/vishvananda/netlink"
 )
