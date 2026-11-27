@@ -9,9 +9,9 @@ import (
 	"io"
 	"os"
 
+	"github.com/k0sproject/k0s/internal/supervisor"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/config"
-	"github.com/k0sproject/k0s/pkg/supervisor"
 	"sigs.k8s.io/yaml"
 )
 

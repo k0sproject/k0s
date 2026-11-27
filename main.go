@@ -13,7 +13,7 @@ import (
 	"github.com/k0sproject/k0s/internal/k0scontext"
 	internallog "github.com/k0sproject/k0s/internal/pkg/log"
 	"github.com/k0sproject/k0s/internal/supervised"
-	"github.com/k0sproject/k0s/pkg/supervisor"
+	"github.com/k0sproject/k0s/internal/supervisor"
 )
 
 //go:generate make codegen
