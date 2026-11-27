@@ -10,7 +10,7 @@ import (
 	"testing/synctest"
 	"time"
 
-	"github.com/k0sproject/k0s/pkg/leaderelection"
+	"github.com/k0sproject/k0s/internal/leaderelection"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
