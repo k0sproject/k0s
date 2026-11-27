@@ -19,51 +19,14 @@ jobs:
       - name: Pre-create HNS networking
         run: |
           $ErrorActionPreference = "Stop"
-          $PSNativeCommandUseErrorActionPreference = $true
           Write-Host "Disabling Windows Firewall"
-          & Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled False
-
-          # Download the MS helpers and load them
-          $u = "https://raw.githubusercontent.com/Microsoft/SDN/master/Kubernetes/windows/hns.psm1"
-          Invoke-WebRequest -Uri $u -OutFile c:/hns.psm1
-          Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
-          Unblock-File 'C:\hns.psm1'            # removes the "downloaded from internet" mark
-          Import-Module 'C:\hns.psm1' -Force
+          Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled False
 
           Write-Host "Detecting primary network adapter"
-          $dest = '8.8.8.8'
-          $best = Find-NetRoute -RemoteIPAddress $dest | Select-Object -First 1
-          $vxlanAdapter = (Get-NetAdapter -InterfaceIndex $best.InterfaceIndex).Name
-          Write-Host "Using adapter: $vxlanAdapter"
-          Write-Host "Creating overlay network"
-          New-HNSNetwork -Type Overlay -AddressPrefix "192.168.255.0/30" -Gateway "192.168.255.1" -Name "External" -SubnetPolicies @(@{Type = "VSID"; VSID = 9999; }) -AdapterName $vxlanAdapter -Verbose
-
-          Start-Sleep -s 20s
-          Write-Host "Overlay network created succesfully"
-
-          Write-Host "Trick Calico NOT the re-create the overlay network by setting up last boot time reg key"
-          $softwareRegistryKey = "HKLM:\Software\Tigera"
-          $calicoRegistryKey = $softwareRegistryKey + "\Calico"
-
-          if (! (Test-Path $softwareRegistryKey))
-          {
-              New-Item $softwareRegistryKey
-          }
-          if (! (Test-Path $calicoRegistryKey))
-          {
-              New-Item $calicoRegistryKey
-          }
-          # Set the Calico last boot time to system last boottime
-          $bootTime = (Get-CimInstance win32_operatingsystem | select @{LABEL='LastBootUpTime';EXPRESSION={$_.lastbootuptime}}).LastBootUpTime
-          if (($bootTime -EQ $null) -OR ($bootTime.length -EQ 0))
-          {
-              throw "Failed to get last boot time"
-          }
-      
-          # This function is used in conjunction with Get-StoredLastBootTime, which
-          # returns a string, so convert the datetime value to a string using the "general" standard format.
-          $systemBootTime = $bootTime.ToString("G")
-          Set-ItemProperty -Path $calicoRegistryKey -Name "LastBootTime" -Value $systemBootTime
+          $best = Find-NetRoute -RemoteIPAddress 8.8.8.8 | Select-Object -First 1
+          $adapter = (Get-NetAdapter -InterfaceIndex $best.InterfaceIndex).Name
+          Write-Host "Using adapter: $adapter"
+          ./inttest/windows/create-overlay-network.ps1 -AdapterName $adapter
 
       - name: Configure WSL to NOT do local port forwarding
         run: |

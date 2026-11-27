@@ -126,3 +126,10 @@ $(smoketests): .bootloose-alpine.stamp
 clean:
 	-[ -x bin/sonobuoy ] && bin/sonobuoy delete
 	rm -rf bin sonobuoy/*_sonobuoy_*.tar.gz .*.stamp
+	windows/lab/lab.sh clean
+
+# Also removes the Windows base VM, which takes long to build again.
+.PHONY: clean-windows-lab
+clean-windows-lab:
+	windows/lab/lab.sh clean-all
+	rm -f windows/lab/.base.stamp
