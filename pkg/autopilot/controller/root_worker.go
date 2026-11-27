@@ -11,22 +11,22 @@ import (
 	"fmt"
 	"time"
 
+	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
 	aproot "github.com/k0sproject/k0s/pkg/autopilot/controller/root"
 	"github.com/k0sproject/k0s/pkg/autopilot/controller/signal"
 	apsigk0s "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/k0s"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
+	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
 	"github.com/k0sproject/k0s/pkg/leaderelection"
 
 	corev1 "k8s.io/api/core/v1"
+	extensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
-	"k8s.io/apimachinery/pkg/util/wait"
-	k8sretry "k8s.io/client-go/util/retry"
 	cr "sigs.k8s.io/controller-runtime"
 	crcache "sigs.k8s.io/controller-runtime/pkg/cache"
 	crcli "sigs.k8s.io/controller-runtime/pkg/client"
-	crconfig "sigs.k8s.io/controller-runtime/pkg/config"
 	crman "sigs.k8s.io/controller-runtime/pkg/manager"
 	crmetricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	crwebhook "sigs.k8s.io/controller-runtime/pkg/webhook"
@@ -38,8 +38,6 @@ type rootWorker struct {
 	cfg           aproot.RootConfig
 	log           *logrus.Entry
 	clientFactory kubernetes.ClientFactoryInterface
-
-	initialized bool
 }
 
 var _ aproot.Root = (*rootWorker)(nil)
@@ -62,18 +60,24 @@ func (w *rootWorker) Run(ctx context.Context) error {
 
 	logger := w.log
 
-	managerOpts := crman.Options{
+	// The manager's field indexer on plans needs the CRD to be served, and
+	// controllers may deploy it after this worker has joined the cluster.
+	if err := w.waitForPlansCRD(ctx); err != nil {
+		return fmt.Errorf("while waiting for autopilot 'plans' CRD: %w", err)
+	}
+
+	clusterID, err := w.getClusterID(ctx)
+	if err != nil {
+		return err
+	}
+
+	restConfig, err := w.clientFactory.GetRESTConfig()
+	if err != nil {
+		return err
+	}
+
+	mgr, err := cr.NewManager(restConfig, crman.Options{
 		Scheme: scheme,
-		Controller: crconfig.Controller{
-			// If this controller is already initialized, this means that all
-			// controller-runtime controllers have already been successfully
-			// registered to another manager. However, controller-runtime
-			// maintains a global checklist of controller names and doesn't
-			// currently provide a way to unregister names from discarded
-			// managers. So it's necessary to suppress the global name check
-			// whenever things retried.
-			SkipNameValidation: new(w.initialized),
-		},
 		WebhookServer: crwebhook.NewServer(crwebhook.Options{
 			Port: w.cfg.ManagerPort,
 		}),
@@ -89,56 +93,70 @@ func (w *rootWorker) Run(ctx context.Context) error {
 				&corev1.Node{}: {Field: fields.OneTermEqualSelector(metav1.ObjectNameField, string(w.cfg.NodeName))},
 			},
 		},
+	})
+	if err != nil {
+		return fmt.Errorf("failed to create controller manager: %w", err)
 	}
 
-	// The restart tracker needs to outlive the individual controller managers,
-	// which get rebuilt on each retry attempt.
 	var restartTracker apsigk0s.RestartTracker
+	if err := signal.RegisterControllers(ctx, logger, mgr, apdel.NodeControllerDelegate(), w.cfg.NodeName, &restartTracker, w.cfg.K0sDataDir, true, clusterID, leaderelection.StatusPending); err != nil {
+		return fmt.Errorf("unable to register signal controllers: %w", err)
+	}
 
-	// In some cases, we need to wait on the worker side until controller deploys all autopilot CRDs
-	var attempt uint
-	return k8sretry.OnError(wait.Backoff{
-		Steps:    120,
-		Duration: 1 * time.Second,
-		Factor:   1.0,
-		Jitter:   0.1,
-	}, func(err error) bool {
-		attempt++
-		logger := logger.WithError(err).WithField("attempt", attempt)
-		logger.Debug("Failed to run controller manager, retrying after backoff")
-		return true
-	}, func() error {
-		cl, err := w.clientFactory.GetClient()
-		if err != nil {
-			return err
-		}
-		ns, err := cl.CoreV1().Namespaces().Get(ctx, metav1.NamespaceSystem, metav1.GetOptions{})
-		if err != nil {
-			return err
-		}
-		clusterID := string(ns.UID)
+	// The controller-runtime start blocks until the context is canceled.
+	if err := mgr.Start(ctx); err != nil {
+		return fmt.Errorf("unable to run controller-runtime manager for workers: %w", err)
+	}
+	return nil
+}
 
-		restConfig, err := w.clientFactory.GetRESTConfig()
-		if err != nil {
-			return err
-		}
+// Blocks until the plans CRD is established. Keeps watching across errors,
+// as workers may come up long before the controllers do.
+func (w *rootWorker) waitForPlansCRD(ctx context.Context) error {
+	client, err := w.clientFactory.GetAPIExtensionsClient()
+	if err != nil {
+		return err
+	}
 
-		mgr, err := cr.NewManager(restConfig, managerOpts)
-		if err != nil {
-			return fmt.Errorf("failed to create controller manager: %w", err)
-		}
+	return watch.CRDs(client.ApiextensionsV1().CustomResourceDefinitions()).
+		WithObjectName("plans."+apv1beta2.GroupName).
+		WithErrorCallback(func(err error) (time.Duration, error) {
+			if retryAfter, e := watch.IsRetryable(err); e == nil {
+				w.log.WithError(err).Infof(
+					"Transient error while watching for autopilot 'plans' CRD, starting over after %s ...",
+					retryAfter,
+				)
+				return retryAfter, nil
+			}
 
-		if err := signal.RegisterControllers(ctx, logger, mgr, apdel.NodeControllerDelegate(), w.cfg.NodeName, &restartTracker, w.cfg.K0sDataDir, true, clusterID, leaderelection.StatusPending); err != nil {
-			return fmt.Errorf("unable to register signal controllers: %w", err)
-		}
+			retryAfter := 10 * time.Second
+			w.log.WithError(err).Errorf(
+				"Failed to watch for autopilot 'plans' CRD, starting over after %s ...",
+				retryAfter,
+			)
+			return retryAfter, nil
+		}).
+		Until(ctx, func(crd *extensionsv1.CustomResourceDefinition) (bool, error) {
+			for _, cond := range crd.Status.Conditions {
+				if cond.Type == extensionsv1.Established {
+					return cond.Status == extensionsv1.ConditionTrue, nil
+				}
+			}
 
-		// All the controller-runtime controllers have been registered.
-		w.initialized = true
+			return false, nil
+		})
+}
 
-		// The controller-runtime start blocks until the context is canceled.
-		if err := mgr.Start(ctx); err != nil {
-			return fmt.Errorf("unable to run controller-runtime manager for workers: %w", err)
-		}
-		return nil
-	})
+func (w *rootWorker) getClusterID(ctx context.Context) (string, error) {
+	client, err := w.clientFactory.GetClient()
+	if err != nil {
+		return "", err
+	}
+
+	namespace, err := client.CoreV1().Namespaces().Get(ctx, metav1.NamespaceSystem, metav1.GetOptions{})
+	if err != nil {
+		return "", err
+	}
+
+	return string(namespace.UID), nil
 }
