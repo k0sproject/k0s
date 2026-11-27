@@ -17,6 +17,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/k0sproject/k0s/internal/constant"
 	"github.com/k0sproject/k0s/internal/k0scontext"
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
@@ -27,7 +28,6 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/worker"
 	workerconfig "github.com/k0sproject/k0s/pkg/component/worker/config"
 	"github.com/k0sproject/k0s/pkg/config"
-	"github.com/k0sproject/k0s/pkg/constant"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 
 	corev1 "k8s.io/api/core/v1"

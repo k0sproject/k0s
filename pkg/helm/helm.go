@@ -15,9 +15,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/k0sproject/k0s/internal/constant"
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	internallog "github.com/k0sproject/k0s/internal/pkg/log"
-	"github.com/k0sproject/k0s/pkg/constant"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/discovery"

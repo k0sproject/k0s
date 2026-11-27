@@ -10,11 +10,11 @@ import (
 	"testing"
 	"testing/synctest"
 
+	"github.com/k0sproject/k0s/internal/constant"
 	internallog "github.com/k0sproject/k0s/internal/pkg/log"
 	"github.com/k0sproject/k0s/internal/testutil"
 	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/controller"
-	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/leaderelection"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"

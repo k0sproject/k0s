@@ -23,6 +23,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/k0sproject/k0s/internal/assets"
+	"github.com/k0sproject/k0s/internal/constant"
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/internal/pkg/users"
@@ -30,7 +31,6 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/featuregates"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/config"
-	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/supervisor"
 )
 
