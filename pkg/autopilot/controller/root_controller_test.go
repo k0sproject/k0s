@@ -66,7 +66,7 @@ func TestModeSwitch(t *testing.T) {
 			return &crd
 		}())
 
-		rootControllerInterface, err := NewRootController(aproot.RootConfig{}, logger, false, clientFactory, updates.NewClusterInfoCollector(v1beta1.DefaultClusterConfig(), clientFactory.Client), netip.IPv4Unspecified())
+		rootControllerInterface, err := NewRootController(aproot.RootConfig{}, logger, false, clientFactory, updates.NewClusterInfoCollector(v1beta1.DefaultClusterConfig(), clientFactory, func() uint { return 1 }), netip.IPv4Unspecified())
 		assert.NoError(t, err)
 
 		rootController, ok := rootControllerInterface.(*rootController)
