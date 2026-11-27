@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/k0sproject/k0s/internal/k0scloudprovider"
 	"github.com/k0sproject/k0s/inttest/common"
-	"github.com/k0sproject/k0s/pkg/k0scloudprovider"
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
 
 	corev1 "k8s.io/api/core/v1"

@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/k0sproject/k0s/internal/k0scloudprovider"
 	"github.com/k0sproject/k0s/pkg/component/manager"
-	"github.com/k0sproject/k0s/pkg/k0scloudprovider"
 	"github.com/stretchr/testify/suite"
 	v1 "k8s.io/api/core/v1"
 )
