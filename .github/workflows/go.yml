@@ -49,6 +49,9 @@ env:
   MAKEFLAGS: -j
   CURL_OPTS: --proto =https --tlsv1.2 --retry 5 --retry-all-errors --silent --show-error --location --fail
 
+permissions:
+  contents: read
+
 jobs:
   prepare:
     name: Prepare
@@ -141,7 +144,6 @@ jobs:
     runs-on: ubuntu-24.04
 
     permissions:
-      id-token: write
       contents: write
 
     steps:

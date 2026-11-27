@@ -6,7 +6,7 @@ on:
       - v* # Push events to matching v*, i.e. v1.0, v20.15.10
 
 permissions:
-  contents: write
+  contents: read
 
 env:
   MAKEFLAGS: -j
@@ -20,6 +20,8 @@ jobs:
       KUBECONFIG: ${{ github.workspace }}/kubeconfig
     name: release
     runs-on: ubuntu-24.04
+    permissions:
+      contents: write # to create the release
     outputs:
       upload_url: ${{ steps.create_release.outputs.upload_url }}
       tag_name: ${{ steps.branch_name.outputs.TAG_NAME }}
@@ -49,6 +51,8 @@ jobs:
   x64:
     needs: release
     runs-on: [self-hosted, linux, x64]
+    permissions:
+      contents: write # to upload release assets
     env:
       SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
     steps:
@@ -201,6 +205,8 @@ jobs:
   windows:
     needs: release
     runs-on: [self-hosted, linux, x64]
+    permissions:
+      contents: write # to upload release assets
     env:
       SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
       TARGET_OS: windows
@@ -301,6 +307,8 @@ jobs:
   arm64:
     needs: release
     runs-on: [self-hosted, linux, arm64]
+    permissions:
+      contents: write # to upload release assets
     env:
       SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
     steps:
@@ -424,6 +432,8 @@ jobs:
   armv7:
     needs: release
     runs-on: [self-hosted, linux, arm]
+    permissions:
+      contents: write # to upload release assets
     env:
       SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
     steps:
@@ -543,6 +553,8 @@ jobs:
       - arm64
       - armv7
     runs-on: ubuntu-24.04
+    permissions:
+      contents: write # to upload release assets
     steps:
       - name: Download assets for generating checksums
         uses: robinraju/release-downloader@28fc21f50d76778e7023361aa1f863e717d3d56f # v1
@@ -666,6 +678,8 @@ jobs:
     name: Upload conformance test results
     needs: [release, conformance-test]
     runs-on: ubuntu-24.04
+    permissions:
+      contents: write # to upload release assets
 
     strategy:
       fail-fast: false

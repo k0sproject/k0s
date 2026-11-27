@@ -2,6 +2,9 @@ on:
 
   workflow_call:
 
+permissions:
+  contents: read
+
 jobs:
   smoketest:
     name: Windows Smoketest

@@ -5,6 +5,8 @@ on:
     workflows: [Go build]
     types: [completed]
 
+permissions: {}
+
 jobs:
   # Based on https://github.com/actions/cache/blob/v4.2.0/tips-and-workarounds.md#force-deletion-of-caches-overriding-default-cache-eviction-policy
   cleanup-actions-caches:

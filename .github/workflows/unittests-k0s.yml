@@ -12,6 +12,9 @@ on:
         description: The platform to test k0s on.
 
 
+permissions:
+  contents: read
+
 jobs:
   unittests:
     name: "check-unit :: ${{ inputs.runs-on }}"

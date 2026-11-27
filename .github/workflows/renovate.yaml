@@ -5,6 +5,8 @@ on:
   schedule:
     - cron: 23 */4 * * * # At minute 23 past every 4th hour.
 
+permissions: {}
+
 jobs:
   renovate:
     runs-on: ubuntu-latest

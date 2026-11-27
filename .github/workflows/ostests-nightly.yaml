@@ -35,6 +35,9 @@ env:
       "ipvs"
     ]
 
+permissions:
+  contents: read
+
 jobs:
   select:
     name: Select
