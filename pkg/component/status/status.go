@@ -9,13 +9,18 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"sync"
+	"sync/atomic"
 	"time"
 
+	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/component/prober"
+	"github.com/k0sproject/k0s/pkg/constant"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 
 	"github.com/sirupsen/logrus"
+	corev1 "k8s.io/api/core/v1"
 )
 
 type Stater interface {
@@ -23,15 +28,47 @@ type Stater interface {
 }
 
 type Status struct {
-	StatusInformation      K0sStatus
-	Prober                 Stater
-	Socket                 string
-	L                      *logrus.Entry
-	httpserver             http.Server
-	GetWorkerClientFactory func() kubeutil.ClientFactoryInterface
+	StatusInformation       K0sStatus
+	Prober                  Stater
+	Socket                  string
+	L                       *logrus.Entry
+	httpserver              http.Server
+	GetWorkerClientFactory  func() kubeutil.ClientFactoryInterface
+	ControllerClientFactory kubeutil.ClientFactoryInterface
+	// HasWindowsNodes is the Windows stack counter. A nil bool means the count is not known yet.
+	HasWindowsNodes func() (*bool, <-chan struct{})
+	network         atomic.Pointer[v1beta1.Network]
 }
 
 var _ manager.Component = (*Status)(nil)
+
+const statusCheckTimeout = 5 * time.Second
+
+func (s *Status) ClusterConfigReconciler() manager.Component {
+	return &clusterConfigUpdater{status: s}
+}
+
+type clusterConfigUpdater struct {
+	status *Status
+}
+
+var (
+	_ manager.Component  = (*clusterConfigUpdater)(nil)
+	_ manager.Reconciler = (*clusterConfigUpdater)(nil)
+)
+
+func (c *clusterConfigUpdater) Init(context.Context) error  { return nil }
+func (c *clusterConfigUpdater) Start(context.Context) error { return nil }
+func (c *clusterConfigUpdater) Stop() error                 { return nil }
+
+func (c *clusterConfigUpdater) Reconcile(_ context.Context, cfg *v1beta1.ClusterConfig) error {
+	var network *v1beta1.Network
+	if cfg != nil && cfg.Spec != nil {
+		network = cfg.Spec.Network
+	}
+	c.status.network.Store(network)
+	return nil
+}
 
 const defaultMaxEvents = 5
 
@@ -99,24 +136,72 @@ func (sh *statusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (sh *statusHandler) getCurrentStatus(ctx context.Context) K0sStatus {
-	status := sh.Status.StatusInformation
-	if !status.Workloads {
-		return status
-	}
+	ctx, cancel := context.WithTimeout(ctx, statusCheckTimeout)
+	defer cancel()
 
+	status := sh.Status.StatusInformation
+	var wg sync.WaitGroup
+	if status.Workloads {
+		wg.Go(func() { sh.probeWorkerAPI(ctx, &status) })
+	}
+	if sh.Status.ControllerClientFactory != nil {
+		wg.Go(func() { sh.setCNICondition(ctx, &status) })
+	}
+	wg.Wait()
+	return status
+}
+
+func (sh *statusHandler) probeWorkerAPI(ctx context.Context, status *K0sStatus) {
 	client, err := sh.Status.GetWorkerClientFactory().GetClient()
 	if err != nil {
 		status.WorkerToAPIConnectionStatus = ProbeStatus{
 			Message: "failed to get client: " + err.Error(),
 		}
-		return status
+		return
 	}
 
 	_, err = client.Discovery().RESTClient().Get().AbsPath("/version").Do(ctx).Raw()
 	if err != nil {
 		status.WorkerToAPIConnectionStatus = ProbeStatus{Message: err.Error()}
-		return status
+		return
 	}
 	status.WorkerToAPIConnectionStatus = ProbeStatus{Success: true}
-	return status
+}
+
+// setCNICondition reports managed CNI health from DaemonSet and Deployment status.
+// A CNI conf file on disk is not used: kubelet treats that file as enough to
+// mark the node Ready even when the CNI is not operational.
+func (sh *statusHandler) setCNICondition(ctx context.Context, status *K0sStatus) {
+	network := sh.Status.network.Load()
+	if network == nil {
+		status.Conditions = []Condition{cniCondition(
+			corev1.ConditionUnknown,
+			reasonError,
+			"network configuration has not been reconciled yet",
+		)}
+		return
+	}
+
+	switch network.Provider {
+	case constant.CNIProviderKubeRouter, constant.CNIProviderCalico:
+	default:
+		return
+	}
+
+	client, err := sh.Status.ControllerClientFactory.GetClient()
+	if err != nil {
+		status.Conditions = []Condition{cniCondition(corev1.ConditionUnknown, reasonError, err.Error())}
+		return
+	}
+
+	var cond Condition
+	switch network.Provider {
+	case constant.CNIProviderKubeRouter:
+		cond = daemonSetCNICondition(ctx, client, kubeRouterDaemonSet)
+	case constant.CNIProviderCalico:
+		cond = calicoCNICondition(ctx, client, network, sh.Status.HasWindowsNodes)
+	default:
+		return
+	}
+	status.Conditions = []Condition{cond}
 }

@@ -447,7 +447,8 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 			K0sVars:       c.K0sVars,
 			ClusterConfig: nodeConfig,
 		},
-		Socket: c.K0sVars.StatusSocketPath,
+		Socket:                  c.K0sVars.StatusSocketPath,
+		ControllerClientFactory: adminClientFactory,
 	}
 	if controllerMode.WorkloadsEnabled() {
 		// The worker installs the real factory once it starts.
@@ -516,6 +517,7 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 		adminClientFactory,
 		configSource,
 	))
+	clusterComponents.Add(ctx, statusComponent.ClusterConfigReconciler())
 
 	if !slices.Contains(flags.DisableComponents, constant.HelmComponentName) {
 		clusterComponents.Add(ctx, controller.NewExtensionsController(
@@ -550,6 +552,7 @@ func (c *command) start(ctx context.Context, runtimeConfig *config.RuntimeConfig
 			return nil, changed
 		}
 	}
+	statusComponent.HasWindowsNodes = hasWindowsNodes
 
 	if !slices.Contains(flags.DisableComponents, constant.KubeProxyComponentName) {
 		clusterComponents.Add(ctx, controller.NewKubeProxy(c.K0sVars, nodeConfig, hasWindowsNodes))
