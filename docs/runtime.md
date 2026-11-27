@@ -260,16 +260,17 @@ need to be taken:
   ```
 
   When running k0s [as a service](cli/k0s_install.md), consider reinstalling the
-  service with the appropriate flags:
+  service with the appropriate flags. The `--start` flag restarts the service,
+  so that the new flags take effect:
 
   ```console
-  sudo k0s install --force worker --cri-socket=remote:unix:///var/run/cri-dockerd.sock
+  sudo k0s install --force --start worker --cri-socket=remote:unix:///var/run/cri-dockerd.sock
   ```
 
   or, respectively
 
   ```console
-  sudo k0s install --force controller --enable-worker --cri-socket=remote:unix:///var/run/cri-dockerd.sock
+  sudo k0s install --force --start controller --enable-worker --cri-socket=remote:unix:///var/run/cri-dockerd.sock
   ```
 
 In scenarios where Docker is managed via systemd, it is crucial that the

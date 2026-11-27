@@ -76,8 +76,8 @@ Global Flags:
   -d, --debug                  Debug logging (implies verbose logging)
       --debugListenOn string   Http listenOn for Debug pprof handler (default ":6060")
   -e, --env stringArray        Set environment variables (<name>=<value> or just <name>)
-      --force                  Force init script creation
-      --start                  Start the service immediately after installation
+      --force                  Replace the service definition if the service is already installed
+      --start                  Start the service immediately after installation (restarts a running service if combined with --force)
   -v, --verbose                Verbose logging
 `, out.String())
 }
