@@ -1,0 +1,13 @@
+[Unit]
+Description=Copy seeded k0s to /usr/local/bin
+DefaultDependencies=no
+After=local-fs.target
+Before=multi-user.target ssh.service
+ConditionPathExists=/dist/k0s
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/install -D -t /usr/local/bin /dist/k0s
+
+[Install]
+WantedBy=multi-user.target
