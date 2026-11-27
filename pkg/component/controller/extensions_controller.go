@@ -21,6 +21,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/k0sproject/k0s/internal/helm"
 	"github.com/k0sproject/k0s/internal/sync/value"
 	helmv1beta1 "github.com/k0sproject/k0s/pkg/apis/helm/v1beta1"
 	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
@@ -28,7 +29,6 @@ import (
 	k0sscheme "github.com/k0sproject/k0s/pkg/client/clientset/scheme"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	"github.com/k0sproject/k0s/pkg/component/manager"
-	"github.com/k0sproject/k0s/pkg/helm"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/leaderelection"
 	"github.com/k0sproject/k0s/static"
