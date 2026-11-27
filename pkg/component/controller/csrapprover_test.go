@@ -102,6 +102,20 @@ func TestCSRApprover(t *testing.T) {
 		return t
 	}
 
+	// Returns the default network with the given node address space. Values
+	// that parse as CIDRs are CIDRs, everything else is a DNS name pattern.
+	networkWithNodeAddresses := func(cidrsOrPatterns ...string) *v1beta1.Network {
+		n := v1beta1.DefaultNetwork()
+		for _, value := range cidrsOrPatterns {
+			if _, err := netip.ParsePrefix(value); err == nil {
+				n.NodeAddresses.CIDRs = append(n.NodeAddresses.CIDRs, v1beta1.NodeCIDR(value))
+			} else {
+				n.NodeAddresses.DNSNames = append(n.NodeAddresses.DNSNames, v1beta1.NodeDNSName(value))
+			}
+		}
+		return n
+	}
+
 	type reviewMode uint8
 	const (
 		reviewModeAllow reviewMode = iota
@@ -429,6 +443,77 @@ func TestCSRApprover(t *testing.T) {
 			template:    templateWithIP("::"),
 			expectedErr: `IPAddresses[1]: forbidden: "::": is an unspecified address`,
 		},
+		{
+			testCase: "certificate inside the configured node address space",
+			objects:  nodeClaiming("10.0.0.2"),
+			network:  networkWithNodeAddresses("10.0.0.0/30", "fd00::/64", "CSR-Approver-*-node"),
+			template: func() *x509.CertificateRequest {
+				t := templateWithIP("10.0.0.2")
+				t.IPAddresses = append(t.IPAddresses, net.ParseIP("fd00::1"))
+				return t
+			}(),
+		},
+		{
+			testCase: "certificate for a DNS name in non-canonical notation matching a configured pattern",
+			objects:  nodeClaiming("Node-1.Nodes.Example.COM."),
+			network:  networkWithNodeAddresses("csr-approver-*", "*.nodes.example.com"),
+			template: func() *x509.CertificateRequest {
+				t := validTemplate()
+				t.DNSNames = append(t.DNSNames, "Node-1.Nodes.Example.COM.")
+				return t
+			}(),
+		},
+		{
+			testCase: "certificate with DNS names only restricted by node CIDRs",
+			objects:  nodeClaiming("node.example.com"),
+			network:  networkWithNodeAddresses("10.0.0.0/30"),
+			template: func() *x509.CertificateRequest {
+				t := validTemplate()
+				t.DNSNames = append(t.DNSNames, "node.example.com")
+				return t
+			}(),
+		},
+		{
+			testCase:    "certificate for an IP address outside of the configured node CIDRs",
+			objects:     nodeClaiming("10.0.0.4"),
+			network:     networkWithNodeAddresses("10.0.0.0/30"),
+			template:    templateWithIP("10.0.0.4"),
+			expectedErr: `IPAddresses[1]: forbidden: "10.0.0.4": is outside of the allowed node CIDRs`,
+		},
+		{
+			testCase:    "certificate for an IPv6 address with only IPv4 node CIDRs",
+			objects:     nodeClaiming("fd00::1"),
+			network:     networkWithNodeAddresses("10.0.0.0/8"),
+			template:    templateWithIP("fd00::1"),
+			expectedErr: `IPAddresses[1]: forbidden: "fd00::1": is outside of the allowed node CIDRs`,
+		},
+		{
+			testCase: "certificate for a DNS name outside of the configured node DNS names",
+			objects:  nodeClaiming("api.example.com"),
+			network:  networkWithNodeAddresses("csr-approver-*", "*.nodes.example.com"),
+			template: func() *x509.CertificateRequest {
+				t := validTemplate()
+				t.DNSNames = append(t.DNSNames, "api.example.com")
+				return t
+			}(),
+			expectedErr: `DNSNames[1]: forbidden: "api.example.com": matches none of the allowed node DNS names`,
+		},
+		{
+			testCase: "certificate for a DNS name with a wildcard spanning labels",
+			objects:  nodeClaiming("a.b.nodes.example.com"),
+			network:  networkWithNodeAddresses("csr-approver-*", "*.nodes.example.com"),
+			template: func() *x509.CertificateRequest {
+				t := validTemplate()
+				t.DNSNames = append(t.DNSNames, "a.b.nodes.example.com")
+				return t
+			}(),
+			expectedErr: `DNSNames[1]: forbidden: "a.b.nodes.example.com": matches none of the allowed node DNS names`,
+		},
+		{
+			testCase:    "certificate for a DNS name that only matches the beginning of a pattern",
+			network:     networkWithNodeAddresses("csr-approver-*.example.com"),
+			expectedErr: `DNSNames[0]: forbidden: "csr-approver-test-node": matches none of the allowed node DNS names`,
+		},
 	} {
 		t.Run(tt.testCase, func(t *testing.T) {
 			if tt.username == "" {
@@ -476,7 +561,7 @@ func TestCSRApprover(t *testing.T) {
 
 				logger, logs := test.NewNullLogger()
 				ctx := k0scontext.WithValue[logrus.FieldLogger](t.Context(), logger)
-				underTest := controller.NewCSRApprover(leaderelector.Off(), fakeFactory, tt.network)
+				underTest := controller.NewCSRApprover(leaderelector.Off(), fakeFactory, nil, tt.network)
 				require.NoError(t, underTest.Init(ctx))
 				require.NoError(t, underTest.Start(ctx))
 				t.Cleanup(func() { assert.NoError(t, underTest.Stop()) })
@@ -535,7 +620,7 @@ func TestCSRApprover(t *testing.T) {
 				return true, sar, nil
 			})
 
-			underTest := controller.NewCSRApprover(leaderelector.Off(), fakeFactory, v1beta1.DefaultNetwork())
+			underTest := controller.NewCSRApprover(leaderelector.Off(), fakeFactory, nil, v1beta1.DefaultNetwork())
 			require.NoError(t, underTest.Init(t.Context()))
 			require.NoError(t, underTest.Start(t.Context()))
 			t.Cleanup(func() { assert.NoError(t, underTest.Stop()) })
@@ -573,7 +658,7 @@ func TestCSRApprover(t *testing.T) {
 				return true, sar, nil
 			})
 
-			underTest := controller.NewCSRApprover(leaderelector.Off(), fakeFactory, v1beta1.DefaultNetwork())
+			underTest := controller.NewCSRApprover(leaderelector.Off(), fakeFactory, nil, v1beta1.DefaultNetwork())
 			require.NoError(t, underTest.Init(t.Context()))
 			require.NoError(t, underTest.Start(t.Context()))
 			t.Cleanup(func() { assert.NoError(t, underTest.Stop()) })
@@ -601,6 +686,54 @@ func TestCSRApprover(t *testing.T) {
 				time.Sleep(12 * time.Second)
 			}
 		})
+	})
+}
+
+func TestCSRApprover_WarnsAboutControlPlaneNodeAddresses(t *testing.T) {
+	network := v1beta1.DefaultNetwork()
+	network.NodeAddresses = v1beta1.NodeAddresses{
+		CIDRs:    []v1beta1.NodeCIDR{"10.0.0.0/16"},
+		DNSNames: []v1beta1.NodeDNSName{"*.example.com"},
+	}
+	network.ControlPlaneLoadBalancing = &v1beta1.ControlPlaneLoadBalancingSpec{
+		Enabled: true,
+		Keepalived: &v1beta1.KeepalivedSpec{
+			VRRPInstances: v1beta1.VRRPInstances{
+				{VirtualIPs: []string{"10.0.1.1/24", "192.168.1.1/24"}},
+			},
+			VirtualServers: v1beta1.VirtualServers{
+				{IPAddress: "10.0.2.1"},
+			},
+		},
+	}
+	api := &v1beta1.APISpec{
+		Address:         "10.0.0.1",
+		ExternalAddress: "api.example.com:6443",
+		SANs:            []string{"192.168.0.1", "api.example.org", "k8s.example.com"},
+	}
+
+	logger, logs := test.NewNullLogger()
+	ctx := k0scontext.WithValue[logrus.FieldLogger](t.Context(), logger)
+	underTest := controller.NewCSRApprover(leaderelector.Off(), testutil.NewFakeClientFactory(), api, network)
+	require.NoError(t, underTest.Init(ctx))
+
+	var warned []string
+	for _, entry := range logs.AllEntries() {
+		assert.Equal(t, logrus.WarnLevel, entry.Level)
+		assert.Contains(t, entry.Message, "Control plane ")
+		assert.Contains(t, entry.Message, " nodes may obtain kubelet serving certificates for it")
+		if address, ok := entry.Data["address"].(string); assert.True(t, ok, "address field is missing or not a string") {
+			warned = append(warned, address)
+		}
+	}
+	assert.ElementsMatch(t, []string{"10.0.0.1", "10.0.1.1", "10.0.2.1", "api.example.com", "k8s.example.com"}, warned)
+
+	t.Run("not without node addresses", func(t *testing.T) {
+		logger, logs := test.NewNullLogger()
+		ctx := k0scontext.WithValue[logrus.FieldLogger](t.Context(), logger)
+		underTest := controller.NewCSRApprover(leaderelector.Off(), testutil.NewFakeClientFactory(), api, v1beta1.DefaultNetwork())
+		require.NoError(t, underTest.Init(ctx))
+		assert.Empty(t, logs.AllEntries())
 	})
 }
 

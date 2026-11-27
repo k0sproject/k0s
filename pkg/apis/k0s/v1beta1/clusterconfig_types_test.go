@@ -404,6 +404,9 @@ func TestClusterConfig_GetClusterWideConfig(t *testing.T) {
 				ControlPlaneLoadBalancing: &ControlPlaneLoadBalancingSpec{
 					Enabled: true,
 				},
+				NodeAddresses: NodeAddresses{
+					CIDRs: []NodeCIDR{"10.0.0.0/16"},
+				},
 				PrimaryAddressFamily: PrimaryFamilyIPv6,
 			}},
 		}, &ClusterConfig{Spec: &ClusterSpec{
