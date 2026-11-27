@@ -82,7 +82,7 @@ const (
 	KubeProxyImage                        = "quay.io/k0sproject/kube-proxy"
 	KubeProxyImageVersion                 = "v1.36.6"
 	KubeProxyWindowsImage                 = "docker.io/sigwindowstools/kube-proxy"
-	KubeProxyWindowsImageVersion          = "v1.36.6-calico-hostprocess"
+	KubeProxyWindowsImageVersion          = "v1.36.7-calico-hostprocess"
 	CoreDNSImage                          = "quay.io/k0sproject/coredns"
 	CoreDNSImageVersion                   = "1.14.7-k0s.1"
 	EnvoyProxyImage                       = "quay.io/k0sproject/envoy-distroless"
