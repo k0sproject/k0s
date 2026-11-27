@@ -61,16 +61,16 @@ spec:
 
 ## Using Calico as the CNI provider
 
-Calico does not support IPv6 tunneling in the default `vxlan` mode, so if you
-prefer to use Calico as your CNI provider, make sure to select `bird` mode. Use
-the following example configuration:
+Calico supports dual-stack in both `vxlan` (the default) and `bird` mode. The
+IPv6 pool uses VXLAN in `vxlan` mode, and plain routing in `bird` mode. Use the
+following example configuration:
 
 ```yaml
 spec:
   network:
     provider: calico
     calico:
-      mode: bird
+      mode: vxlan
     podCIDR: 10.244.0.0/16
     serviceCIDR: 10.96.0.0/12
     dualStack:

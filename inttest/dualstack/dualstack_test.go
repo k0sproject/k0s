@@ -148,6 +148,10 @@ func (s *DualstackSuite) SetupSuite() {
 	s.BootlooseSuite.SetupSuite()
 
 	k0sConfig := k0sConfigWithCalicoDualStack
+	if strings.Contains(os.Getenv("K0S_INTTEST_TARGET"), "vxlan") {
+		s.T().Log("Using calico in vxlan mode")
+		k0sConfig = k0sConfigWithCalicoVXLANDualStack
+	}
 	if s.cni == "kuberouter" {
 		s.T().Log("Using kube-router network")
 		var ipAddress string
@@ -318,6 +322,22 @@ spec:
     provider: calico
     calico:
       mode: "bird"
+    dualStack:
+      enabled: true
+      IPv6podCIDR: "fd00::/108"
+      IPv6serviceCIDR: "fd01::/100"
+    podCIDR: 10.233.0.0/16
+    serviceCIDR: 10.112.0.0/12
+`
+
+const k0sConfigWithCalicoVXLANDualStack = `
+spec:
+  network:
+    kubeProxy:
+      mode: ipvs
+    provider: calico
+    calico:
+      mode: "vxlan"
     dualStack:
       enabled: true
       IPv6podCIDR: "fd00::/108"
