@@ -20,6 +20,7 @@ nav:
       - Alternative Methods:
           - Manual (advanced): k0s-multi-node.md
           - Docker: k0s-in-docker.md
+          - Build a custom Docker image: build-custom-image.md
           - Windows (experimental): experimental-windows.md
           - Raspberry Pi 4: raspberry-pi4.md
           - Raspberry Pi 5: raspberry-pi5.md
