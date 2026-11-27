@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/k0sproject/k0s/pkg/airgap"
+	"github.com/k0sproject/k0s/internal/airgap"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 
 	imagespecv1 "github.com/opencontainers/image-spec/specs-go/v1"

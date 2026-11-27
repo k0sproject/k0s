@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/k0sproject/k0s/pkg/airgap"
+	"github.com/k0sproject/k0s/internal/airgap"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"

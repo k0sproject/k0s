@@ -7,7 +7,7 @@ import (
 	"fmt"
 
 	"github.com/k0sproject/k0s/cmd/internal"
-	"github.com/k0sproject/k0s/pkg/airgap"
+	"github.com/k0sproject/k0s/internal/airgap"
 	"github.com/k0sproject/k0s/pkg/config"
 
 	"github.com/containerd/platforms"
