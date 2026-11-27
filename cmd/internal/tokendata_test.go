@@ -4,10 +4,13 @@
 package internal
 
 import (
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
 
+	"github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -74,6 +77,37 @@ func TestCheckSingleTokenSource(t *testing.T) {
 		err := CheckSingleTokenSource(testToken, "/path/to/token")
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "you can only pass one token source")
+	})
+}
+
+func TestWarnDeprecatedTokenArg(t *testing.T) {
+	std := logrus.StandardLogger()
+	origOut := std.Out
+	origHooks := std.ReplaceHooks(logrus.LevelHooks{})
+	std.SetOutput(io.Discard)
+	t.Cleanup(func() {
+		std.SetOutput(origOut)
+		std.ReplaceHooks(origHooks)
+	})
+
+	hook := test.NewGlobal()
+
+	t.Run("warns when token arg is set", func(t *testing.T) {
+		hook.Reset()
+
+		WarnDeprecatedTokenArg("test-token-data")
+
+		require.Len(t, hook.Entries, 1)
+		assert.Equal(t, logrus.WarnLevel, hook.LastEntry().Level)
+		assert.Equal(t, tokenArgDeprecationWarning, hook.LastEntry().Message)
+	})
+
+	t.Run("silent when token arg is empty", func(t *testing.T) {
+		hook.Reset()
+
+		WarnDeprecatedTokenArg("")
+
+		assert.Empty(t, hook.Entries)
 	})
 }
 
