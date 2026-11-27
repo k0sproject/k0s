@@ -50,6 +50,7 @@ func NewEtcdCmd() *cobra.Command {
 
 	cmd.AddCommand(etcdLeaveCmd())
 	cmd.AddCommand(etcdListCmd())
+	cmd.AddCommand(etcdUpdateCmd())
 
 	return cmd
 }
