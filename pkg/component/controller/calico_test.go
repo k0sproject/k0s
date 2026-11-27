@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"testing"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
@@ -157,6 +158,53 @@ func TestCalicoManifests(t *testing.T) {
 				require.NoError(t, yaml.Unmarshal(daemonSetManifestRaw, &spec))
 				spec.RequireContainerHasEnvVariable(t, "install-cni", "CNI_MTU", test.expected)
 				spec.RequireContainerHasEnvVariable(t, "felix", "FELIX_VXLANMTU", test.expected)
+			})
+		}
+	})
+
+	t.Run("mtu6", func(t *testing.T) {
+		for _, test := range []struct {
+			name       string
+			dualStack  bool
+			mtu, mtu6  int
+			podMTU     string
+			expectMTU6 string // empty if no IPv6 tunnel MTU is expected
+		}{
+			{"ignored_without_ipv6", false, 1450, 1430, "1450", ""},
+			{"defaults_to_1430", true, v1beta1.DefaultCalico().MTU, v1beta1.DefaultCalico().MTU6, "1430", "1430"},
+			{"pods_use_smaller_ipv4_mtu", true, 1400, 1430, "1400", "1430"},
+			{"pods_use_smaller_ipv6_mtu", true, 1450, 1380, "1380", "1380"},
+			{"pods_auto_detected_if_mtu6_is_zero", true, 1450, 0, "0", "0"},
+			{"pods_auto_detected_if_mtu_is_zero", true, 0, 1430, "0", "1430"},
+		} {
+			t.Run(test.name, func(t *testing.T) {
+				clusterConfig := clusterConfig.DeepCopy()
+				clusterConfig.Spec.Network.DualStack.Enabled = test.dualStack
+				clusterConfig.Spec.Network.Calico.MTU = test.mtu
+				clusterConfig.Spec.Network.Calico.MTU6 = test.mtu6
+
+				calico := newTestInstance(t)
+				cfg, err := calico.getConfig(clusterConfig)
+				require.NoError(t, err)
+				require.NoError(t, calico.processConfigChanges(&calicoConfig{&calico.nodeConfig, cfg, true}, nil))
+
+				daemonSetManifestRaw, err := os.ReadFile(filepath.Join(calico.manifestsDir, "calico", "calico-DaemonSet-calico-node.yaml"))
+				require.NoError(t, err, "must have daemon set for calico")
+				spec := daemonSetContainersEnv{}
+				require.NoError(t, yaml.Unmarshal(daemonSetManifestRaw, &spec))
+
+				// The IPv4 tunnels always use the IPv4 MTU.
+				for _, varName := range []string{"FELIX_IPINIPMTU", "FELIX_VXLANMTU", "FELIX_WIREGUARDMTU"} {
+					spec.RequireContainerHasEnvVariable(t, "calico-node", varName, strconv.Itoa(test.mtu))
+				}
+				for _, varName := range []string{"FELIX_VXLANMTUV6", "FELIX_WIREGUARDMTUV6"} {
+					if test.expectMTU6 == "" {
+						spec.RequireContainerHasNoEnvVariable(t, "calico-node", varName)
+					} else {
+						spec.RequireContainerHasEnvVariable(t, "calico-node", varName, test.expectMTU6)
+					}
+				}
+				assert.Contains(t, string(daemonSetManifestRaw), `"mtu": `+test.podMTU+",")
 			})
 		}
 	})

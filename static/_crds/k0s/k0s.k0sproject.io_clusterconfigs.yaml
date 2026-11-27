@@ -615,6 +615,13 @@ spec:
                         default: 1450
                         description: 'MTU for overlay network (default: 1450)'
                         type: integer
+                      mtu6:
+                        default: 1430
+                        description: |-
+                          MTU for the IPv6 overlay network (default: 1430). Only used if IPv6 is
+                          enabled. IPv6 encapsulation needs 20 bytes more than IPv4, so the IPv6
+                          tunnels need a smaller MTU than the IPv4 ones on the same network.
+                        type: integer
                       overlay:
                         default: Always
                         description: |-

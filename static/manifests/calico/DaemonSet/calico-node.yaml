@@ -76,7 +76,7 @@ spec:
                       "log_file_path": "__LOG_FILE_PATH__",
                       "datastore_type": "kubernetes",
                       "nodename": "__KUBERNETES_NODE_NAME__",
-                      "mtu": {{ .MTU }},
+                      "mtu": {{ .PodMTU }},
                       "ipam": {
                           "type": "calico-ipam",
                           {{/* K0s needs to override these for IPv6 support. */ -}}
@@ -236,6 +236,14 @@ spec:
             # Set MTU for the Wireguard tunnel device.
             - name: FELIX_WIREGUARDMTU
               value: "{{ .MTU }}"
+            {{- if .EnableIPv6 }}
+            # Set MTU for the IPv6 VXLAN tunnel device.
+            - name: FELIX_VXLANMTUV6
+              value: "{{ .MTU6 }}"
+            # Set MTU for the IPv6 Wireguard tunnel device.
+            - name: FELIX_WIREGUARDMTUV6
+              value: "{{ .MTU6 }}"
+            {{- end }}
             {{- if .EnableIPv4 }}
             # The default IPv4 pool to create on startup if none exists. Pod IPs will be
             # chosen from this range. Changing this value after installation will have

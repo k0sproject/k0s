@@ -33,6 +33,13 @@ type Calico struct {
 	// +optional
 	MTU int `json:"mtu"`
 
+	// MTU for the IPv6 overlay network (default: 1430). Only used if IPv6 is
+	// enabled. IPv6 encapsulation needs 20 bytes more than IPv4, so the IPv6
+	// tunnels need a smaller MTU than the IPv4 ones on the same network.
+	// +kubebuilder:default=1430
+	// +optional
+	MTU6 int `json:"mtu6"`
+
 	// +kubebuilder:default=vxlan
 	Mode CalicoMode `json:"mode,omitempty"`
 
@@ -72,6 +79,7 @@ func DefaultCalico() *Calico {
 		VxlanPort:            4789,
 		VxlanVNI:             4096,
 		MTU:                  1450,
+		MTU6:                 1430,
 		FlexVolumeDriverPath: "/usr/libexec/k0s/kubelet-plugins/volume/exec/nodeagent~uds",
 		Overlay:              "Always",
 	}
@@ -83,6 +91,7 @@ func (c *Calico) UnmarshalJSON(data []byte) error {
 	c.VxlanPort = 4789
 	c.VxlanVNI = 4096
 	c.MTU = 1450
+	c.MTU6 = 1430
 	c.FlexVolumeDriverPath = "/usr/libexec/kubernetes/kubelet-plugins/volume/exec/nodeagent~uds"
 	c.Overlay = "Always"
 
