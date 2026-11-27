@@ -63,6 +63,8 @@ updates:
     directory: /
     schedule:
       interval: daily
+    exclude-paths:
+      - .github/workflows/*.lock.yml # `gh aw compile` handles this
 
   - package-ecosystem: pip
     directory: /docs
