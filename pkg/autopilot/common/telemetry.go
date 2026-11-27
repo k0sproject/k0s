@@ -4,7 +4,7 @@
 package common
 
 import (
-	"github.com/k0sproject/k0s/pkg/telemetry"
+	"github.com/k0sproject/k0s/internal/telemetry"
 	"github.com/segmentio/analytics-go/v3"
 )
 
